@@ -1,6 +1,6 @@
 # 🌱 Invernadero Inteligente IoT
 
-Proyecto académico del curso **Arquitectura de Computadores y Ensambladores 1** — Segundo Semestre 2026.
+Proyecto académico del curso **Arquitectura de Computadores y Ensambladores 1** — Vacaciones de Primer Semestre 2026.
 
 Sistema IoT sobre **Raspberry Pi** que monitorea y controla un invernadero dividido en dos áreas de cultivo y un centro de control, integrando sensores, actuadores, comunicación MQTT, persistencia en MongoDB Atlas, un dashboard web y procesamiento de datos en ensamblador **ARM64/AArch64**.
 
