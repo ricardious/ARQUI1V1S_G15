@@ -27,26 +27,26 @@ Esta guía resume cómo trabajamos en el repositorio. Seguir estas reglas nos ma
 
 ## 🌿 Trabajamos con ramas
 
-Una rama por tarea, partiendo siempre de `main` actualizado.
+Cada integrante trabaja en **una sola rama propia**, partiendo siempre de `main` actualizado. En esa rama va tanto su parte del invernadero como su módulo ARM64; lo que diferencia una cosa de otra es la etiqueta del commit (ver más abajo).
 
 - `main` → la versión estable. Solo entra por Pull Request.
-- Tu rama → con un nombre que diga qué estás haciendo.
+- Tu rama → lleva tu nombre.
 
 ### Cómo nombrar la rama
 
 ```
-feat/<área>-<descripción-corta>
+feat/<tu-nombre>
 ```
 
 Estas son las ramas que le corresponden a cada quien:
 
-| Integrante | Rama de su parte IoT          | Rama de su módulo ARM64 |
-| ---------- | ----------------------------- | ----------------------- |
-| Claudia    | `feat/area-cultivo-1`         | `feat/arm64-media`      |
-| Elizabeth   | `feat/area-cultivo-2`         | `feat/arm64-varianza`   |
-| Oswaldo    | `feat/centro-control`         | `feat/arm64-prediccion` |
-| Kevin      | `feat/sensores-ambientales`   | `feat/arm64-anomalias`  |
-| Ricardo  | `feat/mqtt-mongodb-dashboard` | `feat/arm64-tendencia`  |
+| Integrante | Su rama          | Qué incluye                                              |
+| ---------- | ---------------- | ------------------------------------------------------- |
+| Claudia    | `feat/claudia`   | Área de cultivo 1 + módulo media ponderada              |
+| Elizabeth  | `feat/elizabeth` | Área de cultivo 2 + módulo varianza                     |
+| Oswaldo    | `feat/oswaldo`   | Centro de control + módulo predicción lineal            |
+| Kevin      | `feat/kevin`     | Sensores ambientales y ventilación + módulo anomalías   |
+| Ricardo    | `feat/ricardo`   | MQTT, MongoDB y dashboard + módulo tendencia            |
 
 Otros prefijos según el caso: `fix/` para corregir bugs, `docs/` para documentación, `chore/` para configuración o limpieza.
 
@@ -57,16 +57,21 @@ Otros prefijos según el caso: `fix/` para corregir bugs, `docs/` para documenta
 git checkout main
 git pull origin main
 
-# 2. Crear tu rama
-git checkout -b feat/arm64-media
+# 2. Crear tu rama (solo la primera vez)
+git checkout -b feat/claudia
 
-# 3. Trabajar y commitear
-git add .
-git commit -m "feat(arm64): suma total y suma de pesos en modulo_1"
+# 3. Trabajar y commitear (separá invernadero y ARM64 en commits distintos)
+git add raspberry/sensors/suelo_area1.py
+git commit -m "feat(area-1): lectura del sensor de humedad de suelo"
+
+git add arm64/modulo_1_media.s
+git commit -m "feat(arm64): media ponderada en modulo_1"
 
 # 4. Subir la rama
-git push origin feat/arm64-media
+git push origin feat/claudia
 ```
+
+> Aunque sea una sola rama, usá la etiqueta del commit para que se vea qué es qué: `feat(area-1): ...` para tu parte del invernadero y `feat(arm64): ...` para tu módulo. Así el historial queda ordenado y se distingue cada aporte.
 
 ---
 
