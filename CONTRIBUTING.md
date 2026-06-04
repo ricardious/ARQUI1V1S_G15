@@ -18,7 +18,8 @@ Esta guía resume cómo trabajamos en el repositorio. Seguir estas reglas nos ma
 
 ## ✅ Lo esencial
 
-- Nada se sube directo a `main`. Todo entra por una rama y un Pull Request.
+- Usamos **Git Flow** (simplificado): `main` para entregas estables, `develop` para integrar el trabajo, y una rama por persona.
+- Nada se sube directo a `main` ni a `develop`. Todo entra por una rama propia y un Pull Request.
 - Cada quien hace sus propios commits desde su propia cuenta de GitHub.
 - Cada quien sube su propio módulo ARM64. El de otro, no.
 - Commits pequeños y seguido. Un commit gigante el último día no le gusta a nadie.
@@ -27,10 +28,19 @@ Esta guía resume cómo trabajamos en el repositorio. Seguir estas reglas nos ma
 
 ## 🌿 Trabajamos con ramas
 
-Cada integrante trabaja en **una sola rama propia**, partiendo siempre de `main` actualizado. En esa rama va tanto su parte del invernadero como su módulo ARM64; lo que diferencia una cosa de otra es la etiqueta del commit (ver más abajo).
+Seguimos el modelo **Git Flow** en su versión simplificada. Tenemos dos ramas permanentes y una rama por integrante.
 
-- `main` → la versión estable. Solo entra por Pull Request.
-- Tu rama → lleva tu nombre.
+- `main` → solo versiones estables y entregables. Casi no se toca; recibe los cambios desde `develop`.
+- `develop` → rama de integración. Aquí se junta el trabajo de todos.
+- Tu rama → lleva tu nombre, sale de `develop` y vuelve a `develop` por Pull Request.
+
+```text
+feat/claudia ─┐
+feat/kevin   ─┤→  develop  ──(al entregar)──→  main
+feat/...     ─┘
+```
+
+Cada integrante trabaja en **una sola rama propia**. En esa rama va tanto su parte del invernadero como su módulo ARM64; lo que diferencia una cosa de otra es la etiqueta del commit (ver más abajo).
 
 ### Cómo nombrar la rama
 
@@ -53,11 +63,11 @@ Otros prefijos según el caso: `fix/` para corregir bugs, `docs/` para documenta
 ### Los pasos
 
 ```bash
-# 1. Actualizar main
-git checkout main
-git pull origin main
+# 1. Actualizar develop
+git checkout develop
+git pull origin develop
 
-# 2. Crear tu rama (solo la primera vez)
+# 2. Crear tu rama desde develop (solo la primera vez)
 git checkout -b feat/claudia
 
 # 3. Trabajar y commitear (separá invernadero y ARM64 en commits distintos)
@@ -98,7 +108,7 @@ Reglas mínimas:
 
 - En español, claro y específico.
 - Un commit equivale a un cambio lógico. Nada de "varios cambios" ni el clásico "asdf".
-- No subir a `main` código que no compila.
+- No subir código que no compila.
 
 ---
 
@@ -106,11 +116,13 @@ Reglas mínimas:
 
 Cuando tu rama esté lista:
 
-1. Abrí un Pull Request hacia `main` en GitHub.
+1. Abrí un Pull Request hacia `develop` (no hacia `main`) en GitHub.
 2. Título claro y una breve descripción de qué hace el cambio.
 3. Que otro integrante lo revise antes del merge.
-4. Si hay conflictos, se resuelven en tu rama, no en `main`.
+4. Si hay conflictos, se resuelven en tu rama, no en `develop`.
 5. Después del merge, podés borrar la rama.
+
+`main` solo recibe un merge desde `develop` cuando hay una entrega estable lista; eso lo coordinamos en grupo.
 
 Si vas a tocar `main.py` o algún archivo que usamos todos, avisá en el grupo antes para no chocar.
 
