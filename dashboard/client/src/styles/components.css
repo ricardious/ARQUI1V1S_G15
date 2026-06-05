@@ -1,0 +1,14 @@
+/* ==========================================================================
+   Estados compartidos de componentes.
+   ========================================================================== */
+
+@layer components {
+  .nav-item.active {
+    background: #ffffff;
+    color: var(--color-ink);
+  }
+
+  .nav-item.active svg {
+    stroke: var(--color-ink);
+  }
+}
