@@ -34,6 +34,7 @@ class Settings:
     mqtt_username: str
     mqtt_password: str
     mqtt_qos: int
+    mqtt_topic_prefix: str
     mongodb_uri: str
     mongodb_db: str
     simulation_mode: bool
@@ -50,6 +51,7 @@ def load_settings() -> Settings:
         mqtt_username=os.getenv("MQTT_USERNAME", ""),
         mqtt_password=os.getenv("MQTT_PASSWORD", ""),
         mqtt_qos=_int_from_env(os.getenv("MQTT_QOS"), 0),
+        mqtt_topic_prefix=os.getenv("MQTT_TOPIC_PREFIX", "greenpi/g15").strip().strip("/"),
         mongodb_uri=os.getenv("MONGODB_URI", ""),
         mongodb_db=os.getenv("MONGODB_DB", "greenpi_iot"),
         simulation_mode=_bool_from_env(os.getenv("SIMULATION_MODE"), True),

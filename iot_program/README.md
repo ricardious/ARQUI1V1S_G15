@@ -168,6 +168,7 @@ MQTT_CLIENT_ID_PREFIX=greenpi-g15-iot
 MQTT_USERNAME=
 MQTT_PASSWORD=
 MQTT_QOS=0
+MQTT_TOPIC_PREFIX=greenpi/g15
 
 MONGODB_URI=mongodb+srv://usuario@cluster.mongodb.net/?retryWrites=true&w=majority
 MONGODB_DB=greenpi_iot
@@ -178,6 +179,12 @@ MQTT_PUBLISH_INTERVAL_SECONDS=1
 ```
 
 > ⚠️ No subas credenciales reales. Si `MONGODB_URI` queda vacío, el programa sigue funcionando con simulación y MQTT, pero muestra una advertencia y **no guarda en MongoDB**.
+
+`MQTT_TOPIC_PREFIX` evita choques con otros grupos en brokers públicos. Con `MQTT_TOPIC_PREFIX=greenpi/g15`, los tópicos se publican como `greenpi/g15/invernadero/...`. Para usar los tópicos exactos del PDF, dejalo vacío:
+
+```env
+MQTT_TOPIC_PREFIX=
+```
 
 ### 4. Ejecutar
 
@@ -197,8 +204,10 @@ Corre en **modo simulación** por defecto. No necesita Raspberry Pi para arranca
 4. Conectarse y suscribirse a:
 
 ```text
-invernadero/#
+greenpi/g15/invernadero/#
 ```
+
+Si `MQTT_TOPIC_PREFIX` está vacío, suscribirse a `invernadero/#`.
 
 > Los payloads son **texto plano**, no JSON.
 
@@ -213,6 +222,8 @@ invernadero/#
 | **Sensores**   | `invernadero/sensores/temperatura`<br>`invernadero/sensores/humedad_ambiente`<br>`invernadero/sensores/humedad_suelo_area1`<br>`invernadero/sensores/humedad_suelo_area2`<br>`invernadero/sensores/luz`<br>`invernadero/sensores/gas` |
 | **Estado**     | `invernadero/estado/global`                                                                                                                                                                                                           |
 | **Actuadores** | `invernadero/actuadores/riego`<br>`invernadero/actuadores/riego_area1`<br>`invernadero/actuadores/riego_area2`<br>`invernadero/actuadores/ventilador`<br>`invernadero/actuadores/luces`<br>`invernadero/actuadores/alarma`            |
+
+Si `MQTT_TOPIC_PREFIX=greenpi/g15`, cada tópico queda precedido por `greenpi/g15/`.
 
 Ejemplo:
 

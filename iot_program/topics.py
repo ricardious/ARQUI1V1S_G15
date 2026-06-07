@@ -29,3 +29,14 @@ COMMAND_TOPICS = [
     "invernadero/control/remoto",
     "invernadero/control/manual",
 ]
+
+
+def with_prefix(topic: str, prefix: str = "") -> str:
+    clean_prefix = prefix.strip().strip("/")
+    if not clean_prefix:
+        return topic
+    return f"{clean_prefix}/{topic}"
+
+
+def topics_with_prefix(topics: dict[str, str], prefix: str = "") -> dict[str, str]:
+    return {key: with_prefix(topic, prefix) for key, topic in topics.items()}
