@@ -87,13 +87,13 @@ export default function Sidebar() {
         <div className="flex items-center gap-2 mb-2">
           <StatusDot color={mqttOnline ? "#00ff6a" : "#5a5a62"} pulse={mqttOnline} />
           <p className="text-[11px] text-dim">
-            MQTT · {mqttOnline ? "en línea" : connectionState}
+            Raspberry Pi 4 · {mqttOnline ? "en línea" : "sin enlace MQTT"}
           </p>
         </div>
         <p className="font-mono text-[11px] text-dim2 leading-relaxed">
-          Backend · {backendOnline == null ? "verificando" : backendOnline ? "en línea" : "desconectado"}
+          MQTT · {mqttOnline ? "activo" : connectionState}
           <br />
-          Datos · {backendOnline ? "MongoDB/API" : "sin backend"}
+          Backend · {backendOnline == null ? "verificando" : backendOnline ? "en línea" : "desconectado"}
         </p>
       </div>
     </aside>
