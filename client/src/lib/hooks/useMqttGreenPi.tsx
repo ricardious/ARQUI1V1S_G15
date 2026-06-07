@@ -27,6 +27,8 @@ export interface MqttContextValue {
   actuators:       ActuatorStates;
   globalState:     EstadoKey;
   connectionState: MqttConnectionState;
+  lastMessageAt:    number | null;
+  raspberryOnline: boolean;
   sendCommand:     (cmd: string) => void;
 }
 
@@ -51,8 +53,10 @@ const DEFAULT_ACTUATORS: ActuatorStates = {
 export const MqttContext = createContext<MqttContextValue>({
   sensors:         DEFAULT_SENSORS,
   actuators:       DEFAULT_ACTUATORS,
-  globalState:     "NORMAL",
+  globalState:     "SIN_DATOS",
   connectionState: "disconnected",
+  lastMessageAt:    null,
+  raspberryOnline: false,
   sendCommand:     () => undefined,
 });
 
@@ -61,9 +65,12 @@ export const MqttContext = createContext<MqttContextValue>({
 export function MqttProvider({ children }: { children: React.ReactNode }) {
   const [sensors, setSensors]         = useState<SensorReadings>(DEFAULT_SENSORS);
   const [actuators, setActuators]     = useState<ActuatorStates>(DEFAULT_ACTUATORS);
-  const [globalState, setGlobalState] = useState<EstadoKey>("NORMAL");
+  const [globalState, setGlobalState] = useState<EstadoKey>("SIN_DATOS");
   const [connState, setConnState]     = useState<MqttConnectionState>("connecting");
+  const [lastMessageAt, setLastMessageAt] = useState<number | null>(null);
+  const [raspberryOnline, setRaspberryOnline] = useState(false);
   const clientRef                     = useRef<MqttClient | null>(null);
+  const raspberryTimeoutRef           = useRef<number | null>(null);
 
   useEffect(() => {
     let client: MqttClient;
@@ -89,6 +96,14 @@ export function MqttProvider({ children }: { children: React.ReactNode }) {
 
       client.on("message", (topic: string, payload: Buffer) => {
         const msg = payload.toString().trim();
+        setLastMessageAt(Date.now());
+        setRaspberryOnline(true);
+        if (raspberryTimeoutRef.current != null) {
+          window.clearTimeout(raspberryTimeoutRef.current);
+        }
+        raspberryTimeoutRef.current = window.setTimeout(() => {
+          setRaspberryOnline(false);
+        }, 30_000);
 
         switch (topic) {
           case TOPICS.TEMP:
@@ -137,6 +152,10 @@ export function MqttProvider({ children }: { children: React.ReactNode }) {
     return () => {
       clientRef.current?.end(true);
       clientRef.current = null;
+      if (raspberryTimeoutRef.current != null) {
+        window.clearTimeout(raspberryTimeoutRef.current);
+        raspberryTimeoutRef.current = null;
+      }
     };
   }, []);
 
@@ -153,6 +172,8 @@ export function MqttProvider({ children }: { children: React.ReactNode }) {
         actuators,
         globalState,
         connectionState: connState,
+        lastMessageAt,
+        raspberryOnline,
         sendCommand,
       }}
     >

@@ -12,7 +12,7 @@ import { ENV } from "@/lib/constants/env";
 export default function Sidebar() {
   const [activeId, setActiveId] = useState<string>("dashboard");
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
-  const { connectionState } = useMqttGreenPi();
+  const { connectionState, raspberryOnline } = useMqttGreenPi();
   const mqttOnline = connectionState === "connected";
 
   useEffect(() => {
@@ -85,9 +85,9 @@ export default function Sidebar() {
 
       <div className="mt-auto rounded-2xl border border-edge bg-panel p-4">
         <div className="flex items-center gap-2 mb-2">
-          <StatusDot color={mqttOnline ? "#00ff6a" : "#5a5a62"} pulse={mqttOnline} />
+          <StatusDot color={raspberryOnline ? "#00ff6a" : "#5a5a62"} pulse={raspberryOnline} />
           <p className="text-[11px] text-dim">
-            Raspberry Pi 4 · {mqttOnline ? "en línea" : "sin enlace MQTT"}
+            Raspberry Pi 4 · {raspberryOnline ? "en línea" : "sin datos recientes"}
           </p>
         </div>
         <p className="font-mono text-[11px] text-dim2 leading-relaxed">
