@@ -5,10 +5,15 @@ import Object3D from "../atoms/Object3D";
 import StatusDot from "../atoms/StatusDot";
 import NavItem from "../molecules/NavItem";
 import { NAV_ITEMS } from "@/lib/constants/dashboard-data";
+import { useMqttGreenPi } from "@/lib/hooks/useMqttGreenPi";
+import { ENV } from "@/lib/constants/env";
 
 /** Organism: barra lateral de navegación con scroll-spy. */
 export default function Sidebar() {
   const [activeId, setActiveId] = useState<string>("dashboard");
+  const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
+  const { connectionState } = useMqttGreenPi();
+  const mqttOnline = connectionState === "connected";
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -26,6 +31,26 @@ export default function Sidebar() {
     });
 
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkBackend = async () => {
+      try {
+        const res = await fetch(`${ENV.API_URL}/api/health`, { cache: "no-store" });
+        if (!cancelled) setBackendOnline(res.ok);
+      } catch {
+        if (!cancelled) setBackendOnline(false);
+      }
+    };
+
+    checkBackend();
+    const id = window.setInterval(checkBackend, 15_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
   }, []);
 
   return (
@@ -60,13 +85,15 @@ export default function Sidebar() {
 
       <div className="mt-auto rounded-2xl border border-edge bg-panel p-4">
         <div className="flex items-center gap-2 mb-2">
-          <StatusDot color="#ffffff" pulse />
-          <p className="text-[11px] text-dim">Raspberry Pi 4 · en línea</p>
+          <StatusDot color={mqttOnline ? "#00ff6a" : "#5a5a62"} pulse={mqttOnline} />
+          <p className="text-[11px] text-dim">
+            MQTT · {mqttOnline ? "en línea" : connectionState}
+          </p>
         </div>
         <p className="font-mono text-[11px] text-dim2 leading-relaxed">
-          MQTT activo · MongoDB Atlas
+          Backend · {backendOnline == null ? "verificando" : backendOnline ? "en línea" : "desconectado"}
           <br />
-          uptime 04:12:33
+          Datos · {backendOnline ? "MongoDB/API" : "sin backend"}
         </p>
       </div>
     </aside>
