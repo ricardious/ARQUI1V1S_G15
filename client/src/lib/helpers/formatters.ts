@@ -15,14 +15,16 @@ export function parseFloat2(val: string | number | null | undefined): number | n
   return isNaN(n) ? null : Math.round(n * 10) / 10;
 }
 
-export function estadoToEstadoKey(raw: string): "NORMAL" | "ADVERTENCIA" | "RIEGO_ACTIVO" | "EMERGENCIA" {
-  const map: Record<string, "NORMAL" | "ADVERTENCIA" | "RIEGO_ACTIVO" | "EMERGENCIA"> = {
+export function estadoToEstadoKey(raw: string): "NORMAL" | "ADVERTENCIA" | "RIEGO_ACTIVO" | "EMERGENCIA" | "MODO_MANUAL" | "SIN_DATOS" {
+  const map: Record<string, "NORMAL" | "ADVERTENCIA" | "RIEGO_ACTIVO" | "EMERGENCIA" | "MODO_MANUAL" | "SIN_DATOS"> = {
     NORMAL:       "NORMAL",
     ADVERTENCIA:  "ADVERTENCIA",
     RIEGO_ACTIVO: "RIEGO_ACTIVO",
     EMERGENCIA:   "EMERGENCIA",
+    MODO_MANUAL:  "MODO_MANUAL",
+    SIN_DATOS:    "SIN_DATOS",
   };
-  return map[raw.toUpperCase()] ?? "NORMAL";
+  return map[raw.toUpperCase()] ?? "SIN_DATOS";
 }
 
 export function estadoRelacionadoToColor(

@@ -11,7 +11,7 @@ export default function KpiCard({
 }: {
   label: string;
   unit: string;
-  value: number;
+  value: number | string;
   trend: string;
   trendColor: string;
   delay?: number;

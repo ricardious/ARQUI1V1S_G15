@@ -22,7 +22,7 @@ function recordsToLog(records: { timestamp: string; tipo_dato: string; valor: Re
 }
 
 /** Organism: tabla de actividad con tabs — datos reales del backend. */
-export default function ActivityTable({ log: seedLog }: { log: LogEntry[] }) {
+export default function ActivityTable() {
   const [tab, setTab] = useState<Tab>("eventos");
 
   const eventsQ   = useEvents(20);
@@ -31,7 +31,7 @@ export default function ActivityTable({ log: seedLog }: { log: LogEntry[] }) {
 
   const activeQuery = tab === "eventos" ? eventsQ : tab === "comandos" ? commandsQ : logsQ;
   const rows: LogEntry[] =
-    activeQuery.data ? recordsToLog(activeQuery.data) : seedLog;
+    activeQuery.data ? recordsToLog(activeQuery.data) : [];
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "eventos",    label: "Eventos"    },
@@ -69,7 +69,7 @@ export default function ActivityTable({ log: seedLog }: { log: LogEntry[] }) {
 
       {activeQuery.isError && (
         <p className="px-5 py-4 text-[12px] text-dim2">
-          Backend no disponible — mostrando datos de sesión.
+          Backend no disponible. No se muestran datos inventados.
         </p>
       )}
 

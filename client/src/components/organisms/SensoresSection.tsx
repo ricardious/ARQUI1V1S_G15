@@ -2,6 +2,7 @@
 
 import KpiCard from "../molecules/KpiCard";
 import { useMqttGreenPi } from "@/lib/hooks/useMqttGreenPi";
+import { useLatestReading } from "@/services/readings/queries";
 
 const SENSOR_DEFS = [
   { key: "temperatura",         label: "Temperatura (DHT22)",  unit: "°C",  trendColor: "text-warn"   },
@@ -15,23 +16,34 @@ const SENSOR_DEFS = [
 /** Organism: grilla de 6 sensores con valores MQTT en tiempo real. */
 export default function SensoresSection() {
   const { sensors, connectionState } = useMqttGreenPi();
+  const latestReadingQ = useLatestReading();
+  const latestValues = latestReadingQ.data?.valor;
+  const values = {
+    temperatura: sensors.temperatura ?? latestValues?.temp ?? null,
+    humedad_ambiente: sensors.humedad_ambiente ?? latestValues?.hum_aire ?? null,
+    humedad_suelo_area1: sensors.humedad_suelo_area1 ?? latestValues?.hum_suelo_1 ?? null,
+    humedad_suelo_area2: sensors.humedad_suelo_area2 ?? latestValues?.hum_suelo_2 ?? null,
+    luz: sensors.luz ?? latestValues?.luz ?? null,
+    gas: sensors.gas ?? latestValues?.gas ?? null,
+  };
 
   return (
     <section className="grid grid-cols-2 xl:grid-cols-3 gap-4">
       {SENSOR_DEFS.map((s, i) => {
-        const raw = sensors[s.key as keyof typeof sensors];
-        const value = raw ?? 0;
-        const trend = connectionState === "connected"
-          ? (raw != null ? "● en vivo" : "sin datos")
-          : "sin conexión";
+        const value = values[s.key];
+        const trend = value == null
+          ? "sin lectura"
+          : connectionState === "connected"
+            ? "en vivo"
+            : "backend";
         return (
           <KpiCard
             key={s.key}
             label={s.label}
             unit={s.unit}
-            value={value}
+            value={value ?? "--"}
             trend={trend}
-            trendColor={raw != null ? s.trendColor : "text-dim2"}
+            trendColor={value != null ? s.trendColor : "text-dim2"}
             delay={i * 0.06}
           />
         );

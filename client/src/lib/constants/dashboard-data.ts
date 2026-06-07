@@ -79,6 +79,18 @@ export const ESTADOS: Record<EstadoKey, EstadoInfo> = {
     hex: "#FF2D2D",
     rgb: "255,45,45",
   },
+  MODO_MANUAL: {
+    label: "MODO MANUAL",
+    sub: "control remoto habilitado",
+    hex: "#2D9BFF",
+    rgb: "45,155,255",
+  },
+  SIN_DATOS: {
+    label: "SIN DATOS",
+    sub: "sin estado real recibido",
+    hex: "#5A5A62",
+    rgb: "90,90,98",
+  },
 };
 
 export const ESTADO_COLOR: Record<EstadoKey, StateColor> = {
@@ -86,6 +98,8 @@ export const ESTADO_COLOR: Record<EstadoKey, StateColor> = {
   ADVERTENCIA: "warn",
   RIEGO_ACTIVO: "info",
   EMERGENCIA: "danger",
+  MODO_MANUAL: "info",
+  SIN_DATOS: "dim",
 };
 
 export const ARM64_CARDS: {
