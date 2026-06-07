@@ -29,7 +29,7 @@ export default function ControlPanel({
   };
 
   return (
-    <div className="rounded-2xl border border-edge bg-panel p-5">
+    <div className="rounded-2xl border border-edge bg-panel p-5 h-full flex flex-col">
       <h3 className="font-display text-lg font-bold mb-1">Control remoto</h3>
       <p className="text-[12px] text-dim2 mb-4">
         Modo{" "}
@@ -37,7 +37,7 @@ export default function ControlPanel({
           {manual ? "Manual" : "Automático"}
         </span>
       </p>
-      <div className="space-y-2.5">
+      <div className="space-y-2.5 flex-1">
         {CONTROLS.map((c) => (
           <ControlToggle
             key={c.key}
