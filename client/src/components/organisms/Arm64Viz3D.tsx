@@ -2,8 +2,16 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
-import { ARM64_CARDS } from "@/lib/constants/dashboard-data";
+import { useArm64Results } from "@/services/arm64/queries";
 import type { Shape } from "@/lib/types/types";
+
+const MODULES: { key: "media" | "varianza" | "anomalias" | "prediccion" | "tendencia"; label: string; shape: Shape }[] = [
+  { key: "media", label: "Media ponderada", shape: "ico" },
+  { key: "varianza", label: "Desv. estándar", shape: "octa" },
+  { key: "anomalias", label: "Anomalías", shape: "tetra" },
+  { key: "prediccion", label: "Predicción", shape: "torus" },
+  { key: "tendencia", label: "Tendencia", shape: "box" },
+];
 
 function makeGeo(shape: Shape): THREE.BufferGeometry {
   switch (shape) {
@@ -21,6 +29,19 @@ const FLOAT_Y = [0, 0.45, -0.25, 0.7, 1.05];
 /** Organism: cristales 3D por módulo ARM64 — formas y colores por tarjeta. */
 export default function Arm64Viz3D() {
   const elRef = useRef<HTMLDivElement>(null);
+  const resultsQ = useArm64Results(1);
+  const valor = resultsQ.data?.[0]?.valor ?? {};
+  const cards = MODULES.map((module) => {
+    const value = valor[module.key] ?? "—";
+    const danger = module.key === "anomalias" && value !== "—" && Number(value) > 2;
+    return {
+      ...module,
+      file: `modulo_${module.key}.s`,
+      value,
+      color: danger ? "#FF2D2D" : value === "—" ? "#5a5a62" : "#ffffff",
+      danger,
+    };
+  });
 
   useEffect(() => {
     const el = elRef.current;
@@ -46,7 +67,7 @@ export default function Arm64Viz3D() {
 
     const groups: THREE.Group[] = [];
 
-    ARM64_CARDS.forEach((card, i) => {
+    MODULES.forEach((card, i) => {
       const geo = makeGeo(card.shape);
       const g = new THREE.Group();
       g.position.set(X_POS[i], FLOAT_Y[i], 0);
@@ -55,29 +76,12 @@ export default function Arm64Viz3D() {
         new THREE.LineSegments(
           new THREE.EdgesGeometry(geo),
           new THREE.LineBasicMaterial({
-            color: new THREE.Color(card.color),
+            color: new THREE.Color("#ffffff"),
             transparent: true,
-            opacity: card.danger ? 0.95 : 0.78,
+            opacity: 0.78,
           }),
         ),
       );
-
-      if (card.danger) {
-        g.add(
-          Object.assign(
-            new THREE.Mesh(
-              geo,
-              new THREE.MeshBasicMaterial({
-                color: new THREE.Color(card.color),
-                transparent: true,
-                opacity: 0.07,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false,
-              }),
-            ),
-          ),
-        );
-      }
 
       groups.push(g);
       root.add(g);
@@ -123,7 +127,7 @@ export default function Arm64Viz3D() {
       </div>
       <div ref={elRef} className="h-52 sm:h-64 w-full" />
       <div className="grid grid-cols-5 border-t border-edge">
-        {ARM64_CARDS.map((c) => (
+        {cards.map((c) => (
           <div
             key={c.file}
             className="flex flex-col items-center gap-1 py-3 border-r border-edge last:border-r-0"
