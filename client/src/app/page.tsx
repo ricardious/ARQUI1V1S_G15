@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import DashboardLayout from "@/components/templates/DashboardLayout";
-import KpiGrid from "@/components/organisms/KpiGrid";
 import Greenhouse3D from "@/components/organisms/Greenhouse3D";
 import TempChart from "@/components/organisms/TempChart";
 import EstadoGlobal from "@/components/organisms/EstadoGlobal";
@@ -61,12 +60,9 @@ export default function Page() {
     <DashboardLayout>
       {/* ── Dashboard ─────────────────────────────────────────────── */}
       <section id="dashboard" className="space-y-6 scroll-mt-20">
-        <KpiGrid />
+        <EstadoGlobal onEvent={pushEvent} />
         <Greenhouse3D />
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-          <TempChart />
-          <EstadoGlobal onEvent={pushEvent} />
-        </div>
+        <TempChart />
       </section>
 
       {/* ── Áreas de cultivo ──────────────────────────────────────── */}
@@ -112,7 +108,7 @@ export default function Page() {
           title="Actuadores"
           sub="Control remoto de dispositivos del invernadero"
         />
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <ControlPanel onEvent={pushEvent} onStateChange={setActuadorStates} />
           <ActuadoresViz3D on={actuadorStates} />
         </div>
