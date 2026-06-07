@@ -6,6 +6,7 @@
   html,
   body {
     background: var(--color-ink);
+    scroll-behavior: smooth;
   }
 
   body {

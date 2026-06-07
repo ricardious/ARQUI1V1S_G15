@@ -7,15 +7,19 @@ import type { StateColor } from "@/lib/types/types";
 /** Organism: panel de control remoto de actuadores. */
 export default function ControlPanel({
   onEvent,
+  onStateChange,
 }: {
   onEvent: (o: string, e: string, v: string, c: StateColor) => void;
+  onStateChange?: (on: Record<string, boolean>) => void;
 }) {
   const [on, setOn] = useState<Record<string, boolean>>({});
   const [manual, setManual] = useState(false);
 
   const toggle = (key: string, label: string) => {
     const next = !on[key];
-    setOn((p) => ({ ...p, [key]: next }));
+    const updated = { ...on, [key]: next };
+    setOn(updated);
+    onStateChange?.(updated);
     onEvent(
       "comando",
       `${label} ${next ? "activado" : "apagado"}`,
