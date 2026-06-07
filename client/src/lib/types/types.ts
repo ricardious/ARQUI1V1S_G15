@@ -5,7 +5,9 @@ export type EstadoKey =
   | "NORMAL"
   | "ADVERTENCIA"
   | "RIEGO_ACTIVO"
-  | "EMERGENCIA";
+  | "EMERGENCIA"
+  | "MODO_MANUAL"
+  | "SIN_DATOS";
 
 export interface LogEntry {
   hora: string;

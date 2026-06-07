@@ -19,7 +19,7 @@ export const TOPICS = {
   VENTILADOR:    topic("invernadero/actuadores/ventilador"),
   LUCES:         topic("invernadero/actuadores/luces"),
   ALARMA:        topic("invernadero/actuadores/alarma"),
-  CONTROL:       topic("invernadero/control/remoto"),
+  CONTROL:       topic("invernadero/control/manual"),
 } as const;
 
 export const ALL_SENSOR_TOPICS = [

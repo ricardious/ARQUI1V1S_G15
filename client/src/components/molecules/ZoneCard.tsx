@@ -12,12 +12,14 @@ export default function ZoneCard({
   riego,
 }: {
   zona: string;
-  humedad: number;
+  humedad: number | null;
   estadoLabel: string;
   estadoColor: StateColor;
   barColor: string;
   riego: string;
 }) {
+  const humedadValue = humedad ?? 0;
+
   return (
     <div className="tilt rounded-2xl border border-edge bg-panel p-5">
       <div className="flex items-center justify-between mb-4">
@@ -31,10 +33,10 @@ export default function ZoneCard({
       </div>
       <p className="text-[12px] text-dim mb-1">Humedad de suelo</p>
       <p className="font-mono text-2xl font-bold mb-3">
-        {humedad}
-        <span className="text-dim2 text-base">%</span>
+        {humedad ?? "--"}
+        {humedad != null && <span className="text-dim2 text-base">%</span>}
       </p>
-      <ProgressBar value={humedad} color={barColor} />
+      <ProgressBar value={humedadValue} color={barColor} />
       <div className="flex items-center justify-between mt-4 pt-4 border-t border-edge text-[12px]">
         <span className="text-dim">Riego {zona.toLowerCase()}</span>
         <span className="font-mono text-dim2">{riego}</span>

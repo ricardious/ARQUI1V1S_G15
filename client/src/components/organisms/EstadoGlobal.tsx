@@ -1,25 +1,38 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import * as THREE from "three";
-import { ESTADOS, ESTADO_COLOR, KPIS } from "@/lib/constants/dashboard-data";
+import { ESTADOS, KPIS } from "@/lib/constants/dashboard-data";
 import { useMqttGreenPi } from "@/lib/hooks/useMqttGreenPi";
-import type { EstadoKey, StateColor } from "@/lib/types/types";
+import { estadoToEstadoKey } from "@/lib/helpers/formatters";
+import { useLatestReading } from "@/services/readings/queries";
+import { useSystemStatus } from "@/services/status/queries";
+import type { EstadoKey } from "@/lib/types/types";
 
 /** Organism: hero de estado global con orbe 3D y mini-KPIs vivos. */
-export default function EstadoGlobal({
-  onEvent,
-}: {
-  onEvent: (o: string, e: string, v: string, c: StateColor) => void;
-}) {
+export default function EstadoGlobal() {
   const orbRef = useRef<HTMLDivElement>(null);
   const matsRef = useRef<THREE.Material[]>([]);
-  const [estadoOverride, setEstadoOverride] = useState<EstadoKey | null>(null);
-  const [kpiVals, setKpiVals] = useState<Record<string, number>>(
-    Object.fromEntries(KPIS.map((k) => [k.key, k.base])),
-  );
 
   const { sensors, globalState: mqttGlobalState, connectionState } = useMqttGreenPi();
-  const estado: EstadoKey = estadoOverride ?? mqttGlobalState;
+  const statusQ = useSystemStatus();
+  const latestReadingQ = useLatestReading();
+  const backendState = statusQ.data?.estado_relacionado
+    ? estadoToEstadoKey(statusQ.data.estado_relacionado)
+    : "SIN_DATOS";
+  const estado: EstadoKey =
+    connectionState === "connected"
+      ? mqttGlobalState
+      : statusQ.isSuccess
+        ? backendState
+        : "SIN_DATOS";
+
+  const latestValues = latestReadingQ.data?.valor;
+  const kpiVals: Record<string, number | null> = {
+    temp: sensors.temperatura ?? latestValues?.temp ?? null,
+    hum:  sensors.humedad_ambiente ?? latestValues?.hum_aire ?? null,
+    luz:  sensors.luz ?? latestValues?.luz ?? null,
+    gas:  sensors.gas ?? latestValues?.gas ?? null,
+  };
 
   useEffect(() => {
     const el = orbRef.current;
@@ -101,45 +114,18 @@ export default function EstadoGlobal({
     };
   }, []);
 
-  // Sync KPI values from MQTT when available, fallback to simulation
-  useEffect(() => {
-    const fromMqtt = {
-      temp: sensors.temperatura,
-      hum:  sensors.humedad_ambiente,
-      luz:  sensors.luz,
-      gas:  sensors.gas,
-    };
-    const hasMqtt = Object.values(fromMqtt).some((v) => v !== null);
-    if (hasMqtt) {
-      setKpiVals((prev) => ({
-        temp: fromMqtt.temp ?? prev.temp,
-        hum:  fromMqtt.hum  ?? prev.hum,
-        luz:  fromMqtt.luz  ?? prev.luz,
-        gas:  fromMqtt.gas  ?? prev.gas,
-      }));
-      return;
-    }
-    // Simulation fallback when MQTT not connected
-    const id = setInterval(() => {
-      setKpiVals(
-        Object.fromEntries(
-          KPIS.map((k) => [k.key, Math.round(k.base + (Math.random() - 0.5) * k.spread)]),
-        ),
-      );
-    }, 3000);
-    return () => clearInterval(id);
-  }, [sensors]);
-
   useEffect(() => {
     const c = new THREE.Color(ESTADOS[estado].hex);
     matsRef.current.forEach((m) => ((m as THREE.LineBasicMaterial).color = c));
   }, [estado]);
 
   const e = ESTADOS[estado];
-  const change = (k: EstadoKey) => {
-    setEstadoOverride(k);
-    onEvent("sistema", "Cambio de estado global", ESTADOS[k].label, ESTADO_COLOR[k]);
-  };
+  const sourceLabel =
+    connectionState === "connected"
+      ? "MQTT"
+      : statusQ.data
+        ? "BACKEND"
+        : "SIN DATOS";
 
   return (
     <div className="rounded-2xl border border-edge bg-panel overflow-hidden">
@@ -181,7 +167,7 @@ export default function EstadoGlobal({
                       : "border-edge text-dim2"
                 }`}
               >
-                MQTT · {connectionState === "connected" ? "EN LÍNEA" : connectionState === "connecting" ? "CONECTANDO" : "DESCONECTADO"}
+                {sourceLabel} · {connectionState === "connected" ? "EN LÍNEA" : connectionState === "connecting" ? "CONECTANDO" : "DESCONECTADO"}
               </span>
             </div>
             <p className="text-[13px] text-dim2 mt-1">{e.sub}</p>
@@ -195,45 +181,14 @@ export default function EstadoGlobal({
                   {k.label}
                 </p>
                 <p className="font-mono text-2xl font-bold mt-1 leading-none">
-                  {kpiVals[k.key]}
+                  {kpiVals[k.key] ?? "--"}
                   <span className="text-[11px] text-dim2 ml-0.5">{k.unit}</span>
                 </p>
-                <p className={`text-[10px] mt-1 ${k.trendColor}`}>{k.trend}</p>
+                <p className="text-[10px] mt-1 text-dim2">
+                  {kpiVals[k.key] == null ? "sin lectura" : sourceLabel.toLowerCase()}
+                </p>
               </div>
             ))}
-          </div>
-
-          {/* Botones de estado */}
-          <div>
-            <p className="text-[11px] uppercase tracking-[.2em] text-dim2 mb-2">
-              Simular estado
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[12px]">
-              <button
-                onClick={() => change("NORMAL")}
-                className="rounded-lg border border-edge py-2 hover:border-white hover:text-white transition"
-              >
-                Normal
-              </button>
-              <button
-                onClick={() => change("ADVERTENCIA")}
-                className="rounded-lg border border-edge py-2 hover:border-warn hover:text-warn transition"
-              >
-                Advertencia
-              </button>
-              <button
-                onClick={() => change("RIEGO_ACTIVO")}
-                className="rounded-lg border border-edge py-2 hover:border-info hover:text-info transition"
-              >
-                Riego activo
-              </button>
-              <button
-                onClick={() => change("EMERGENCIA")}
-                className="rounded-lg border border-edge py-2 hover:border-danger hover:text-danger transition"
-              >
-                Emergencia
-              </button>
-            </div>
           </div>
         </div>
       </div>

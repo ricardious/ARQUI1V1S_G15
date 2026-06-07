@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+import { useMqttGreenPi } from "@/lib/hooks/useMqttGreenPi";
+import { useLatestReading } from "@/services/readings/queries";
 
 const DEFS: {
   key: string;
@@ -22,7 +24,8 @@ const DEFS: {
   { key: "gas",     label: "Gas",      base: 150, spread: 30, unit: "ppm", warnHi: 300,dangerHi: 400 },
 ];
 
-function getHealth(def: (typeof DEFS)[0], v: number): "ok" | "warn" | "danger" {
+function getHealth(def: (typeof DEFS)[0], v: number | null): "ok" | "warn" | "danger" | "dim" {
+  if (v == null) return "dim";
   if (def.dangerHi !== undefined && v > def.dangerHi) return "danger";
   if (def.dangerLo !== undefined && v < def.dangerLo) return "danger";
   if (def.warnHi !== undefined && v > def.warnHi) return "warn";
@@ -30,14 +33,38 @@ function getHealth(def: (typeof DEFS)[0], v: number): "ok" | "warn" | "danger" {
   return "ok";
 }
 
-const HC = { ok: "#5a5a62", warn: "#FFC400", danger: "#FF2D2D" } as const;
+const HC = { ok: "#5a5a62", warn: "#FFC400", danger: "#FF2D2D", dim: "#2a2a2e" } as const;
 
 /** Organism: constelación 3D de sensores con nodos reactivos. */
 export default function SensoresViz3D() {
   const elRef = useRef<HTMLDivElement>(null);
   const matsRef = useRef<THREE.LineBasicMaterial[]>([]);
-  const [vals, setVals] = useState<Record<string, number>>(
-    Object.fromEntries(DEFS.map((d) => [d.key, d.base])),
+  const { sensors } = useMqttGreenPi();
+  const latestReadingQ = useLatestReading();
+  const latestValues = latestReadingQ.data?.valor;
+  const vals = useMemo<Record<string, number | null>>(
+    () => ({
+      temp:    sensors.temperatura ?? latestValues?.temp ?? null,
+      hum_amb: sensors.humedad_ambiente ?? latestValues?.hum_aire ?? null,
+      suelo_1: sensors.humedad_suelo_area1 ?? latestValues?.hum_suelo_1 ?? null,
+      suelo_2: sensors.humedad_suelo_area2 ?? latestValues?.hum_suelo_2 ?? null,
+      luz:     sensors.luz ?? latestValues?.luz ?? null,
+      gas:     sensors.gas ?? latestValues?.gas ?? null,
+    }),
+    [
+      latestValues?.gas,
+      latestValues?.hum_aire,
+      latestValues?.hum_suelo_1,
+      latestValues?.hum_suelo_2,
+      latestValues?.luz,
+      latestValues?.temp,
+      sensors.gas,
+      sensors.humedad_ambiente,
+      sensors.humedad_suelo_area1,
+      sensors.humedad_suelo_area2,
+      sensors.luz,
+      sensors.temperatura,
+    ],
   );
 
   useEffect(() => {
@@ -125,22 +152,14 @@ export default function SensoresViz3D() {
   }, []);
 
   useEffect(() => {
-    const id = setInterval(() => {
-      const nv: Record<string, number> = {};
-      DEFS.forEach((d) => {
-        nv[d.key] = Math.round(d.base + (Math.random() - 0.5) * d.spread);
-      });
-      setVals(nv);
-      DEFS.forEach((def, i) => {
-        const mat = matsRef.current[i];
-        if (!mat) return;
-        const h = getHealth(def, nv[def.key]);
-        mat.color.set(HC[h]);
-        mat.opacity = h === "ok" ? 0.65 : 0.95;
-      });
-    }, 3000);
-    return () => clearInterval(id);
-  }, []);
+    DEFS.forEach((def, i) => {
+      const mat = matsRef.current[i];
+      if (!mat) return;
+      const h = getHealth(def, vals[def.key]);
+      mat.color.set(HC[h]);
+      mat.opacity = h === "dim" ? 0.35 : h === "ok" ? 0.65 : 0.95;
+    });
+  }, [vals]);
 
   return (
     <div className="rounded-2xl border border-edge bg-panel overflow-hidden">
@@ -169,8 +188,8 @@ export default function SensoresViz3D() {
                 className="text-[11px] font-mono font-bold transition-colors duration-700"
                 style={{ color: HC[h] }}
               >
-                {vals[def.key]}
-                {def.unit}
+                {vals[def.key] ?? "--"}
+                {vals[def.key] == null ? "" : def.unit}
               </span>
             </div>
           );

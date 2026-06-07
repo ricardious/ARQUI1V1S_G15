@@ -66,11 +66,11 @@ function buildZone(
 
 /** Organism: dos zonas de cultivo en 3D con nivel de humedad visible. */
 export default function ZonasHumedad3D({
-  humedad1 = 45,
-  humedad2 = 28,
+  humedad1,
+  humedad2,
 }: {
-  humedad1?: number;
-  humedad2?: number;
+  humedad1: number | null;
+  humedad2: number | null;
 }) {
   const elRef = useRef<HTMLDivElement>(null);
 
@@ -93,8 +93,8 @@ export default function ZonasHumedad3D({
     grid.position.y = -(BH / 2) - 0.04;
     scene.add(grid);
 
-    buildZone(-1.8, humedad1, "#ffffff", scene);
-    buildZone(1.8, humedad2, "#ffc400", scene);
+    buildZone(-1.8, humedad1 ?? 0, "#ffffff", scene);
+    buildZone(1.8, humedad2 ?? 0, "#ffc400", scene);
 
     let raf = 0;
     const loop = () => {
@@ -133,7 +133,9 @@ export default function ZonasHumedad3D({
         <div className="flex flex-col items-center gap-1 py-3 border-r border-edge">
           <span className="h-2 w-2 rounded-full bg-white" />
           <span className="text-[10px] font-mono text-dim2">Zona 1</span>
-          <span className="text-[11px] font-mono font-bold text-white">{humedad1}%</span>
+          <span className="text-[11px] font-mono font-bold text-white">
+            {humedad1 == null ? "--" : `${humedad1}%`}
+          </span>
         </div>
         <div className="flex flex-col items-center gap-1 py-3">
           <span className="h-2 w-2 rounded-full" style={{ background: "#ffc400" }} />
@@ -142,7 +144,7 @@ export default function ZonasHumedad3D({
             className="text-[11px] font-mono font-bold"
             style={{ color: "#ffc400" }}
           >
-            {humedad2}%
+            {humedad2 == null ? "--" : `${humedad2}%`}
           </span>
         </div>
       </div>

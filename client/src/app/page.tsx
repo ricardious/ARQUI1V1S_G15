@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import DashboardLayout from "@/components/templates/DashboardLayout";
 import Greenhouse3D from "@/components/organisms/Greenhouse3D";
 import TempChart from "@/components/organisms/TempChart";
@@ -9,14 +8,13 @@ import ZoneCard from "@/components/molecules/ZoneCard";
 import ZonasHumedad3D from "@/components/organisms/ZonasHumedad3D";
 import SensoresSection from "@/components/organisms/SensoresSection";
 import SensoresViz3D from "@/components/organisms/SensoresViz3D";
-import ControlPanel from "@/components/organisms/ControlPanel";
 import ActuadoresViz3D from "@/components/organisms/ActuadoresViz3D";
 import ActivityTable from "@/components/organisms/ActivityTable";
 import Arm64Section from "@/components/organisms/Arm64Section";
 import Arm64Viz3D from "@/components/organisms/Arm64Viz3D";
 import { useMqttGreenPi } from "@/lib/hooks/useMqttGreenPi";
-import { SEED_LOG } from "@/lib/constants/dashboard-data";
-import type { LogEntry, StateColor } from "@/lib/types/types";
+import { useLatestReading } from "@/services/readings/queries";
+import type { StateColor } from "@/lib/types/types";
 
 function SectionLabel({ title, sub }: { title: string; sub?: string }) {
   return (
@@ -37,8 +35,9 @@ function zoneEstado(hum: number | null): { label: string; color: "white" | "warn
 }
 
 export default function Page() {
-  const [log, setLog] = useState<LogEntry[]>(SEED_LOG);
   const { sensors, actuators } = useMqttGreenPi();
+  const latestReadingQ = useLatestReading();
+  const latestValues = latestReadingQ.data?.valor;
 
   const pushEvent = (
     origen: string,
@@ -46,16 +45,10 @@ export default function Page() {
     valor: string,
     color: StateColor,
   ) => {
-    const now = new Date();
-    const hora = [now.getHours(), now.getMinutes(), now.getSeconds()]
-      .map((v) => String(v).padStart(2, "0"))
-      .join(":");
-    const stateByColor: Record<StateColor, string> = {
-      white: "OK", warn: "WARN", info: "INFO", danger: "ALERT", dim: "OFF",
-    };
-    setLog((prev) =>
-      [{ hora, origen, evento, valor, color, estado: stateByColor[color] }, ...prev].slice(0, 12),
-    );
+    void origen;
+    void evento;
+    void valor;
+    void color;
   };
 
   // Actuator states mapped to the 4 shapes in ActuadoresViz3D
@@ -66,14 +59,16 @@ export default function Page() {
     alarma: actuators.alarma,
   };
 
-  const z1 = zoneEstado(sensors.humedad_suelo_area1);
-  const z2 = zoneEstado(sensors.humedad_suelo_area2);
+  const humedadZona1 = sensors.humedad_suelo_area1 ?? latestValues?.hum_suelo_1 ?? null;
+  const humedadZona2 = sensors.humedad_suelo_area2 ?? latestValues?.hum_suelo_2 ?? null;
+  const z1 = zoneEstado(humedadZona1);
+  const z2 = zoneEstado(humedadZona2);
 
   return (
     <DashboardLayout>
       {/* ── Dashboard ─────────────────────────────────────────────── */}
       <section id="dashboard" className="space-y-6 scroll-mt-20">
-        <EstadoGlobal onEvent={pushEvent} />
+        <EstadoGlobal />
         <Greenhouse3D />
         <TempChart />
       </section>
@@ -87,7 +82,7 @@ export default function Page() {
         <div className="grid sm:grid-cols-2 gap-4">
           <ZoneCard
             zona="Zona 1"
-            humedad={sensors.humedad_suelo_area1 ?? 0}
+            humedad={humedadZona1}
             estadoLabel={z1.label}
             estadoColor={z1.color}
             barColor={z1.barColor}
@@ -95,7 +90,7 @@ export default function Page() {
           />
           <ZoneCard
             zona="Zona 2"
-            humedad={sensors.humedad_suelo_area2 ?? 0}
+            humedad={humedadZona2}
             estadoLabel={z2.label}
             estadoColor={z2.color}
             barColor={z2.barColor}
@@ -103,8 +98,8 @@ export default function Page() {
           />
         </div>
         <ZonasHumedad3D
-          humedad1={sensors.humedad_suelo_area1 ?? 45}
-          humedad2={sensors.humedad_suelo_area2 ?? 28}
+          humedad1={humedadZona1}
+          humedad2={humedadZona2}
         />
       </section>
 
@@ -124,10 +119,7 @@ export default function Page() {
           title="Actuadores"
           sub="Control remoto de dispositivos del invernadero"
         />
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <ControlPanel onEvent={pushEvent} />
-          <ActuadoresViz3D on={actuadorStates} />
-        </div>
+        <ActuadoresViz3D on={actuadorStates} onEvent={pushEvent} />
       </section>
 
       {/* ── Historial ─────────────────────────────────────────────── */}
@@ -136,7 +128,7 @@ export default function Page() {
           title="Historial"
           sub="Registro de eventos, comandos y alertas del sistema"
         />
-        <ActivityTable log={log} />
+        <ActivityTable />
       </section>
 
       {/* ── Análisis ARM64 ────────────────────────────────────────── */}
