@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const SEARCH_ITEMS = [
   { label: "Dashboard", detail: "Estado global, temperatura, invernadero 3D", target: "dashboard" },
@@ -35,6 +35,7 @@ function normalize(value: string): string {
 
 /** Organism: cabecera superior. */
 export default function Header() {
+  const searchRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
 
@@ -52,6 +53,17 @@ export default function Header() {
     setFocused(false);
   };
 
+  useEffect(() => {
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (!searchRef.current?.contains(target)) setFocused(false);
+    };
+
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, []);
+
   return (
     <header className="sticky top-0 z-40 flex items-center gap-4 px-5 sm:px-8 py-4 border-b border-edge bg-ink/80 backdrop-blur-xl">
       <div className="min-w-0">
@@ -62,7 +74,7 @@ export default function Header() {
           Monitoreo y control en tiempo real
         </p>
       </div>
-      <div className="relative ml-auto hidden md:block w-80">
+      <div ref={searchRef} className="relative ml-auto hidden md:block w-80">
         <div className="flex items-center gap-2 rounded-xl border border-edge bg-panel px-3 py-2">
           <svg
             className="size-3.25 shrink-0 text-dim2"
