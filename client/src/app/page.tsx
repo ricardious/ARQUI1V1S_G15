@@ -14,6 +14,7 @@ import ActuadoresViz3D from "@/components/organisms/ActuadoresViz3D";
 import ActivityTable from "@/components/organisms/ActivityTable";
 import Arm64Section from "@/components/organisms/Arm64Section";
 import Arm64Viz3D from "@/components/organisms/Arm64Viz3D";
+import { useMqttGreenPi } from "@/lib/hooks/useMqttGreenPi";
 import { SEED_LOG } from "@/lib/constants/dashboard-data";
 import type { LogEntry, StateColor } from "@/lib/types/types";
 
@@ -27,9 +28,17 @@ function SectionLabel({ title, sub }: { title: string; sub?: string }) {
   );
 }
 
+function zoneEstado(hum: number | null): { label: string; color: "white" | "warn" | "danger" | "info"; barColor: string } {
+  if (hum == null) return { label: "SIN DATOS", color: "info",   barColor: "#2D9BFF" };
+  if (hum < 25)    return { label: "SECO",      color: "danger", barColor: "#FF2D2D" };
+  if (hum < 35)    return { label: "SECO",      color: "warn",   barColor: "#FFC400" };
+  if (hum > 75)    return { label: "SATURADO",  color: "warn",   barColor: "#FFC400" };
+  return              { label: "NORMAL",     color: "white",  barColor: "#ffffff" };
+}
+
 export default function Page() {
   const [log, setLog] = useState<LogEntry[]>(SEED_LOG);
-  const [actuadorStates, setActuadorStates] = useState<Record<string, boolean>>({});
+  const { sensors, actuators } = useMqttGreenPi();
 
   const pushEvent = (
     origen: string,
@@ -42,19 +51,23 @@ export default function Page() {
       .map((v) => String(v).padStart(2, "0"))
       .join(":");
     const stateByColor: Record<StateColor, string> = {
-      white: "OK",
-      warn: "WARN",
-      info: "INFO",
-      danger: "ALERT",
-      dim: "OFF",
+      white: "OK", warn: "WARN", info: "INFO", danger: "ALERT", dim: "OFF",
     };
     setLog((prev) =>
-      [
-        { hora, origen, evento, valor, color, estado: stateByColor[color] },
-        ...prev,
-      ].slice(0, 12),
+      [{ hora, origen, evento, valor, color, estado: stateByColor[color] }, ...prev].slice(0, 12),
     );
   };
+
+  // Actuator states mapped to the 4 shapes in ActuadoresViz3D
+  const actuadorStates: Record<string, boolean> = {
+    riego:  actuators.riego || actuators.riego_area1 || actuators.riego_area2,
+    vent:   actuators.ventilador,
+    luz:    actuators.luces,
+    alarma: actuators.alarma,
+  };
+
+  const z1 = zoneEstado(sensors.humedad_suelo_area1);
+  const z2 = zoneEstado(sensors.humedad_suelo_area2);
 
   return (
     <DashboardLayout>
@@ -74,22 +87,25 @@ export default function Page() {
         <div className="grid sm:grid-cols-2 gap-4">
           <ZoneCard
             zona="Zona 1"
-            humedad={45}
-            estadoLabel="NORMAL"
-            estadoColor="white"
-            barColor="#ffffff"
-            riego="RIEGO_OFF"
+            humedad={sensors.humedad_suelo_area1 ?? 0}
+            estadoLabel={z1.label}
+            estadoColor={z1.color}
+            barColor={z1.barColor}
+            riego={actuators.riego_area1 ? "RIEGO_ON" : "RIEGO_OFF"}
           />
           <ZoneCard
             zona="Zona 2"
-            humedad={28}
-            estadoLabel="SECO"
-            estadoColor="warn"
-            barColor="#ffc400"
-            riego="RIEGO_OFF"
+            humedad={sensors.humedad_suelo_area2 ?? 0}
+            estadoLabel={z2.label}
+            estadoColor={z2.color}
+            barColor={z2.barColor}
+            riego={actuators.riego_area2 ? "RIEGO_ON" : "RIEGO_OFF"}
           />
         </div>
-        <ZonasHumedad3D humedad1={45} humedad2={28} />
+        <ZonasHumedad3D
+          humedad1={sensors.humedad_suelo_area1 ?? 45}
+          humedad2={sensors.humedad_suelo_area2 ?? 28}
+        />
       </section>
 
       {/* ── Sensores ──────────────────────────────────────────────── */}
@@ -109,7 +125,7 @@ export default function Page() {
           sub="Control remoto de dispositivos del invernadero"
         />
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <ControlPanel onEvent={pushEvent} onStateChange={setActuadorStates} />
+          <ControlPanel onEvent={pushEvent} />
           <ActuadoresViz3D on={actuadorStates} />
         </div>
       </section>
