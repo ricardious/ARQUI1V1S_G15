@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { ESTADOS, ESTADO_COLOR, KPIS } from "@/lib/constants/dashboard-data";
+import { useMqttGreenPi } from "@/lib/hooks/useMqttGreenPi";
 import type { EstadoKey, StateColor } from "@/lib/types/types";
 
 /** Organism: hero de estado global con orbe 3D y mini-KPIs vivos. */
@@ -12,10 +13,13 @@ export default function EstadoGlobal({
 }) {
   const orbRef = useRef<HTMLDivElement>(null);
   const matsRef = useRef<THREE.Material[]>([]);
-  const [estado, setEstado] = useState<EstadoKey>("NORMAL");
+  const [estadoOverride, setEstadoOverride] = useState<EstadoKey | null>(null);
   const [kpiVals, setKpiVals] = useState<Record<string, number>>(
     Object.fromEntries(KPIS.map((k) => [k.key, k.base])),
   );
+
+  const { sensors, globalState: mqttGlobalState, connectionState } = useMqttGreenPi();
+  const estado: EstadoKey = estadoOverride ?? mqttGlobalState;
 
   useEffect(() => {
     const el = orbRef.current;
@@ -97,7 +101,25 @@ export default function EstadoGlobal({
     };
   }, []);
 
+  // Sync KPI values from MQTT when available, fallback to simulation
   useEffect(() => {
+    const fromMqtt = {
+      temp: sensors.temperatura,
+      hum:  sensors.humedad_ambiente,
+      luz:  sensors.luz,
+      gas:  sensors.gas,
+    };
+    const hasMqtt = Object.values(fromMqtt).some((v) => v !== null);
+    if (hasMqtt) {
+      setKpiVals((prev) => ({
+        temp: fromMqtt.temp ?? prev.temp,
+        hum:  fromMqtt.hum  ?? prev.hum,
+        luz:  fromMqtt.luz  ?? prev.luz,
+        gas:  fromMqtt.gas  ?? prev.gas,
+      }));
+      return;
+    }
+    // Simulation fallback when MQTT not connected
     const id = setInterval(() => {
       setKpiVals(
         Object.fromEntries(
@@ -106,7 +128,7 @@ export default function EstadoGlobal({
       );
     }, 3000);
     return () => clearInterval(id);
-  }, []);
+  }, [sensors]);
 
   useEffect(() => {
     const c = new THREE.Color(ESTADOS[estado].hex);
@@ -115,7 +137,7 @@ export default function EstadoGlobal({
 
   const e = ESTADOS[estado];
   const change = (k: EstadoKey) => {
-    setEstado(k);
+    setEstadoOverride(k);
     onEvent("sistema", "Cambio de estado global", ESTADOS[k].label, ESTADO_COLOR[k]);
   };
 
@@ -150,6 +172,17 @@ export default function EstadoGlobal({
                 className="h-2.5 w-2.5 rounded-full pulse shrink-0"
                 style={{ background: e.hex }}
               />
+              <span
+                className={`ml-auto text-[10px] font-mono px-2 py-0.5 rounded-full border ${
+                  connectionState === "connected"
+                    ? "border-ok/40 text-ok"
+                    : connectionState === "connecting"
+                      ? "border-warn/40 text-warn"
+                      : "border-edge text-dim2"
+                }`}
+              >
+                MQTT · {connectionState === "connected" ? "EN LÍNEA" : connectionState === "connecting" ? "CONECTANDO" : "DESCONECTADO"}
+              </span>
             </div>
             <p className="text-[13px] text-dim2 mt-1">{e.sub}</p>
           </div>
