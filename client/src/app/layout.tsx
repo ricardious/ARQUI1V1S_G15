@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, JetBrains_Mono, Sora } from "next/font/google";
 import "../styles/globals.css";
+import Providers from "./providers";
 
 export const metadata: Metadata = {
   title: "Invernadero Inteligente IoT — Grupo 15",
@@ -28,7 +29,7 @@ export default function RootLayout({
       className={`${bricolageGrotesque.variable} ${sora.variable} ${jetBrainsMono.variable}`}
     >
       <body className="grain font-sans text-white antialiased selection:bg-white selection:text-ink">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
