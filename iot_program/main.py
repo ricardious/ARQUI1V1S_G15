@@ -4,12 +4,14 @@ from threading import Event
 from typing import Any
 
 from actuators.manager import ActuatorManager
+from actuators.raspberry_actuators import RaspberryActuators
 from config import Settings, load_settings
 from global_state import GlobalState
 from mongo_repository import MongoRepository
 from mqtt_client import MQTTClient
 from rules import evaluate_readings, event_description_for_command, estado_for_command
 from sensors.manager import SensorManager
+from sensors.raspberry_sensors import RaspberrySensors
 
 VALID_COMMANDS = {
     "ACTIVAR_RIEGO",
@@ -32,8 +34,14 @@ class IoTProgram:
     def __init__(self) -> None:
         self.settings: Settings = load_settings()
         self.state = GlobalState()
-        self.sensors = SensorManager(self.state)
-        self.actuators = ActuatorManager(self.state)
+        if self.settings.simulation_mode:
+            self.sensors = SensorManager(self.state)
+            self.actuators = ActuatorManager(self.state)
+            print("[IoT] Modo simulacion activo")
+        else:
+            self.sensors = RaspberrySensors(self.state)
+            self.actuators = RaspberryActuators()
+            print("[IoT] Modo Raspberry activo")
         self.mongo = MongoRepository(
             self.settings.mongodb_uri, self.settings.mongodb_db
         )
@@ -85,9 +93,7 @@ class IoTProgram:
         self.mqtt.connect()
 
     def read_sensors(self) -> dict[str, Any]:
-        """Lee sensores simulados o futuros sensores reales."""
-        if not self.settings.simulation_mode:
-            print("[IoT] SIMULATION_MODE=false, pero todavia se usa FakeSensors.")
+        """Lee sensores simulados o sensores reales segun SIMULATION_MODE."""
         return self.sensors.read_all()
 
     def publish_sensor_values(self, readings: dict[str, Any]) -> None:

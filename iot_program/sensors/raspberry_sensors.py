@@ -1,9 +1,37 @@
 from models import SensorReading
 from sensors.base import SensorReader
+from sensors.gas import GasSensor
+from sensors.luz import LuzSensor
+from sensors.suelo_area1 import SueloArea1Sensor
+from sensors.suelo_area2 import SueloArea2Sensor
+from sensors.temperatura_humedad import TemperaturaHumedadSensor
+from global_state import GlobalState
 
 
 class RaspberrySensors(SensorReader):
-    """Placeholder para sensores reales conectados a Raspberry Pi."""
+    """Integra sensores reales conectados a Raspberry Pi.
+
+    Cada sensor vive en su propio archivo. Esta clase solo los junta para que
+    main.py tenga una entrada unica cuando SIMULATION_MODE=false.
+    """
+
+    def __init__(self, state: GlobalState) -> None:
+        self.state = state
+        self.temperatura_humedad = TemperaturaHumedadSensor()
+        self.suelo_area1 = SueloArea1Sensor()
+        self.suelo_area2 = SueloArea2Sensor()
+        self.luz = LuzSensor()
+        self.gas = GasSensor()
 
     def read_all(self) -> SensorReading:
-        raise NotImplementedError("Sensores reales pendientes de integrar con GPIO/I2C/SPI.")
+        return {
+            "temperatura": self.temperatura_humedad.leer_temperatura(),
+            "humedad_ambiente": self.temperatura_humedad.leer_humedad(),
+            "humedad_suelo_area1": self.suelo_area1.read(),
+            "humedad_suelo_area2": self.suelo_area2.read(),
+            "luz": self.luz.read(),
+            "gas": self.gas.read(),
+            "riego_1": self.state.get("riego_1", 0),
+            "riego_2": self.state.get("riego_2", 0),
+            "estado_global": self.state.get("estado_global", "NORMAL"),
+        }
