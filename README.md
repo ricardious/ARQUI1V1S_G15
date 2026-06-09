@@ -222,4 +222,4 @@ Todos los integrantes participan en la construcción física de la maqueta y en 
 
 ## 📌 Estado del proyecto
 
-🟡 En fase inicial de análisis, diseño y planificación.
+🟡 En desarrollo.
