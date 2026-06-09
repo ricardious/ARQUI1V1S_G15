@@ -131,6 +131,99 @@ global_state.py
 
 > `sensors/manager.py` junta las lecturas de cada sensor individual y entrega una **lectura unificada** al programa principal. De forma similar, `actuators/manager.py` recibe comandos y **delega** la acción al archivo del actuador correspondiente.
 
+### Qué hacer después de implementar un sensor o actuador
+
+No es solo meter código en el archivo asignado. Después hay que revisar que ese archivo sí lo esté usando el programa principal.
+
+#### Sensores
+
+Para sensores, `sensors/manager.py` ya llama estas clases y métodos. Entonces hay que mantener esos nombres:
+
+| Archivo | Clase/métodos que debe conservar |
+| ------- | -------------------------------- |
+| `sensors/temperatura_humedad.py` | `TemperaturaHumedadSensor.leer_temperatura()` y `leer_humedad()` |
+| `sensors/suelo_area1.py` | `SueloArea1Sensor.read()` |
+| `sensors/suelo_area2.py` | `SueloArea2Sensor.read()` |
+| `sensors/luz.py` | `LuzSensor.read()` |
+| `sensors/gas.py` | `GasSensor.read()` |
+
+Checklist antes de subir:
+
+- Implementar la lectura real en el archivo que te toca.
+- Retornar número (`int` o `float`), no texto.
+- No cambiar nombres de clases ni métodos sin coordinar.
+- Ejecutar `python main.py`.
+- Ver en consola o MQTTX que se publique el tópico de tu sensor en `invernadero/sensores/*`.
+- Si hay MongoDB configurado, revisar que entren lecturas en `sensor_readings`.
+
+Si tu sensor necesita parámetros, pines o inicialización especial y ya no alcanza con `Sensor()`, ahí sí hay que tocar y coordinar:
+
+```text
+sensors/manager.py
+```
+
+#### Actuadores
+
+Para actuadores, `actuators/manager.py` ya llama estas clases y métodos. Hay que mantener la misma interfaz:
+
+| Archivo | Clase/métodos que debe conservar |
+| ------- | -------------------------------- |
+| `actuators/riego_area1.py` | `RiegoArea1Actuator.activar()` y `desactivar()` |
+| `actuators/riego_area2.py` | `RiegoArea2Actuator.activar()` y `desactivar()` |
+| `actuators/ventilador.py` | `VentiladorActuator.activar()` y `desactivar()` |
+| `actuators/luces.py` | `LucesActuator.encender()` y `apagar()` |
+| `actuators/alarma.py` | `AlarmaActuator.silenciar()` |
+| `actuators/leds_estado.py` | `LedsEstadoActuator.modo_automatico()` y `modo_manual()` |
+
+Checklist antes de subir:
+
+- Implementar la acción real GPIO/relé en el archivo que te toca.
+- Retornar un diccionario con el estado que cambió.
+- No cambiar nombres de clases ni métodos sin coordinar.
+- Ejecutar `python main.py`.
+- Probar desde MQTTX publicando un comando en `invernadero/control/manual`.
+- Ver que el estado salga en `invernadero/actuadores/*`.
+- Si hay MongoDB configurado, revisar que entren logs en `actuator_logs`.
+
+Ejemplo:
+
+```text
+Topic:   invernadero/control/manual
+Payload: ENCENDER_LUCES
+```
+
+Respuesta esperada:
+
+```text
+Topic:   invernadero/actuadores/luces
+Payload: ON
+```
+
+#### Modo simulado y modo Raspberry
+
+`main.py` ya escoge entre modo simulado y modo Raspberry con `SIMULATION_MODE`.
+
+```env
+SIMULATION_MODE=true   # usa managers normales
+SIMULATION_MODE=false  # usa raspberry_sensors.py y raspberry_actuators.py
+```
+
+En modo Raspberry se usan estos archivos:
+
+```text
+sensors/raspberry_sensors.py
+actuators/raspberry_actuators.py
+```
+
+Pero ojo: esos archivos no reemplazan el trabajo individual. Solo juntan todo.
+
+Para este avance, lo más directo es:
+
+1. Cada quien implementa su archivo individual.
+2. `raspberry_sensors.py` o `raspberry_actuators.py` ya lo llama.
+3. Para probar hardware real, poner `SIMULATION_MODE=false`.
+4. Ejecutar `python main.py`.
+
 ---
 
 ## 🚀 Puesta en marcha

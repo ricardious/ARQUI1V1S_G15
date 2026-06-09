@@ -9,6 +9,7 @@ Esta guía resume cómo trabajamos en el repositorio. Seguir estas reglas nos ma
 - [Lo esencial](#-lo-esencial)
 - [Trabajamos con ramas](#-trabajamos-con-ramas)
 - [Cómo escribir los commits](#-cómo-escribir-los-commits)
+- [Qué hacer según tu parte](#-qué-hacer-según-tu-parte)
 - [Pull Requests](#-pull-requests)
 - [La parte de ARM64 (ojo aquí)](#-la-parte-de-arm64-ojo-aquí)
 - [Qué NO subir](#-qué-no-subir)
@@ -50,13 +51,13 @@ feat/<tu-nombre>
 
 Estas son las ramas que le corresponden a cada quien:
 
-| Integrante | Su rama          | Qué incluye                                              |
-| ---------- | ---------------- | ------------------------------------------------------- |
-| Claudia    | `feat/claudia`   | Área de cultivo 1 + módulo media ponderada              |
-| Elizabeth  | `feat/elizabeth` | Área de cultivo 2 + módulo varianza                     |
-| Oswaldo    | `feat/oswaldo`   | Centro de control + módulo predicción lineal            |
-| Kevin      | `feat/kevin`     | Sensores ambientales y ventilación + módulo anomalías   |
-| Ricardo    | `feat/ricardo`   | MQTT, MongoDB y dashboard + módulo tendencia            |
+| Integrante | Su rama          | Qué incluye                                           |
+| ---------- | ---------------- | ----------------------------------------------------- |
+| Claudia    | `feat/claudia`   | Área de cultivo 1 + módulo media ponderada            |
+| Elizabeth  | `feat/elizabeth` | Área de cultivo 2 + módulo varianza                   |
+| Oswaldo    | `feat/oswaldo`   | Centro de control + módulo predicción lineal          |
+| Kevin      | `feat/kevin`     | Sensores ambientales y ventilación + módulo anomalías |
+| Ricardo    | `feat/ricardo`   | MQTT, MongoDB y dashboard + módulo tendencia          |
 
 Otros prefijos según el caso: `fix/` para corregir bugs, `docs/` para documentación, `chore/` para configuración o limpieza.
 
@@ -71,7 +72,7 @@ git pull origin develop
 git checkout -b feat/claudia
 
 # 3. Trabajar y commitear (separá invernadero y ARM64 en commits distintos)
-git add raspberry/sensors/suelo_area1.py
+git add iot_program/sensors/suelo_area1.py
 git commit -m "feat(area-1): lectura del sensor de humedad de suelo"
 
 git add arm64/modulo_1_media.s
@@ -109,6 +110,74 @@ Reglas mínimas:
 - En español, claro y específico.
 - Un commit equivale a un cambio lógico. Nada de "varios cambios" ni el clásico "asdf".
 - No subir código que no compila.
+
+---
+
+## 🧭 Qué hacer según tu parte
+
+Antes de empezar, leé el README de la carpeta donde vas a trabajar:
+
+| Parte                 | Leer primero            | Qué se hace ahí                                   |
+| --------------------- | ----------------------- | ------------------------------------------------- |
+| Sensores y actuadores | `iot_program/README.md` | Implementar hardware, probar MQTT y guardar datos |
+| Backend               | `server/README.md`      | API, MongoDB, históricos y flujo ARM64            |
+| Dashboard             | `client/README.md`      | Interfaz web y consumo de API/MQTT                |
+| ARM64                 | `arm64/README.md`       | Módulos `.s`, Makefile, GDB y resultados `.txt`   |
+
+### Sensores y actuadores
+
+El trabajo de hardware está en `iot_program/`.
+
+Cada quien trabaja su archivo individual. Ejemplos:
+
+```text
+iot_program/sensors/suelo_area1.py
+iot_program/sensors/gas.py
+iot_program/actuators/riego_area1.py
+iot_program/actuators/ventilador.py
+```
+
+Después de implementar:
+
+- Mantener nombres de clases y métodos que ya usa el manager.
+- Ejecutar `python main.py` desde `iot_program/`.
+- Probar con MQTTX usando `invernadero/#`.
+- Revisar que salgan lecturas en `invernadero/sensores/*`.
+- Revisar que salgan estados en `invernadero/actuadores/*`.
+- Si hay MongoDB configurado, revisar `sensor_readings` y `actuator_logs`.
+
+Para probar hardware real:
+
+```env
+SIMULATION_MODE=false
+```
+
+Con eso `main.py` usa:
+
+```text
+iot_program/sensors/raspberry_sensors.py
+iot_program/actuators/raspberry_actuators.py
+```
+
+Esos archivos juntan todos los sensores y actuadores reales. Normalmente no los toca cada integrante; se tocan solo si hace falta pasar pines, buses o configuración especial.
+
+### Backend
+
+El backend no implementa sensores ni actuadores. Su trabajo es:
+
+- consultar MongoDB,
+- exponer endpoints,
+- generar `data/lecturas.csv`,
+- ejecutar ARM64,
+- leer resultados de `resultados_arm64/`.
+
+Leer `server/README.md` antes de tocar endpoints o servicios.
+
+### ARM64
+
+Cada quien crea y sube solo su módulo `.s`. No subir módulos de otro integrante.
+
+Todos usan `arm64/utils.s` como apoyo común. Si necesitan cambiar `utils.s`, avisen antes porque puede afectar a todos.
 
 ---
 
