@@ -1,5 +1,4 @@
 {
   "debug.allowBreakpointsEverywhere": true,
-  "terminal.integrated.cwd": "${fileDirname}",
-  "postman.settings.dotenv-detection-notification-visibility": false
+  "terminal.integrated.cwd": "${fileDirname}"
 }

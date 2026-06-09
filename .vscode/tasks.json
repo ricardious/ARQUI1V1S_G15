@@ -1,0 +1,67 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "ARM64: build archivo activo",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "SRC=${fileBasename}"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "ARM64: run archivo activo",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "SRC=${fileBasename}",
+        "run"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "ARM64: build + gdb archivo activo",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "SRC=${fileBasename}",
+        "gdb-vscode"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "arm64-qemu",
+        "pattern": {
+          "regexp": "a^"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^Starting QEMU",
+          "endsPattern": "^QEMU_GDB_READY$"
+        }
+      }
+    },
+    {
+      "label": "ARM64: clean archivo activo",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "clean"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
