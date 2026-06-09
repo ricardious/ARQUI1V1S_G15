@@ -48,7 +48,8 @@ class Arm64Service:
     def __init__(self, db: AsyncDatabase[Any], settings: Settings) -> None:
         self.settings = settings
         self.arm64_dir = settings.arm64_path
-        self.csv_path = self.arm64_dir / "lecturas.csv"
+        self.data_dir = settings.data_path
+        self.csv_path = self.data_dir / "lecturas.csv"
         self.results_dir = settings.arm64_results_path
         self.readings = MongoRepository(db, "sensor_readings")
         self.results = MongoRepository(db, "arm64_results")
@@ -57,11 +58,11 @@ class Arm64Service:
         return await self.results.list_recent(limit)
 
     async def generate_csv(self) -> dict[str, Any]:
-        """Genera arm64/lecturas.csv con los ultimos 30 registros."""
+        """Genera data/lecturas.csv con los ultimos 30 registros."""
         readings = await self.readings.list_recent(30)
         rows = list(reversed(readings))
 
-        self.arm64_dir.mkdir(parents=True, exist_ok=True)
+        self.data_dir.mkdir(parents=True, exist_ok=True)
         with self.csv_path.open("w", newline="", encoding="utf-8") as csv_file:
             writer = csv.writer(csv_file)
             writer.writerow(CSV_HEADER)

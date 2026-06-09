@@ -156,7 +156,7 @@ sequenceDiagram
     FE->>BE: POST /api/arm64/generate-csv
     BE->>DB: consulta últimos 30 registros
     DB-->>BE: 30 lecturas
-    BE->>BE: genera arm64/lecturas.csv (enteros)
+    BE->>BE: genera data/lecturas.csv (enteros)
     FE->>BE: POST /api/arm64/run
     BE->>A: make + ejecutar módulos
     A-->>BE: resultado_*.txt
@@ -166,7 +166,7 @@ sequenceDiagram
 
 ### 1. Generar el CSV — `POST /api/arm64/generate-csv`
 
-Consulta los **últimos 30 documentos** de `sensor_readings` y genera `arm64/lecturas.csv` (en la raíz del repositorio) con este formato:
+Consulta los **últimos 30 documentos** de `sensor_readings` y genera `data/lecturas.csv` (en la raíz del repositorio) con este formato:
 
 ```csv
 ID,TEMP,HUM_AIRE,HUM_SUELO_1,HUM_SUELO_2,LUZ,GAS,RIEGO_1,RIEGO_2

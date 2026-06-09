@@ -50,6 +50,11 @@ class Settings(BaseSettings):
         """Ruta absoluta donde ARM64 deja los archivos resultado_*.txt."""
         return (self.project_root / "resultados_arm64").resolve()
 
+    @property
+    def data_path(self) -> Path:
+        """Ruta absoluta de la carpeta data/ (CSV de lecturas)."""
+        return (self.project_root / "data").resolve()
+
 
 @lru_cache
 def get_settings() -> Settings:
