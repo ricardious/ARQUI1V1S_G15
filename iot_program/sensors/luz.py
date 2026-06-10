@@ -1,11 +1,50 @@
 import random
 
+_I2C_AVAILABLE = False
+
+try:
+    import board
+    import busio
+    import adafruit_ads1x15.ads1115 as ADS
+    from adafruit_ads1x15.analog_in import AnalogIn
+
+    _I2C_AVAILABLE = True
+except ImportError:
+    pass
+
 
 class LuzSensor:
-    """Sensor de luz.
+    """Sensor LDR conectado a ADS1115 A3.
 
-    TODO: reemplazar por lectura real del LDR o sensor de luz usado.
+    Retorna una escala 0-1000 compatible con las reglas automaticas:
+    valores bajos significan poca luz y valores altos suficiente luz.
     """
 
+    _RAW_DARK = 2000
+    _RAW_BRIGHT = 26000
+
+    def __init__(self, channel: int = 3, address: int = 0x48) -> None:
+        self._simulation = not _I2C_AVAILABLE
+        self._analog_in = None
+
+        if not self._simulation:
+            try:
+                i2c = busio.I2C(board.SCL, board.SDA)
+                ads = ADS.ADS1115(i2c, address=address)
+                ads_channels = [ADS.P0, ADS.P1, ADS.P2, ADS.P3]
+                self._analog_in = AnalogIn(ads, ads_channels[channel])
+            except Exception:
+                self._simulation = True
+
     def read(self) -> int:
-        return random.randint(180, 700)
+        if self._simulation or self._analog_in is None:
+            return random.randint(180, 700)
+
+        try:
+            raw = int(self._analog_in.value)
+        except Exception:
+            return random.randint(180, 700)
+
+        raw = max(self._RAW_DARK, min(self._RAW_BRIGHT, raw))
+        value = (raw - self._RAW_DARK) / (self._RAW_BRIGHT - self._RAW_DARK) * 1000
+        return int(round(value))
