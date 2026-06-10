@@ -13,7 +13,7 @@ class ActuatorManager:
     def __init__(self, state: GlobalState) -> None:
         self.state = state
         self.riego_area1 = RiegoArea1Actuator()
-        self.riego_area2 = RiegoArea2Actuator()
+        self.riego_area2 = RiegoArea2Actuator(self.riego_area1)
         self.ventilador = VentiladorActuator()
         self.luces = LucesActuator()
         self.alarma = AlarmaActuator()
@@ -31,6 +31,10 @@ class ActuatorManager:
             changes = self.riego_area1.activar()
         elif action == "ACTIVAR_RIEGO_2":
             changes = self.riego_area2.activar()
+        elif action == "DESACTIVAR_RIEGO_1":
+            changes = self.riego_area1.desactivar()
+        elif action == "DESACTIVAR_RIEGO_2":
+            changes = self.riego_area2.desactivar()
         elif action == "ENCENDER_LUCES":
             changes = self.luces.encender()
         elif action == "APAGAR_LUCES":
@@ -39,6 +43,8 @@ class ActuatorManager:
             changes = self.ventilador.activar()
         elif action == "DESACTIVAR_VENTILADOR":
             changes = self.ventilador.desactivar()
+        elif action == "ACTIVAR_ALARMA":
+            changes = self.alarma.activar()
         elif action == "SILENCIAR_ALARMA":
             changes = self.alarma.silenciar()
         elif action == "CAMBIAR_MODO_AUTOMATICO":
