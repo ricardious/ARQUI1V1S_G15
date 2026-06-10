@@ -13,7 +13,7 @@ class ActuatorManager:
     def __init__(self, state: GlobalState) -> None:
         self.state = state
         self.riego_area1 = RiegoArea1Actuator()
-        self.riego_area2 = RiegoArea2Actuator()
+        self.riego_area2 = RiegoArea2Actuator(self.riego_area1)
         self.ventilador = VentiladorActuator()
         self.luces = LucesActuator()
         self.alarma = AlarmaActuator()
@@ -24,13 +24,29 @@ class ActuatorManager:
         changes: dict[str, str | int]
 
         if action == "ACTIVAR_RIEGO":
-            changes = {**self.riego_area1.activar(), **self.riego_area2.activar()}
+            r1 = self.riego_area1.activar()
+            changes = {
+                "riego_1":       r1.get("riego_1", 0),
+                "riego_2":       r1.get("riego_1", 0),  # misma bomba
+                "estado_global": r1.get("estado_global", "NORMAL")
+            }
         elif action == "DESACTIVAR_RIEGO":
-            changes = {**self.riego_area1.desactivar(), **self.riego_area2.desactivar()}
+            changes = {**self.riego_area1.desactivar(), "riego_2": 0}
         elif action == "ACTIVAR_RIEGO_1":
             changes = self.riego_area1.activar()
         elif action == "ACTIVAR_RIEGO_2":
             changes = self.riego_area2.activar()
+        elif action == "ACTIVAR_RIEGO_MANUAL":
+            r1 = self.riego_area1.activar_manual()
+            changes = {
+                "riego_1":       r1.get("riego_1", 0),
+                "riego_2":       r1.get("riego_1", 0),
+                "estado_global": r1.get("estado_global", "NORMAL")
+            }
+        elif action == "ACTIVAR_RIEGO_1_MANUAL":
+            changes = self.riego_area1.activar_manual()
+        elif action == "ACTIVAR_RIEGO_2_MANUAL":
+            changes = self.riego_area2.activar_manual()
         elif action == "ENCENDER_LUCES":
             changes = self.luces.encender()
         elif action == "APAGAR_LUCES":
