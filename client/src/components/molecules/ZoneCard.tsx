@@ -21,7 +21,7 @@ export default function ZoneCard({
   const humedadValue = humedad ?? 0;
 
   return (
-    <div className="tilt rounded-2xl border border-edge bg-panel p-5">
+    <div className="tilt min-w-0 rounded-2xl border border-edge bg-panel p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
           <p className="text-[11px] uppercase tracking-[.2em] text-dim2">

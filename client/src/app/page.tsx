@@ -79,7 +79,7 @@ export default function Page() {
           title="Áreas de cultivo"
           sub="Estado actual de las 2 zonas del invernadero"
         />
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] gap-4">
           <ZoneCard
             zona="Zona 1"
             humedad={humedadZona1}

@@ -18,7 +18,7 @@ export default function KpiCard({
 }) {
   return (
     <div
-      className="reveal tilt rounded-2xl border border-edge bg-panel p-5"
+      className="reveal tilt min-w-0 rounded-2xl border border-edge bg-panel p-5"
       style={{ animationDelay: `${delay}s` }}
     >
       <div className="flex items-center justify-between mb-4">

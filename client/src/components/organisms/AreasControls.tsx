@@ -10,7 +10,7 @@ export default function AreasControls({
 }) {
   return (
     <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-      <div className="xl:col-span-2 grid sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] gap-4 xl:col-span-2">
         <ZoneCard
           zona="Zona 1"
           humedad={45}
