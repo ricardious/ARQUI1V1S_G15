@@ -3,6 +3,7 @@ import time
 from threading import Event
 from typing import Any
 
+from automation import AutomationController
 from actuators.manager import ActuatorManager
 from actuators.raspberry_actuators import RaspberryActuators
 from config import Settings, load_settings
@@ -10,6 +11,8 @@ from global_state import GlobalState
 from mongo_repository import MongoRepository
 from mqtt_client import MQTTClient
 from rules import evaluate_readings, event_description_for_command, estado_for_command
+from local_panel.buttons import Buttons
+from local_panel.lcd_display import LCDDisplay
 from sensors.manager import SensorManager
 from sensors.raspberry_sensors import RaspberrySensors
 
@@ -18,10 +21,13 @@ VALID_COMMANDS = {
     "DESACTIVAR_RIEGO",
     "ACTIVAR_RIEGO_1",
     "ACTIVAR_RIEGO_2",
+    "DESACTIVAR_RIEGO_1",
+    "DESACTIVAR_RIEGO_2",
     "ENCENDER_LUCES",
     "APAGAR_LUCES",
     "ACTIVAR_VENTILADOR",
     "DESACTIVAR_VENTILADOR",
+    "ACTIVAR_ALARMA",
     "SILENCIAR_ALARMA",
     "CAMBIAR_MODO_AUTOMATICO",
     "CAMBIAR_MODO_MANUAL",
@@ -42,10 +48,13 @@ class IoTProgram:
             self.sensors = RaspberrySensors(self.state)
             self.actuators = RaspberryActuators()
             print("[IoT] Modo Raspberry activo")
+        self.buttons = Buttons()
+        self.lcd = LCDDisplay()
         self.mongo = MongoRepository(
             self.settings.mongodb_uri, self.settings.mongodb_db
         )
         self.mqtt = MQTTClient(self.settings, self._handle_mqtt_command)
+        self.automation = AutomationController(self.state, self.actuators, self.mongo)
         self.stop_event = Event()
         self.last_publish_at = 0.0
 
@@ -61,10 +70,20 @@ class IoTProgram:
         print("[IoT] Iniciando loop principal")
         while not self.stop_event.is_set():
             try:
+                for button_event in self.buttons.poll():
+                    self._handle_button_event(button_event)
+
                 readings = self.read_sensors()
+                self.state.update(**readings)
+                self.automation.apply(readings)
+                readings["riego_1"] = self.state.get("riego_1", 0)
+                readings["riego_2"] = self.state.get("riego_2", 0)
                 estado = self.update_status(readings)
                 readings["estado_global"] = estado
-                self.state.update(**readings)
+                self.state.update(estado_global=estado)
+                if hasattr(self.actuators, "leds_estado"):
+                    self.actuators.leds_estado.set_estado(estado)
+                self.lcd.update(self.state.as_dict())
 
                 self.mongo.insert_sensor_reading(readings, estado)
                 self.mongo.update_system_status(self.state.as_dict())
@@ -126,16 +145,49 @@ class IoTProgram:
             )
             return
 
+        self._execute_command(action, payload, {"topic": topic})
+
+    def _handle_button_event(self, event: str) -> None:
+        action_by_event = {
+            "TOGGLE_MODE": (
+                "CAMBIAR_MODO_AUTOMATICO"
+                if self.state.get("modo") == "MANUAL"
+                else "CAMBIAR_MODO_MANUAL"
+            ),
+            "TOGGLE_WATER": (
+                "DESACTIVAR_RIEGO"
+                if int(self.state.get("riego_1", 0)) == 1 or int(self.state.get("riego_2", 0)) == 1
+                else "ACTIVAR_RIEGO"
+            ),
+            "TOGGLE_LIGHTS": (
+                "APAGAR_LUCES" if self.state.get("luces") == "ON" else "ENCENDER_LUCES"
+            ),
+            "SILENCE_ALARM": "SILENCIAR_ALARMA",
+        }
+        action = action_by_event.get(event)
+        if not action:
+            self.state.update(last_error=f"Evento de boton no reconocido: {event}")
+            return
+
+        print(f"[PANEL] Evento={event} accion={action}")
+        self._execute_command(action, event, {"origen": "panel_local", "evento": event})
+
+    def _execute_command(
+        self,
+        action: str,
+        original_payload: str,
+        extra: dict[str, Any],
+    ) -> None:
         changes = self.actuators.apply_command(action)
         estado = estado_for_command(action, self.state.as_dict())
-        self.state.update(estado_global=estado)
+        self.state.update(**changes, estado_global=estado)
 
         self.mongo.insert_command(action, payload, estado)
         self.mongo.insert_actuator_log(action, changes, estado)
         self.mongo.insert_event(
             event_description_for_command(action),
             estado,
-            {"topic": topic, "cambios": changes},
+            {**extra, "cambios": changes},
         )
         self.mongo.update_system_status(self.state.as_dict())
         self.publish_actuator_values(self.state.as_dict())
@@ -146,6 +198,10 @@ class IoTProgram:
 
     def handle_shutdown(self) -> None:
         print("[IoT] Cerrando iot_program")
+        for component in (self.lcd, self.buttons):
+            cleanup = getattr(component, "cleanup", None)
+            if callable(cleanup):
+                cleanup()
         self.mqtt.disconnect()
         self.mongo.close()
 
