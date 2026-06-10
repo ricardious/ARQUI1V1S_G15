@@ -10,17 +10,19 @@
 // Algoritmo:
 //   1. Leer CSV completo generado por backend.
 //   2. Saltar encabezado.
-//   3. Procesar hasta 30 registros, 9 columnas por registro.
-//   4. Comparar columnas sensoras 1..6 contra registro anterior:
-//        TEMP, HUM_AIRE, HUM_SUELO_1, HUM_SUELO_2, LUZ, GAS.
-//   5. Acumular:
+//   3. Procesar hasta 30 registros, leyendo 9 columnas por registro.
+//   4. Tomar una sola variable X desde COLUMN_INDEX (por defecto TEMP).
+//   5. Comparar X_i contra X_(i-1).
+//   6. Acumular:
 //        - suma de subidas
 //        - suma de bajadas
 //        - cantidad de cambios positivos
 //        - cantidad de cambios negativos
 //        - cantidad de cambios estables
-//   6. Calcular tendencia neta = suma_subidas - suma_bajadas.
-//   7. Clasificar:
+//        - racha maxima de crecimiento continuo
+//        - racha maxima de decremento continuo
+//   7. Calcular tendencia neta = suma_subidas - suma_bajadas.
+//   8. Clasificar:
 //        neta > 0  -> SUBE
 //        neta < 0  -> BAJA
 //        neta = 0  -> ESTABLE
@@ -33,6 +35,7 @@
 .equ CSV_MAX_BYTES, 8192
 .equ MAX_RECORDS, 30
 .equ COLS_PER_RECORD, 9
+.equ COLUMN_INDEX, 1              // Variable X: 1=TEMP, 2=HUM_AIRE, 3=HUM_SUELO_1...
 
 .section .rodata
 msg_title:
@@ -53,6 +56,10 @@ msg_neg_count:
     .asciz "Cambios negativos: "
 msg_stable_count:
     .asciz "Cambios estables: "
+msg_max_up:
+    .asciz "Max crecimiento continuo: "
+msg_max_down:
+    .asciz "Max decremento continuo: "
 msg_label:
     .asciz "Clasificacion: "
 msg_up:
@@ -72,10 +79,14 @@ msg_open_result_error:
 .align 3
 csv_buffer:
     .skip CSV_MAX_BYTES
-prev_values:
-    .skip 8 * COLS_PER_RECORD
-curr_values:
-    .skip 8 * COLS_PER_RECORD
+prev_value:
+    .skip 8
+curr_value:
+    .skip 8
+max_up_result:
+    .skip 8
+max_down_result:
+    .skip 8
 
 .section .text
 .global _start
@@ -103,6 +114,10 @@ _start:
     // x26 = contador negativos
     // x27 = contador estables
     // x28 = fd resultado
+    // x15 = racha positiva actual
+    // x16 = racha negativa actual
+    // x17 = racha positiva maxima
+    // x18 = racha negativa maxima
 
     bl open_csv_read
     cmp x0, #0
@@ -129,13 +144,17 @@ _start:
     mov x25, #0
     mov x26, #0
     mov x27, #0
+    mov x15, #0
+    mov x16, #0
+    mov x17, #0
+    mov x18, #0
 
 record_loop:
     cmp x22, #MAX_RECORDS
     b.hs finish_calculation
 
     mov x9, #0
-    ldr x10, =curr_values
+    ldr x10, =curr_value
 
 column_loop:
     cmp x9, #COLS_PER_RECORD
@@ -147,13 +166,16 @@ column_loop:
     cbz x2, finish_calculation
     mov x20, x0
 
-    str x1, [x10, x9, lsl #3]
+    cmp x9, #COLUMN_INDEX
+    b.ne column_next
+    str x1, [x10]
+column_next:
     add x9, x9, #1
     b column_loop
 
 record_loaded:
     cbz x22, save_first_record
-    bl compare_sensor_columns
+    bl compare_selected_column
 
 save_first_record:
     bl copy_current_to_previous
@@ -163,6 +185,11 @@ save_first_record:
 finish_calculation:
     mov x0, x19
     bl close_fd
+
+    ldr x9, =max_up_result
+    str x17, [x9]
+    ldr x9, =max_down_result
+    str x18, [x9]
 
     bl open_tendencia_write
     cmp x0, #0
@@ -177,48 +204,47 @@ finish_calculation:
     mov x0, #0
     bl exit_program
 
-// Compara columnas 1..6 entre curr_values y prev_values.
-compare_sensor_columns:
-    mov x9, #1
-    ldr x10, =curr_values
-    ldr x11, =prev_values
-compare_loop:
-    cmp x9, #7
-    b.hs compare_done
-    ldr x12, [x10, x9, lsl #3]
-    ldr x13, [x11, x9, lsl #3]
+// Compara la variable X actual contra la lectura anterior.
+compare_selected_column:
+    ldr x10, =curr_value
+    ldr x11, =prev_value
+    ldr x12, [x10]
+    ldr x13, [x11]
     subs x14, x12, x13
     b.gt delta_positive
     b.lt delta_negative
     add x27, x27, #1
-    b compare_next
+    mov x15, #0
+    mov x16, #0
+    ret
 delta_positive:
     add x23, x23, x14
     add x25, x25, #1
-    b compare_next
+    add x15, x15, #1
+    mov x16, #0
+    cmp x15, x17
+    b.le positive_done
+    mov x17, x15
+positive_done:
+    ret
 delta_negative:
     neg x14, x14
     add x24, x24, x14
     add x26, x26, #1
-compare_next:
-    add x9, x9, #1
-    b compare_loop
-compare_done:
+    add x16, x16, #1
+    mov x15, #0
+    cmp x16, x18
+    b.le negative_done
+    mov x18, x16
+negative_done:
     ret
 
-// Copia 9 enteros de curr_values a prev_values.
+// Copia la variable X actual como valor anterior.
 copy_current_to_previous:
-    mov x9, #0
-    ldr x10, =curr_values
-    ldr x11, =prev_values
-copy_loop:
-    cmp x9, #COLS_PER_RECORD
-    b.hs copy_done
-    ldr x12, [x10, x9, lsl #3]
-    str x12, [x11, x9, lsl #3]
-    add x9, x9, #1
-    b copy_loop
-copy_done:
+    ldr x10, =curr_value
+    ldr x11, =prev_value
+    ldr x12, [x10]
+    str x12, [x11]
     ret
 
 write_report:
@@ -290,6 +316,29 @@ write_report:
     bl write_cstr
     mov x0, x28
     mov x1, x27
+    bl write_uint
+    mov x0, x28
+    bl write_newline
+
+    mov x0, x28
+    bl write_newline
+
+    mov x0, x28
+    ldr x1, =msg_max_up
+    bl write_cstr
+    mov x0, x28
+    ldr x9, =max_up_result
+    ldr x1, [x9]
+    bl write_uint
+    mov x0, x28
+    bl write_newline
+
+    mov x0, x28
+    ldr x1, =msg_max_down
+    bl write_cstr
+    mov x0, x28
+    ldr x9, =max_down_result
+    ldr x1, [x9]
     bl write_uint
     mov x0, x28
     bl write_newline

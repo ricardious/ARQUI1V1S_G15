@@ -56,10 +56,10 @@ export interface SensorRecord {
   timestamp: string;
   tipo_dato: string;
   valor: {
-    temp?:       number;
-    hum_aire?:   number;
-    hum_suelo_1?: number;
-    hum_suelo_2?: number;
+    temperatura?:       number;
+    humedad_ambiente?:  number;
+    humedad_suelo_area1?: number;
+    humedad_suelo_area2?: number;
     luz?:        number;
     gas?:        number;
     riego_1?:    number;

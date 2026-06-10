@@ -9,10 +9,10 @@ const pw = VW - PAD.l - PAD.r,
   ph = VH - PAD.t - PAD.b;
 
 const METRICS = [
-  { key: "temp", label: "Temperatura", title: "Temperatura ambiental", unit: "°C", min: 0, max: 50 },
-  { key: "hum_aire", label: "Humedad", title: "Humedad ambiental", unit: "%", min: 0, max: 100 },
-  { key: "hum_suelo_1", label: "Suelo A1", title: "Humedad suelo Área 1", unit: "%", min: 0, max: 100 },
-  { key: "hum_suelo_2", label: "Suelo A2", title: "Humedad suelo Área 2", unit: "%", min: 0, max: 100 },
+  { key: "temperatura", label: "Temperatura", title: "Temperatura ambiental", unit: "°C", min: 0, max: 50 },
+  { key: "humedad_ambiente", label: "Humedad", title: "Humedad ambiental", unit: "%", min: 0, max: 100 },
+  { key: "humedad_suelo_area1", label: "Suelo A1", title: "Humedad suelo Área 1", unit: "%", min: 0, max: 100 },
+  { key: "humedad_suelo_area2", label: "Suelo A2", title: "Humedad suelo Área 2", unit: "%", min: 0, max: 100 },
   { key: "luz", label: "Luz", title: "Nivel de luz", unit: "lx", min: 0, max: 1024 },
   { key: "gas", label: "Gas", title: "Nivel de gas", unit: "ppm", min: 0, max: 1000 },
 ] as const;
@@ -53,7 +53,7 @@ function formatLabel(iso: string): string {
 export default function TempChart() {
   const svgRef = useRef<SVGSVGElement>(null);
   const readingsQ = useReadingsHistory(50);
-  const [metricKey, setMetricKey] = useState<MetricKey>("temp");
+  const [metricKey, setMetricKey] = useState<MetricKey>("temperatura");
   const metric = METRICS.find((item) => item.key === metricKey) ?? METRICS[0];
   const ticks = useMemo(
     () =>
