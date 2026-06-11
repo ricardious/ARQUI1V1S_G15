@@ -186,7 +186,7 @@ class IoTProgram:
     ) -> None:
         changes = self.actuators.apply_command(action)
         estado = estado_for_command(action, self.state.as_dict())
-        self.state.update(**changes, estado_global=estado)
+        self.state.update(**{**changes, "estado_global": estado})
 
         self.mongo.insert_command(action, original_payload, estado)
         self.mongo.insert_actuator_log(action, changes, estado)
