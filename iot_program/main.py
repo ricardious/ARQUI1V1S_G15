@@ -202,6 +202,11 @@ class IoTProgram:
             cleanup = getattr(component, "cleanup", None)
             if callable(cleanup):
                 cleanup()
+        if isinstance(self.actuators, RaspberryActuators):
+            self.actuators.ventilador.desactivar()
+            self.actuators.riego_area1.desactivar()
+            self.actuators.ventilador.limpiar()
+            self.actuators.riego_area1.limpiar()
         self.mqtt.disconnect()
         self.mongo.close()
 
