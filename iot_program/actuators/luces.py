@@ -9,11 +9,11 @@ except (ImportError, RuntimeError):
 
 
 class LucesActuator:
-    """Control de luces por rele en GPIO23."""
+    """Control de luces por rele en GPIO25 (BOARD pin 22, Relay IN4)."""
 
-    _DEFAULT_PIN = 23
+    _DEFAULT_PIN = 25
 
-    def __init__(self, pin: int = _DEFAULT_PIN, active_high: bool = True) -> None:
+    def __init__(self, pin: int = _DEFAULT_PIN, active_high: bool = False) -> None:
         self._pin = pin
         self._active_high = active_high
         self._simulation = not _GPIO_AVAILABLE

@@ -13,7 +13,7 @@ class AlarmaActuator:
 
     _DEFAULT_PIN = 24
 
-    def __init__(self, pin: int = _DEFAULT_PIN, active_high: bool = True) -> None:
+    def __init__(self, pin: int = _DEFAULT_PIN, active_high: bool = False) -> None:
         self._pin = pin
         self._active_high = active_high
         self._simulation = not _GPIO_AVAILABLE
