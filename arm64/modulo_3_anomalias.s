@@ -12,7 +12,7 @@
 //   2. Saltar encabezado.
 //   3. Procesar hasta 30 registros, 9 columnas por registro.
 //   4. Para cada columna sensora (TEMP, HUM_AIRE, HUM_SUELO_1,
-//      HUM_SUELO_2, LUZ, GAS):
+//      LUZ, GAS):
 //      a. Calcular media aritmetica de los valores.
 //      b. Calcular Desviacion Absoluta Media (MAD):
 //         MAD = sum(|valor - media|) / n
@@ -48,8 +48,7 @@ msg_col_hum_aire:
     .asciz "\n--- HUM_AIRE ---\n"
 msg_col_hum_s1:
     .asciz "\n--- HUM_SUELO_1 ---\n"
-msg_col_hum_s2:
-    .asciz "\n--- HUM_SUELO_2 ---\n"
+
 msg_col_luz:
     .asciz "\n--- LUZ ---\n"
 msg_col_gas:
@@ -105,7 +104,7 @@ anomaly_indices:
 //   x23 = MAD de la columna actual (reutiliza record_count)
 //   x24 = fd resultado
 //   x25 = total anomalias (acumulado entre columnas)
-//   x26 = indice de columna actual (1..6)
+//   x26 = indice de columna actual (1..3, 5..6)
 //   x27 = cantidad de valores en la columna actual
 // ---------------------------------------------------------------------------
 
@@ -163,7 +162,7 @@ _start:
     mov x26, #1          // columna inicial = 1 (TEMP)
 
 // ===================================================================
-// Bucle principal: procesa columnas 1 a 6
+// Bucle principal: procesa columnas 1..3, 5..6 (salta Area 2)
 // ===================================================================
 column_loop:
     cmp x26, #7
@@ -315,7 +314,12 @@ after_regs:
     add x25, x25, x28    // acumular al total
 
 next_column:
+    cmp x26, #3
+    b.eq skip_area2
     add x26, x26, #1
+    b column_loop
+skip_area2:
+    mov x26, #5
     b column_loop
 
 // ===================================================================
@@ -345,7 +349,7 @@ write_summary:
 
 // ===================================================================
 // select_column_name -- devuelve en x1 el puntero al nombre de
-//   la columna segun x26 (1..6).
+//   la columna segun x26 (1..3, 5..6).
 // ===================================================================
 select_column_name:
     cmp x26, #1
@@ -354,8 +358,6 @@ select_column_name:
     b.eq scn_hum_aire
     cmp x26, #3
     b.eq scn_hum_s1
-    cmp x26, #4
-    b.eq scn_hum_s2
     cmp x26, #5
     b.eq scn_luz
     ldr x1, =msg_col_gas
@@ -368,9 +370,6 @@ scn_hum_aire:
     ret
 scn_hum_s1:
     ldr x1, =msg_col_hum_s1
-    ret
-scn_hum_s2:
-    ldr x1, =msg_col_hum_s2
     ret
 scn_luz:
     ldr x1, =msg_col_luz
