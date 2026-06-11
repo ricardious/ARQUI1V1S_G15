@@ -39,13 +39,25 @@ class VentiladorActuator:
         self._active = True
         if not self._simulation:
             GPIO.output(self._pin, self._on_level)
-        return {"ventilador": "ON"}
+        return {"ventilador": "VENTILACION_ON"}
+
+    def activar_manual(self) -> dict[str, str]:
+        self._active = True
+        if not self._simulation:
+            GPIO.output(self._pin, self._on_level)
+        return {"ventilador": "VENTILACION_MANUAL"}
+
+    def activar_emergencia(self) -> dict[str, str]:
+        self._active = True
+        if not self._simulation:
+            GPIO.output(self._pin, self._on_level)
+        return {"ventilador": "VENTILACION_EMERGENCIA"}
 
     def desactivar(self) -> dict[str, str]:
         self._active = False
         if not self._simulation:
             GPIO.output(self._pin, self._off_level)
-        return {"ventilador": "OFF"}
+        return {"ventilador": "VENTILACION_OFF"}
 
     def limpiar(self) -> None:
         if not self._simulation:

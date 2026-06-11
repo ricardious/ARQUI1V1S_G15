@@ -62,6 +62,16 @@ class AutomationController:
         if gas < GAS_RECOVERY_THRESHOLD and self.state.get("alarma") == "ON":
             actions.update(self._execute("SILENCIAR_ALARMA", "gas normalizado", "NORMAL"))
 
+        if gas < GAS_RECOVERY_THRESHOLD and self.state.get("ventilador") == "VENTILACION_EMERGENCIA":
+            temp = _as_float(readings.get("temperatura"))
+            if temp < HIGH_TEMPERATURE_THRESHOLD:
+                actions.update(self._run_action(
+                    self.actuators.ventilador.desactivar,
+                    "DESACTIVAR_VENTILADOR",
+                    "ventilador desactivado, gas normalizado",
+                    "NORMAL",
+                ))
+
         if mode != "AUTOMATICO":
             return actions
 
@@ -184,18 +194,21 @@ class AutomationController:
 
     def _apply_ventilation(self, readings: dict[str, Any]) -> dict[str, dict[str, str | int]]:
         temperature = _as_float(readings.get("temperatura"))
-        fan_on = self.state.get("ventilador") == "ON"
+        ventilador_state = self.state.get("ventilador", "VENTILACION_OFF")
+        fan_active = ventilador_state != "VENTILACION_OFF"
 
-        if temperature >= HIGH_TEMPERATURE_THRESHOLD and not fan_on:
-            return self._execute(
+        if temperature >= HIGH_TEMPERATURE_THRESHOLD and not fan_active:
+            return self._run_action(
+                self.actuators.ventilador.activar,
                 "ACTIVAR_VENTILADOR",
                 "ventilador automatico activado por temperatura alta",
                 "ADVERTENCIA",
                 {"temperatura": temperature},
             )
 
-        if temperature <= TEMPERATURE_RECOVERY_THRESHOLD and fan_on:
-            return self._execute(
+        if temperature <= TEMPERATURE_RECOVERY_THRESHOLD and ventilador_state == "VENTILACION_ON":
+            return self._run_action(
+                self.actuators.ventilador.desactivar,
                 "DESACTIVAR_VENTILADOR",
                 "ventilador automatico desactivado por temperatura normal",
                 "NORMAL",
@@ -206,14 +219,13 @@ class AutomationController:
 
     def _apply_gas_emergency(self) -> dict[str, dict[str, str | int]]:
         actions: dict[str, dict[str, str | int]] = {}
-        if self.state.get("ventilador") != "ON":
-            actions.update(
-                self._execute(
-                    "ACTIVAR_VENTILADOR",
-                    "ventilador activado por emergencia de gas",
-                    "EMERGENCIA",
-                )
-            )
+        if self.state.get("ventilador") == "VENTILACION_OFF":
+            actions.update(self._run_action(
+                self.actuators.ventilador.activar_emergencia,
+                "ACTIVAR_VENTILADOR",
+                "ventilador activado por emergencia de gas",
+                "EMERGENCIA",
+            ))
         if self.state.get("alarma") != "ON":
             actions.update(
                 self._execute(
@@ -223,6 +235,24 @@ class AutomationController:
                 )
             )
         return actions
+
+    def _run_action(
+        self,
+        action_fn: Any,
+        command_name: str,
+        description: str,
+        estado: str,
+        extra: dict[str, Any] | None = None,
+    ) -> dict[str, dict[str, str | int]]:
+        changes = action_fn()
+        self.state.update(**changes)
+        self.mongo.insert_actuator_log(command_name, changes, estado)
+        event_extra: dict[str, Any] = {"cambios": changes}
+        if extra:
+            event_extra.update(extra)
+        self.mongo.insert_event(description, estado, event_extra)
+        print(f"[AUTO] {description}: {changes}")
+        return {command_name: changes}
 
     def _execute(
         self,

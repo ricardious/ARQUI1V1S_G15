@@ -15,7 +15,7 @@ class StateSnapshot:
     gas: int = 0
     riego_1: int = 0
     riego_2: int = 0
-    ventilador: str = "OFF"
+    ventilador: str = "VENTILACION_OFF"
     luces: str = "OFF"
     alarma: str = "OFF"
     modo: str = "AUTOMATICO"

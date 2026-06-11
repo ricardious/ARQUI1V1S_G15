@@ -40,7 +40,7 @@ class ActuatorManager:
         elif action == "APAGAR_LUCES":
             changes = self.luces.apagar()
         elif action == "ACTIVAR_VENTILADOR":
-            changes = self.ventilador.activar()
+            changes = self.ventilador.activar_manual()
         elif action == "DESACTIVAR_VENTILADOR":
             changes = self.ventilador.desactivar()
         elif action == "ACTIVAR_ALARMA":

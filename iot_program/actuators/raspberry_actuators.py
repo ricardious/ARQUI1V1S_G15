@@ -42,7 +42,7 @@ class RaspberryActuators(ActuatorController):
         if action == "APAGAR_LUCES":
             return self.luces.apagar()
         if action == "ACTIVAR_VENTILADOR":
-            return self.ventilador.activar()
+            return self.ventilador.activar_manual()
         if action == "DESACTIVAR_VENTILADOR":
             return self.ventilador.desactivar()
         if action == "ACTIVAR_ALARMA":
