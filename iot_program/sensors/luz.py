@@ -3,10 +3,9 @@ import random
 _I2C_AVAILABLE = False
 
 try:
-    import board
-    import busio
     import adafruit_ads1x15.ads1115 as ADS
     from adafruit_ads1x15.analog_in import AnalogIn
+    from sensors.i2c_bus import get_i2c, get_lock
 
     _I2C_AVAILABLE = True
 except ImportError:
@@ -26,11 +25,11 @@ class LuzSensor:
     def __init__(self, channel: int = 3, address: int = 0x48) -> None:
         self._simulation = not _I2C_AVAILABLE
         self._analog_in = None
+        self._lock = get_lock() if _I2C_AVAILABLE else None
 
         if not self._simulation:
             try:
-                i2c = board.I2C()
-                ads = ADS.ADS1115(i2c, address=address)
+                ads = ADS.ADS1115(get_i2c(), address=address)
                 self._analog_in = AnalogIn(ads, channel)
             except Exception as e:
                 self._simulation = True
@@ -46,7 +45,8 @@ class LuzSensor:
             return random.randint(350, 600)
 
         try:
-            raw = int(self._analog_in.value)
+            with self._lock:
+                raw = int(self._analog_in.value)
         except Exception as e:
             print(f"[Sensor] Luz: error de lectura, usando simulacion ({e})")
             return random.randint(350, 600)
