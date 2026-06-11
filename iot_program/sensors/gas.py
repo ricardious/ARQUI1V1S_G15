@@ -48,7 +48,6 @@ class GasSensor:
         try:
             with self._lock:
                 raw = int(self._analog_in.value)
-            self._error_count = 0
         except Exception as e:
             self._error_count += 1
             if self._error_count >= self._MAX_ERRORS:
@@ -58,6 +57,15 @@ class GasSensor:
                 print(f"[Sensor] Gas: error de lectura ({e})")
             return random.randint(90, 400)
 
+        # Canal flotante devuelve valores por debajo del minimo real del sensor MQ
+        if raw < self._RAW_CLEAN // 2:
+            self._error_count += 1
+            if self._error_count >= self._MAX_ERRORS:
+                self._simulation = True
+                print(f"[Sensor] Gas: canal flotante detectado, cambiando a simulacion")
+            return random.randint(90, 400)
+
+        self._error_count = 0
         raw = max(self._RAW_CLEAN, min(self._RAW_DANGER, raw))
         value = (raw - self._RAW_CLEAN) / (self._RAW_DANGER - self._RAW_CLEAN) * 1000
         return int(round(value))
