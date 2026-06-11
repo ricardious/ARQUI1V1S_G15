@@ -33,8 +33,14 @@ class LuzSensor:
                 ads = ADS.ADS1115(i2c, address=address)
                 ads_channels = [ADS.P0, ADS.P1, ADS.P2, ADS.P3]
                 self._analog_in = AnalogIn(ads, ads_channels[channel])
-            except Exception:
+            except Exception as e:
                 self._simulation = True
+                print(f"[Sensor] Luz (ADS1115 A{channel}): fallo inicializacion, simulacion ({e})")
+
+        if self._simulation:
+            print(f"[Sensor] Luz (ADS1115 A{channel}): simulacion (hardware no disponible)")
+        else:
+            print(f"[Sensor] Luz (ADS1115 A{channel}): hardware (0x{address:02X})")
 
     def read(self) -> int:
         if self._simulation or self._analog_in is None:
@@ -42,7 +48,8 @@ class LuzSensor:
 
         try:
             raw = int(self._analog_in.value)
-        except Exception:
+        except Exception as e:
+            print(f"[Sensor] Luz: error de lectura, usando simulacion ({e})")
             return random.randint(350, 600)
 
         raw = max(self._RAW_DARK, min(self._RAW_BRIGHT, raw))

@@ -33,8 +33,14 @@ class SueloArea1Sensor:
                 ads = ADS.ADS1115(i2c, address=address)
                 ads_channels = [ADS.P0, ADS.P1, ADS.P2, ADS.P3]
                 self._analog_in = AnalogIn(ads, ads_channels[channel])
-            except Exception:
+            except Exception as e:
                 self._simulation = True
+                print(f"[Sensor] Suelo (ADS1115 A{channel}): fallo inicializacion, simulacion ({e})")
+
+        if self._simulation:
+            print(f"[Sensor] Suelo (ADS1115 A{channel}): simulacion (hardware no disponible)")
+        else:
+            print(f"[Sensor] Suelo (ADS1115 A{channel}): hardware (0x{address:02X})")
 
     def read(self) -> float:
         if self._simulation or self._analog_in is None:
@@ -42,7 +48,8 @@ class SueloArea1Sensor:
 
         try:
             raw = int(self._analog_in.value)
-        except Exception:
+        except Exception as e:
+            print(f"[Sensor] Suelo: error de lectura, usando simulacion ({e})")
             return round(random.uniform(40.0, 75.0), 1)
 
         raw = max(self._RAW_WET, min(self._RAW_DRY, raw))

@@ -46,6 +46,11 @@ class TemperaturaHumedadSensor:
             except Exception:
                 self._simulation = True
 
+        if self._simulation:
+            print("[Sensor] DHT22: simulacion (hardware no disponible)")
+        else:
+            print(f"[Sensor] DHT22: hardware ({_DHT_SENSOR_TYPE}, pin {self._pin})")
+
     def leer_temperatura(self) -> float:
         temperatura, _ = self._read_sensor()
         return temperatura
@@ -60,7 +65,7 @@ class TemperaturaHumedadSensor:
             return self._cached_temp, self._cached_humidity
 
         if self._simulation:
-            self._cached_temp = round(random.uniform(24.0, 36.5), 1)
+            self._cached_temp = round(random.uniform(24.0, 32.0), 1)
             self._cached_humidity = round(random.uniform(55.0, 82.0), 1)
             self._last_read_at = now
             return self._cached_temp, self._cached_humidity
@@ -73,8 +78,8 @@ class TemperaturaHumedadSensor:
             else:
                 temperatura = self._device.temperature
                 humedad = self._device.humidity
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[Sensor] DHT22: error de lectura, usando cache ({e})")
 
         if temperatura is not None:
             self._cached_temp = round(float(temperatura), 1)
