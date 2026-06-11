@@ -42,7 +42,7 @@ class TemperaturaHumedadSensor:
 
         if not self._simulation and _DHT_SENSOR_TYPE == "adafruit":
             try:
-                self._device = adafruit_dht.DHT11(self._pin)
+                self._device = adafruit_dht.DHT11(self._pin, use_pulseio=False)
             except Exception:
                 self._simulation = True
 
