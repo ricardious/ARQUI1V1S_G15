@@ -23,7 +23,7 @@ class SueloArea1Sensor:
     _RAW_WET = 5000
     _RAW_DRY = 28000
 
-    def __init__(self, channel: int = 1, address: int = 0x48) -> None:
+    def __init__(self, channel: int = 0, address: int = 0x48) -> None:
         self._simulation = not _I2C_AVAILABLE
         self._analog_in = None
 

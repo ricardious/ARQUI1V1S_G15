@@ -10,7 +10,7 @@ except (ImportError, RuntimeError):
     print("[ADVERTENCIA] RPi.GPIO no disponible, modo simulacion")
 
 
-PIN_RELE_BOMBA = 17
+PIN_RELE_BOMBA = 22
 DURACION_RIEGO = 5
 PAUSA_MINIMA = 30
 
@@ -26,7 +26,7 @@ class RiegoArea1Actuator:
         if GPIO_DISPONIBLE:
             GPIO.setmode(GPIO.BCM)
             GPIO.setup(PIN_RELE_BOMBA, GPIO.OUT)
-            GPIO.output(PIN_RELE_BOMBA, GPIO.LOW)
+            GPIO.output(PIN_RELE_BOMBA, GPIO.HIGH)
 
     @property
     def estado(self) -> str:
@@ -39,13 +39,13 @@ class RiegoArea1Actuator:
         """Hilo secundario: enciende bomba, espera duracion y apaga."""
         try:
             if GPIO_DISPONIBLE:
-                GPIO.output(PIN_RELE_BOMBA, GPIO.HIGH)
+                GPIO.output(PIN_RELE_BOMBA, GPIO.LOW)
             self._estado = estado_activo
             print(f"[RIEGO] Bomba encendida - estado: {estado_activo}")
             time.sleep(DURACION_RIEGO)
         finally:
             if GPIO_DISPONIBLE:
-                GPIO.output(PIN_RELE_BOMBA, GPIO.LOW)
+                GPIO.output(PIN_RELE_BOMBA, GPIO.HIGH)
             self._estado = "RIEGO_OFF"
             self._ultimo_riego = time.time()
             print("[RIEGO] Bomba apagada.")
@@ -105,7 +105,7 @@ class RiegoArea1Actuator:
 
     def desactivar(self) -> dict:
         if GPIO_DISPONIBLE:
-            GPIO.output(PIN_RELE_BOMBA, GPIO.LOW)
+            GPIO.output(PIN_RELE_BOMBA, GPIO.HIGH)
         self._estado = "RIEGO_OFF"
         return {"riego_1": 0, "estado_global": "NORMAL"}
 
@@ -119,5 +119,5 @@ class RiegoArea1Actuator:
 
     def limpiar(self):
         if GPIO_DISPONIBLE:
-            GPIO.output(PIN_RELE_BOMBA, GPIO.LOW)
+            GPIO.output(PIN_RELE_BOMBA, GPIO.HIGH)
             GPIO.cleanup(PIN_RELE_BOMBA)
