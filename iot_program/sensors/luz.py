@@ -21,13 +21,11 @@ class LuzSensor:
     _RAW_DARK = 2000
     _RAW_BRIGHT = 26000
 
-    _MAX_ERRORS = 3
-
     def __init__(self, channel: int = 3, address: int = 0x48) -> None:
         self._simulation = not _I2C_AVAILABLE
         self._analog_in = None
         self._lock = get_lock() if _I2C_AVAILABLE else None
-        self._error_count = 0
+        self._error_logged = False
 
         if not self._simulation:
             try:
@@ -49,23 +47,16 @@ class LuzSensor:
             with self._lock:
                 raw = int(self._analog_in.value)
         except Exception as e:
-            self._error_count += 1
-            if self._error_count >= self._MAX_ERRORS:
-                self._simulation = True
-                print(f"[Sensor] Luz: canal sin sensor fisico, cambiando a simulacion")
-            else:
+            if not self._error_logged:
                 print(f"[Sensor] Luz: error de lectura ({e})")
+                self._error_logged = True
             return 99999
 
         # Canal flotante devuelve valores cercanos a 0, por debajo del minimo real
         if raw < self._RAW_DARK // 2:
-            self._error_count += 1
-            if self._error_count >= self._MAX_ERRORS:
-                self._simulation = True
-                print(f"[Sensor] Luz: canal flotante detectado, cambiando a simulacion")
             return 99999
 
-        self._error_count = 0
+        self._error_logged = False
         raw = max(self._RAW_DARK, min(self._RAW_BRIGHT, raw))
         value = (raw - self._RAW_DARK) / (self._RAW_BRIGHT - self._RAW_DARK) * 1000
         return int(round(value))

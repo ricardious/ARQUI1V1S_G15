@@ -182,10 +182,13 @@ class LCDDisplay:
     # ── helpers ─────────────────────────────────────────────────────────────
 
     def _write(self, line1: str, line2: str) -> None:
-        self._lcd.clear()
-        self._lcd.write_string(line1[:16])
-        self._lcd.crlf()
-        self._lcd.write_string(line2[:16])
+        try:
+            self._lcd.clear()
+            self._lcd.write_string(line1[:16])
+            self._lcd.crlf()
+            self._lcd.write_string(line2[:16])
+        except OSError:
+            pass  # ruido I2C transitorio: no tumbar el loop principal
 
     def show(self, line_1: str, line_2: str = "") -> None:
         if self._simulation or self._lcd is None:
