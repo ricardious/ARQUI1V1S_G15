@@ -4,3 +4,4 @@ python-dotenv
 adafruit-circuitpython-ads1x15
 adafruit-circuitpython-dht
 RPLCD
+smbus2
