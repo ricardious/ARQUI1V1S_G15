@@ -71,10 +71,20 @@ class LCDDisplay:
         elif view == "actuators":
             self.show(
                 f"R1 {state.get('riego_1', 0)} R2 {state.get('riego_2', 0)}",
-                f"V {state.get('ventilador', 'OFF')} L {state.get('luces', 'OFF')}",
+                f"V {self._vent_short(state)} L {state.get('luces', 'OFF')}",
             )
         else:
             self.show("Estado global", estado[:16])
+
+    @staticmethod
+    def _vent_short(state: dict[str, Any]) -> str:
+        mapping = {
+            "VENTILACION_ON": "ON",
+            "VENTILACION_OFF": "OFF",
+            "VENTILACION_MANUAL": "MAN",
+            "VENTILACION_EMERGENCIA": "EMG",
+        }
+        return mapping.get(str(state.get("ventilador", "")), "OFF")
 
     def show(self, line_1: str, line_2: str = "") -> None:
         if self._simulation or self._lcd is None:
