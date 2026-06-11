@@ -1,4 +1,5 @@
 import random
+import time
 
 _I2C_AVAILABLE = False
 
@@ -43,7 +44,7 @@ class GasSensor:
 
     def read(self) -> int:
         if self._simulation or self._analog_in is None:
-            return random.randint(90, 400)
+            return 99999
 
         try:
             with self._lock:
@@ -55,7 +56,7 @@ class GasSensor:
                 print(f"[Sensor] Gas: multiples errores I2C, cambiando a simulacion")
             else:
                 print(f"[Sensor] Gas: error de lectura ({e})")
-            return random.randint(90, 400)
+            return 99999
 
         self._error_count = 0
         raw = max(self._RAW_CLEAN, min(self._RAW_DANGER, raw))
