@@ -29,7 +29,7 @@ class LuzSensor:
 
         if not self._simulation:
             try:
-                i2c = busio.I2C(board.SCL, board.SDA)
+                i2c = board.I2C()
                 ads = ADS.ADS1115(i2c, address=address)
                 ads_channels = [ADS.P0, ADS.P1, ADS.P2, ADS.P3]
                 self._analog_in = AnalogIn(ads, ads_channels[channel])
