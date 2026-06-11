@@ -4,7 +4,7 @@ _I2C_AVAILABLE = False
 
 try:
     from adafruit_ads1x15.analog_in import AnalogIn
-    from sensors.i2c_bus import get_ads, get_lock
+    from sensors.i2c_bus import get_ads, get_lock, channel_pin
 
     _I2C_AVAILABLE = True
 except ImportError:
@@ -31,7 +31,7 @@ class LuzSensor:
 
         if not self._simulation:
             try:
-                self._analog_in = AnalogIn(get_ads(address), channel)
+                self._analog_in = AnalogIn(get_ads(address), channel_pin(channel))
             except Exception as e:
                 self._simulation = True
                 print(f"[Sensor] Luz (ADS1115 A{channel}): fallo inicializacion, simulacion ({e})")
