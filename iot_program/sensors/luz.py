@@ -21,10 +21,13 @@ class LuzSensor:
     _RAW_DARK = 2000
     _RAW_BRIGHT = 26000
 
+    _MAX_ERRORS = 3
+
     def __init__(self, channel: int = 3, address: int = 0x48) -> None:
         self._simulation = not _I2C_AVAILABLE
         self._analog_in = None
         self._lock = get_lock() if _I2C_AVAILABLE else None
+        self._error_count = 0
 
         if not self._simulation:
             try:
@@ -45,8 +48,14 @@ class LuzSensor:
         try:
             with self._lock:
                 raw = int(self._analog_in.value)
+            self._error_count = 0
         except Exception as e:
-            print(f"[Sensor] Luz: error de lectura, usando simulacion ({e})")
+            self._error_count += 1
+            if self._error_count >= self._MAX_ERRORS:
+                self._simulation = True
+                print(f"[Sensor] Luz: canal sin sensor fisico, cambiando a simulacion")
+            else:
+                print(f"[Sensor] Luz: error de lectura ({e})")
             return random.randint(350, 600)
 
         raw = max(self._RAW_DARK, min(self._RAW_BRIGHT, raw))
