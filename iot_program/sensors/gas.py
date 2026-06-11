@@ -18,7 +18,7 @@ class GasSensor:
     las reglas existentes puedan usar el umbral de emergencia 600.
     """
 
-    _RAW_CLEAN = 2800
+    _RAW_CLEAN = 1200
     _RAW_DANGER = 21800
 
     _MAX_ERRORS = 3
@@ -52,17 +52,9 @@ class GasSensor:
             self._error_count += 1
             if self._error_count >= self._MAX_ERRORS:
                 self._simulation = True
-                print(f"[Sensor] Gas: canal sin sensor fisico, cambiando a simulacion")
+                print(f"[Sensor] Gas: multiples errores I2C, cambiando a simulacion")
             else:
                 print(f"[Sensor] Gas: error de lectura ({e})")
-            return random.randint(90, 400)
-
-        # Canal flotante devuelve valores por debajo del minimo real del sensor MQ
-        if raw < self._RAW_CLEAN // 2:
-            self._error_count += 1
-            if self._error_count >= self._MAX_ERRORS:
-                self._simulation = True
-                print(f"[Sensor] Gas: canal flotante detectado, cambiando a simulacion")
             return random.randint(90, 400)
 
         self._error_count = 0
