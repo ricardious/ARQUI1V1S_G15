@@ -57,6 +57,7 @@ class IoTProgram:
         self.automation = AutomationController(self.state, self.actuators, self.mongo)
         self.stop_event = Event()
         self.last_publish_at = 0.0
+        self.last_mongo_at = 0.0
 
         signal.signal(signal.SIGINT, self._signal_shutdown)
         signal.signal(signal.SIGTERM, self._signal_shutdown)
@@ -85,10 +86,15 @@ class IoTProgram:
                     self.actuators.leds_estado.set_estado(estado)
                 self.lcd.update(self.state.as_dict())
 
-                self.mongo.insert_sensor_reading(readings, estado)
-                self.mongo.update_system_status(self.state.as_dict())
-
                 now = time.monotonic()
+                if (
+                    now - self.last_mongo_at
+                    >= self.settings.mqtt_publish_interval_seconds
+                ):
+                    self.mongo.insert_sensor_reading(readings, estado)
+                    self.mongo.update_system_status(self.state.as_dict())
+                    self.last_mongo_at = now
+
                 if (
                     now - self.last_publish_at
                     >= self.settings.mqtt_publish_interval_seconds
