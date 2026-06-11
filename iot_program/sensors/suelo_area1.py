@@ -40,14 +40,14 @@ class SueloArea1Sensor:
 
     def read(self) -> float:
         if self._simulation or self._analog_in is None:
-            return round(random.uniform(40.0, 75.0), 1)
+            return 99999
 
         try:
             with self._lock:
                 raw = int(self._analog_in.value)
         except Exception as e:
-            print(f"[Sensor] Suelo: error de lectura, usando simulacion ({e})")
-            return round(random.uniform(40.0, 75.0), 1)
+            print(f"[Sensor] Suelo: error de lectura ({e})")
+            return 99999
 
         raw = max(self._RAW_WET, min(self._RAW_DRY, raw))
         humidity = (self._RAW_DRY - raw) / (self._RAW_DRY - self._RAW_WET) * 100

@@ -36,8 +36,8 @@ class TemperaturaHumedadSensor:
         self._simulation = not _DHT_AVAILABLE
         self._pin = pin if pin is not None else _DHT_PIN
         self._device = None
-        self._cached_temp = 25.0
-        self._cached_humidity = 60.0
+        self._cached_temp = 99999
+        self._cached_humidity = 99999
         self._last_read_at = 0.0
 
         if not self._simulation and _DHT_SENSOR_TYPE == "adafruit":
@@ -65,10 +65,8 @@ class TemperaturaHumedadSensor:
             return self._cached_temp, self._cached_humidity
 
         if self._simulation:
-            self._cached_temp = round(random.uniform(24.0, 32.0), 1)
-            self._cached_humidity = round(random.uniform(55.0, 82.0), 1)
             self._last_read_at = now
-            return self._cached_temp, self._cached_humidity
+            return 99999, 99999
 
         temperatura = None
         humedad = None

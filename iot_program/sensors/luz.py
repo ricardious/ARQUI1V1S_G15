@@ -43,7 +43,7 @@ class LuzSensor:
 
     def read(self) -> int:
         if self._simulation or self._analog_in is None:
-            return random.randint(350, 600)
+            return 99999
 
         try:
             with self._lock:
@@ -55,7 +55,7 @@ class LuzSensor:
                 print(f"[Sensor] Luz: canal sin sensor fisico, cambiando a simulacion")
             else:
                 print(f"[Sensor] Luz: error de lectura ({e})")
-            return random.randint(350, 600)
+            return 99999
 
         # Canal flotante devuelve valores cercanos a 0, por debajo del minimo real
         if raw < self._RAW_DARK // 2:
@@ -63,7 +63,7 @@ class LuzSensor:
             if self._error_count >= self._MAX_ERRORS:
                 self._simulation = True
                 print(f"[Sensor] Luz: canal flotante detectado, cambiando a simulacion")
-            return random.randint(350, 600)
+            return 99999
 
         self._error_count = 0
         raw = max(self._RAW_DARK, min(self._RAW_BRIGHT, raw))
