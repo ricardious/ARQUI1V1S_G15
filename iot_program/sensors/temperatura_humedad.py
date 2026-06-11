@@ -42,14 +42,14 @@ class TemperaturaHumedadSensor:
 
         if not self._simulation and _DHT_SENSOR_TYPE == "adafruit":
             try:
-                self._device = adafruit_dht.DHT22(self._pin)
+                self._device = adafruit_dht.DHT11(self._pin)
             except Exception:
                 self._simulation = True
 
         if self._simulation:
-            print("[Sensor] DHT22: simulacion (hardware no disponible)")
+            print("[Sensor] DHT11: simulacion (hardware no disponible)")
         else:
-            print(f"[Sensor] DHT22: hardware ({_DHT_SENSOR_TYPE}, pin {self._pin})")
+            print(f"[Sensor] DHT11: hardware ({_DHT_SENSOR_TYPE}, pin {self._pin})")
 
     def leer_temperatura(self) -> float:
         temperatura, _ = self._read_sensor()
@@ -74,12 +74,12 @@ class TemperaturaHumedadSensor:
         humedad = None
         try:
             if _DHT_SENSOR_TYPE == "legacy":
-                humedad, temperatura = Adafruit_DHT.read_retry(Adafruit_DHT.DHT22, self._pin)
+                humedad, temperatura = Adafruit_DHT.read_retry(Adafruit_DHT.DHT11, self._pin)
             else:
                 temperatura = self._device.temperature
                 humedad = self._device.humidity
         except Exception as e:
-            print(f"[Sensor] DHT22: error de lectura, usando cache ({e})")
+            print(f"[Sensor] DHT11: error de lectura, usando cache ({e})")
 
         if temperatura is not None:
             self._cached_temp = round(float(temperatura), 1)
