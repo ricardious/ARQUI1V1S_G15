@@ -31,8 +31,7 @@ class LuzSensor:
             try:
                 i2c = board.I2C()
                 ads = ADS.ADS1115(i2c, address=address)
-                ads_channels = [ADS.P0, ADS.P1, ADS.P2, ADS.P3]
-                self._analog_in = AnalogIn(ads, ads_channels[channel])
+                self._analog_in = AnalogIn(ads, channel)
             except Exception as e:
                 self._simulation = True
                 print(f"[Sensor] Luz (ADS1115 A{channel}): fallo inicializacion, simulacion ({e})")
