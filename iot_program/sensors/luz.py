@@ -3,9 +3,8 @@ import random
 _I2C_AVAILABLE = False
 
 try:
-    import adafruit_ads1x15.ads1115 as ADS
     from adafruit_ads1x15.analog_in import AnalogIn
-    from sensors.i2c_bus import get_i2c, get_lock
+    from sensors.i2c_bus import get_ads, get_lock
 
     _I2C_AVAILABLE = True
 except ImportError:
@@ -29,8 +28,7 @@ class LuzSensor:
 
         if not self._simulation:
             try:
-                ads = ADS.ADS1115(get_i2c(), address=address)
-                self._analog_in = AnalogIn(ads, channel)
+                self._analog_in = AnalogIn(get_ads(address), channel)
             except Exception as e:
                 self._simulation = True
                 print(f"[Sensor] Luz (ADS1115 A{channel}): fallo inicializacion, simulacion ({e})")
