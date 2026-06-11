@@ -38,12 +38,12 @@ class LuzSensor:
 
     def read(self) -> int:
         if self._simulation or self._analog_in is None:
-            return random.randint(180, 700)
+            return random.randint(350, 600)
 
         try:
             raw = int(self._analog_in.value)
         except Exception:
-            return random.randint(180, 700)
+            return random.randint(350, 600)
 
         raw = max(self._RAW_DARK, min(self._RAW_BRIGHT, raw))
         value = (raw - self._RAW_DARK) / (self._RAW_BRIGHT - self._RAW_DARK) * 1000

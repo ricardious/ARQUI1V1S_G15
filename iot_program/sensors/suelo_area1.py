@@ -38,12 +38,12 @@ class SueloArea1Sensor:
 
     def read(self) -> float:
         if self._simulation or self._analog_in is None:
-            return round(random.uniform(28.0, 90.0), 1)
+            return round(random.uniform(40.0, 75.0), 1)
 
         try:
             raw = int(self._analog_in.value)
         except Exception:
-            return round(random.uniform(28.0, 90.0), 1)
+            return round(random.uniform(40.0, 75.0), 1)
 
         raw = max(self._RAW_WET, min(self._RAW_DRY, raw))
         humidity = (self._RAW_DRY - raw) / (self._RAW_DRY - self._RAW_WET) * 100

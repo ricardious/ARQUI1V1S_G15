@@ -38,12 +38,12 @@ class GasSensor:
 
     def read(self) -> int:
         if self._simulation or self._analog_in is None:
-            return random.randint(90, 680)
+            return random.randint(90, 400)
 
         try:
             raw = int(self._analog_in.value)
         except Exception:
-            return random.randint(90, 680)
+            return random.randint(90, 400)
 
         raw = max(self._RAW_CLEAN, min(self._RAW_DANGER, raw))
         value = (raw - self._RAW_CLEAN) / (self._RAW_DANGER - self._RAW_CLEAN) * 1000
