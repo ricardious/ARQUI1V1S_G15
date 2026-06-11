@@ -18,6 +18,7 @@ GAS_EMERGENCY_THRESHOLD = 600.0
 GAS_RECOVERY_THRESHOLD = 520.0
 IRRIGATION_MAX_SECONDS = 8.0
 IRRIGATION_COOLDOWN_SECONDS = 35.0
+SENSOR_ERROR_VALUE = 99999.0
 
 
 def _as_float(value: Any, default: float = 0.0) -> float:
@@ -25,6 +26,10 @@ def _as_float(value: Any, default: float = 0.0) -> float:
         return float(value)
     except (TypeError, ValueError):
         return default
+
+
+def _is_error(value: float) -> bool:
+    return value >= SENSOR_ERROR_VALUE
 
 
 @dataclass
@@ -55,22 +60,24 @@ class AutomationController:
         mode = self.state.get("modo", "AUTOMATICO")
         gas = _as_float(readings.get("gas"))
 
-        if gas >= GAS_EMERGENCY_THRESHOLD:
-            actions.update(self._apply_gas_emergency())
-            return actions
+        # Lectura invalida (99999): no disparar ni recuperar emergencia de gas
+        if not _is_error(gas):
+            if gas >= GAS_EMERGENCY_THRESHOLD:
+                actions.update(self._apply_gas_emergency())
+                return actions
 
-        if gas < GAS_RECOVERY_THRESHOLD and self.state.get("alarma") == "ON":
-            actions.update(self._execute("SILENCIAR_ALARMA", "gas normalizado", "NORMAL"))
+            if gas < GAS_RECOVERY_THRESHOLD and self.state.get("alarma") == "ON":
+                actions.update(self._execute("SILENCIAR_ALARMA", "gas normalizado", "NORMAL"))
 
-        if gas < GAS_RECOVERY_THRESHOLD and self.state.get("ventilador") == "VENTILACION_EMERGENCIA":
-            temp = _as_float(readings.get("temperatura"))
-            if temp < HIGH_TEMPERATURE_THRESHOLD:
-                actions.update(self._run_action(
-                    self.actuators.ventilador.desactivar,
-                    "DESACTIVAR_VENTILADOR",
-                    "ventilador desactivado, gas normalizado",
-                    "NORMAL",
-                ))
+            if gas < GAS_RECOVERY_THRESHOLD and self.state.get("ventilador") == "VENTILACION_EMERGENCIA":
+                temp = _as_float(readings.get("temperatura"))
+                if temp < HIGH_TEMPERATURE_THRESHOLD:
+                    actions.update(self._run_action(
+                        self.actuators.ventilador.desactivar,
+                        "DESACTIVAR_VENTILADOR",
+                        "ventilador desactivado, gas normalizado",
+                        "NORMAL",
+                    ))
 
         if mode != "AUTOMATICO":
             return actions
@@ -87,6 +94,9 @@ class AutomationController:
         return actions
 
     def _apply_irrigation_area(self, area: int, humidity: float) -> dict[str, dict[str, str | int]]:
+        if _is_error(humidity):
+            return {}
+
         runtime = self.irrigation[area]
         now = time.monotonic()
         state_key = f"riego_{area}"
@@ -172,6 +182,8 @@ class AutomationController:
 
     def _apply_lighting(self, readings: dict[str, Any]) -> dict[str, dict[str, str | int]]:
         light = _as_float(readings.get("luz"))
+        if _is_error(light):
+            return {}
         lights_on = self.state.get("luces") == "ON"
 
         if light < LOW_LIGHT_THRESHOLD and not lights_on:
@@ -194,6 +206,8 @@ class AutomationController:
 
     def _apply_ventilation(self, readings: dict[str, Any]) -> dict[str, dict[str, str | int]]:
         temperature = _as_float(readings.get("temperatura"))
+        if _is_error(temperature):
+            return {}
         ventilador_state = self.state.get("ventilador", "VENTILACION_OFF")
         fan_active = ventilador_state != "VENTILACION_OFF"
 
