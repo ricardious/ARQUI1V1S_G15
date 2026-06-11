@@ -3,7 +3,6 @@ from models import SensorReading
 from sensors.gas import GasSensor
 from sensors.luz import LuzSensor
 from sensors.suelo_area1 import SueloArea1Sensor
-from sensors.suelo_area2 import SueloArea2Sensor
 from sensors.temperatura_humedad import TemperaturaHumedadSensor
 
 
@@ -14,16 +13,16 @@ class SensorManager:
         self.state = state
         self.temperatura_humedad = TemperaturaHumedadSensor()
         self.suelo_area1 = SueloArea1Sensor()
-        self.suelo_area2 = SueloArea2Sensor()
         self.luz = LuzSensor()
         self.gas = GasSensor()
 
     def read_all(self) -> SensorReading:
+        suelo = self.suelo_area1.read()
         return {
             "temperatura": self.temperatura_humedad.leer_temperatura(),
             "humedad_ambiente": self.temperatura_humedad.leer_humedad(),
-            "humedad_suelo_area1": self.suelo_area1.read(),
-            "humedad_suelo_area2": self.suelo_area2.read(),
+            "humedad_suelo_area1": suelo,
+            "humedad_suelo_area2": suelo,
             "luz": self.luz.read(),
             "gas": self.gas.read(),
             "riego_1": self.state.get("riego_1", 0),

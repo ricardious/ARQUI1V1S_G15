@@ -23,7 +23,7 @@ class GasSensor:
     _RAW_CLEAN = 2800
     _RAW_DANGER = 21800
 
-    def __init__(self, channel: int = 0, address: int = 0x48) -> None:
+    def __init__(self, channel: int = 2, address: int = 0x48) -> None:
         self._simulation = not _I2C_AVAILABLE
         self._analog_in = None
 
