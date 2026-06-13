@@ -18,8 +18,9 @@ class LuzSensor:
     valores bajos significan poca luz y valores altos suficiente luz.
     """
 
-    _RAW_DARK = 2000
-    _RAW_BRIGHT = 26000
+    # Modulo LDR: mucha luz -> voltaje (raw) bajo; sombra/oscuridad -> raw alto
+    _RAW_BRIGHT = 800
+    _RAW_DARK = 26000
 
     def __init__(self, channel: int = 3, address: int = 0x48) -> None:
         self._simulation = not _I2C_AVAILABLE
@@ -52,11 +53,7 @@ class LuzSensor:
                 self._error_logged = True
             return 99999
 
-        # Canal flotante devuelve valores cercanos a 0, por debajo del minimo real
-        if raw < self._RAW_DARK // 2:
-            return 99999
-
         self._error_logged = False
-        raw = max(self._RAW_DARK, min(self._RAW_BRIGHT, raw))
-        value = (raw - self._RAW_DARK) / (self._RAW_BRIGHT - self._RAW_DARK) * 1000
+        raw = max(self._RAW_BRIGHT, min(self._RAW_DARK, raw))
+        value = (self._RAW_DARK - raw) / (self._RAW_DARK - self._RAW_BRIGHT) * 1000
         return int(round(value))
