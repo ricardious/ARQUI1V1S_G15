@@ -31,6 +31,7 @@ class TemperaturaHumedadSensor:
     """
 
     _CACHE_SECONDS = 2.0
+    _MAX_ERRORS = 8  # tras esta racha de errores se recrea el dispositivo DHT
 
     def __init__(self, pin=None) -> None:
         self._simulation = not _DHT_AVAILABLE
@@ -39,6 +40,7 @@ class TemperaturaHumedadSensor:
         self._cached_temp = 99999
         self._cached_humidity = 99999
         self._last_read_at = 0.0
+        self._error_count = 0
 
         if not self._simulation and _DHT_SENSOR_TYPE == "adafruit":
             try:
@@ -77,7 +79,15 @@ class TemperaturaHumedadSensor:
                 temperatura = self._device.temperature
                 humedad = self._device.humidity
         except Exception as e:
-            print(f"[Sensor] DHT11: error de lectura, usando cache ({e})")
+            self._error_count += 1
+            print(
+                f"[Sensor] DHT11: error de lectura, usando cache "
+                f"({e}) [{self._error_count}/{self._MAX_ERRORS}]"
+            )
+            if self._error_count >= self._MAX_ERRORS:
+                self._recreate_device()
+        else:
+            self._error_count = 0  # lectura sin excepcion: reinicia la racha
 
         if temperatura is not None:
             self._cached_temp = round(float(temperatura), 1)
@@ -86,3 +96,20 @@ class TemperaturaHumedadSensor:
 
         self._last_read_at = now
         return self._cached_temp, self._cached_humidity
+
+    def _recreate_device(self) -> None:
+        """Reinicia el DHT tras una racha de errores; mantiene el ultimo valor."""
+        if _DHT_SENSOR_TYPE != "adafruit":
+            self._error_count = 0
+            return
+        try:
+            if self._device is not None:
+                self._device.exit()
+        except Exception:
+            pass
+        try:
+            self._device = adafruit_dht.DHT11(self._pin, use_pulseio=False)
+            print("[Sensor] DHT11: dispositivo recreado tras racha de errores")
+        except Exception as e:
+            print(f"[Sensor] DHT11: fallo al recrear ({e})")
+        self._error_count = 0
