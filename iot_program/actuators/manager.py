@@ -25,6 +25,8 @@ class ActuatorManager:
 
         if action == "ACTIVAR_RIEGO":
             changes = {**self.riego_area1.activar(), **self.riego_area2.activar()}
+        elif action == "ACTIVAR_RIEGO_MANUAL":
+            changes = {**self.riego_area1.activar_manual(), **self.riego_area2.activar_manual()}
         elif action == "DESACTIVAR_RIEGO":
             changes = {**self.riego_area1.desactivar(), **self.riego_area2.desactivar()}
         elif action == "ACTIVAR_RIEGO_1":

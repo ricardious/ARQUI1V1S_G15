@@ -27,6 +27,8 @@ class RaspberryActuators(ActuatorController):
 
         if action == "ACTIVAR_RIEGO":
             return {**self.riego_area1.activar(), **self.riego_area2.activar()}
+        if action == "ACTIVAR_RIEGO_MANUAL":
+            return {**self.riego_area1.activar_manual(), **self.riego_area2.activar_manual()}
         if action == "DESACTIVAR_RIEGO":
             return {**self.riego_area1.desactivar(), **self.riego_area2.desactivar()}
         if action == "ACTIVAR_RIEGO_1":

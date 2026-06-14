@@ -18,6 +18,7 @@ from sensors.raspberry_sensors import RaspberrySensors
 
 VALID_COMMANDS = {
     "ACTIVAR_RIEGO",
+    "ACTIVAR_RIEGO_MANUAL",
     "DESACTIVAR_RIEGO",
     "ACTIVAR_RIEGO_1",
     "ACTIVAR_RIEGO_2",
@@ -163,7 +164,7 @@ class IoTProgram:
             "TOGGLE_WATER": (
                 "DESACTIVAR_RIEGO"
                 if int(self.state.get("riego_1", 0)) == 1 or int(self.state.get("riego_2", 0)) == 1
-                else "ACTIVAR_RIEGO"
+                else "ACTIVAR_RIEGO_MANUAL"
             ),
             "TOGGLE_LIGHTS": (
                 "APAGAR_LUCES" if self.state.get("luces") == "ON" else "ENCENDER_LUCES"
