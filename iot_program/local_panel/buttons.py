@@ -38,7 +38,7 @@ class Buttons:
                         pin,
                         GPIO.FALLING,
                         callback=self._handle_press,
-                        bouncetime=300,
+                        bouncetime=120,
                     )
             except Exception:
                 self._simulation = True
