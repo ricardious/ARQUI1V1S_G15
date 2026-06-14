@@ -14,14 +14,14 @@ except ImportError:
 class GasSensor:
     """Sensor MQ-2/MQ-135 conectado a ADS1115 por I2C.
 
-    Canal por defecto: A0. Retorna un valor normalizado 0-1000 para que
+    Canal por defecto: A1. Retorna un valor normalizado 0-1000 para que
     las reglas existentes puedan usar el umbral de emergencia 600.
     """
 
     _RAW_CLEAN = 1200
     _RAW_DANGER = 21800
 
-    def __init__(self, channel: int = 2, address: int = 0x48) -> None:
+    def __init__(self, channel: int = 1, address: int = 0x48) -> None:
         self._simulation = not _I2C_AVAILABLE
         self._analog_in = None
         self._lock = get_lock() if _I2C_AVAILABLE else None
