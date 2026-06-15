@@ -7,15 +7,17 @@ TENDENCIA_OBJ := $(BUILD_DIR)/modulo_5_tendencia.o
 MEDIA_OBJ := $(BUILD_DIR)/modulo_1_media.o
 VARIANZA_OBJ := $(BUILD_DIR)/modulo_2_varianza.o
 ANOMALIAS_OBJ := $(BUILD_DIR)/modulo_3_anomalias.o
+PREDICCION_OBJ := $(BUILD_DIR)/modulo_4_prediccion.o
 
 TENDENCIA_BIN := $(BUILD_DIR)/modulo_5_tendencia
 MEDIA_BIN := $(BUILD_DIR)/modulo_1_media
 VARIANZA_BIN := $(BUILD_DIR)/modulo_2_varianza
 ANOMALIAS_BIN := $(BUILD_DIR)/modulo_3_anomalias
+PREDICCION_BIN := $(BUILD_DIR)/modulo_4_prediccion
 
 .PHONY: all media varianza anomalias prediccion tendencia run-media run-varianza run-anomalias run-prediccion run-tendencia run-all clean
 
-all: media varianza anomalias tendencia
+all: media varianza anomalias prediccion tendencia
 
 media: $(MEDIA_BIN)
 
@@ -23,8 +25,7 @@ varianza: $(VARIANZA_BIN)
 
 anomalias: $(ANOMALIAS_BIN)
 
-prediccion:
-	@echo "PENDIENTE: falta arm64/modulo_4_prediccion.s (Oswaldo)"
+prediccion: $(PREDICCION_BIN)
 
 tendencia: $(TENDENCIA_BIN)
 
@@ -49,6 +50,9 @@ $(VARIANZA_BIN): $(VARIANZA_OBJ) $(UTILS_OBJ)
 $(ANOMALIAS_BIN): $(ANOMALIAS_OBJ) $(UTILS_OBJ)
 	$(LD) -o $@ $^
 
+$(PREDICCION_BIN): $(PREDICCION_OBJ) $(UTILS_OBJ)
+	$(LD) -o $@ $^
+
 run-media: $(MEDIA_BIN)
 	$(MEDIA_BIN)
 
@@ -58,15 +62,14 @@ run-varianza: $(VARIANZA_BIN)
 run-anomalias: $(ANOMALIAS_BIN)
 	$(ANOMALIAS_BIN)
 
-run-prediccion:
-	@echo "PENDIENTE: falta arm64/modulo_4_prediccion.s (Oswaldo)"
-	@exit 2
+run-prediccion: $(PREDICCION_BIN)
+	$(PREDICCION_BIN)
 
 run-tendencia: $(TENDENCIA_BIN)
 	$(TENDENCIA_BIN)
 
-run-all: run-media run-varianza run-anomalias run-tendencia
-	@echo "PENDIENTE: run-prediccion se habilita cuando exista su .s"
+run-all: run-media run-varianza run-anomalias run-prediccion run-tendencia
+	@echo "Todos los modulos ARM64 ejecutados."
 
 clean:
 	rm -rf $(BUILD_DIR)
