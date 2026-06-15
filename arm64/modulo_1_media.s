@@ -1,8 +1,5 @@
 // =============================================================================
 // Media Aritmetica Ponderada
-// DESCRIPCION:
-//   Calcula la media aritmetica ponderada de 30 datos reales leidos desde
-//   lecturas.csv
 // FORMULA:
 //   WEIGHTED_MEAN = Σ(X_i * W_i) / ΣW_i
 //   Donde W_i = i (peso del dato i, del 1 al 30)
@@ -11,8 +8,6 @@
 // FLUJO:
 //   Abrir CSV -> Leer buffer -> Saltar header -> Cargar columna ->
 //   Calcular sumas -> Dividir -> Escribir resultado -> Cerrar -> Salir
-// =============================================================================
-
 // -----------------------------------------------------------------------------
 // COLUMNA A PROCESAR
 // Cambiar este valor para procesar una variable distinta del CSV:
@@ -34,7 +29,6 @@
 .extern skip_header         //salta encabezado
 .extern load_column_30      //carga 30
 .extern exit_program        //sale del programa
-
 // Sección .rodata, Strings de salida (solo para su lectura)
 .section .rodata
 msg_module:
@@ -58,7 +52,7 @@ data_array:
 .section .text
 .global _start
 
-// MAPA DE REGISTROS:
+//REGISTROS:
 //   x19 = fd del CSV
 //   x20 = fd del archivo de salida resultado_media.txt
 //   x21 = bytes leidos del CSV (retorno de read_fd)
@@ -66,7 +60,6 @@ data_array:
 //   x23 = suma_x (suma simple de todos los datos)
 //   x24 = suma_ponderada (suma de dato[i] * peso[i])
 //   x25 = valor actual del dato leido del arreglo
-// -----------------------------------------------------------------------------
 _start:
 // 1) ABRIR Y LEER EL CSV
     // Abrir lecturas.csv en modo lectura
@@ -141,19 +134,12 @@ calc_loop:
 
 calc_done:
 
-    // Calcular media ponderada = suma_ponderada / WEIGHT_SUM (465) o suma de pesos
+    // media ponderada = suma_ponderada / WEIGHT_SUM (465) o suma de pesos
     mov x0, #WEIGHT_SUM
     udiv x25, x24, x0              // x25 = suma_ponderada / 465 = WEIGHTED_MEAN
 
-// =============================================================================
-// FASE 4: ESCRIBIR RESULTADOS EN resultado_media.txt
-// Formato:
-//   MODULE=WEIGHTED_MEAN
-//   TOTAL_VALUES=30
-//   SUM_X=<valor>
-//   WEIGHT_SUM=465
-//   WEIGHTED_MEAN=<valor>
-// =============================================================================
+// 4) resultado_media.txt
+
     // MODULE=WEIGHTED_MEAN
     mov x0, x20
     ldr x1, =msg_module
@@ -195,15 +181,12 @@ calc_done:
     bl write_newline
 
 //5) CERRAR ARCHIVOS Y SALIR
-
     // Cerrar fd del CSV
     mov x0, x19
     bl close_fd
-
     // Cerrar fd del archivo de salida
     mov x0, x20
     bl close_fd
-
     // Terminar el proceso con codigo 0 (exito)
     mov x0, #0
     bl exit_program
