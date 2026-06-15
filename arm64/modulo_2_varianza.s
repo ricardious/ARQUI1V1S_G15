@@ -4,16 +4,12 @@
 //
 // Entrada:
 //   ../data/lecturas.csv
-//   Argumento 1: numero de columna a procesar (0-8)
+//   Argumento 1: 
 //      0=ID  1=TEMP  2=HUM_AIRE  3=HUM_SUELO_1  4=HUM_SUELO_2
 //      5=LUZ  6=GAS  7=RIEGO_1  8=RIEGO_2
 //
-// Salida:
-//   ../resultados_arm64/resultado_varianza.txt
-//
 // Como ejecutar:
-//   ./modulo_2_varianza 4     procesa HUM_SUELO_2
-//   ./modulo_2_varianza 1     procesa TEMP
+//   ./modulo_2_varianza
 // ====================================================================
 
 .section .rodata
@@ -49,7 +45,7 @@ variance_res:     .skip 8
 std_dev_res:      .skip 8
 
 columna_res:      .skip 8
-// aqui se guarda el numero de columna pedido por argumento, se guarda en memoria
+// aqui se guarda el numero de columna pedido, se guarda en memoria
 // porque se haran varios bl a utils.s antes de usarlo, y para que ninguna funcion pise ese registro
 
 
@@ -89,50 +85,15 @@ columna_res:      .skip 8
 _start:
 
     // ----------------------------------------------------------------
-    // PASO 0: leer el argumento que dice que columna procesar
+    // PASO 0: configurar la columna a procesar de forma fija
     // ----------------------------------------------------------------
-    // cuando el programa arranca, el stack tiene esto directamente,
-    // sin punteros a punteros:
-    //   [sp+0]  = argc           cuantos argumentos hay
-    //   [sp+8]  = argv[0]        puntero al string "./programa"
-    //   [sp+16] = argv[1]        puntero al string con la columna, ej "4"
-    //
-    // aqui no hay doble indireccion, los strings ya estan
-    // directamente en esas posiciones del stack
 
-    ldr x8, [sp]
-    // x8 = argc, cuantos argumentos nos pasaron contando el nombre del programa
-
-    cmp x8, #2
-    b.lt error_args
-    // si argc es menor a 2 significa que no nos pasaron la columna, salta a error_args
-
-    ldr x9, [sp, #16]
-    // x9 = argv[1], el puntero directo al string de la columna, ej "4"
-
-    // ahora convertimos ese string "4" a numero entero
-    // usamos parse_next_uint de utils que recibe:
-    //   x0 = puntero inicio
-    //   x1 = puntero fin
-    // y retorna:
-    //   x0 = puntero despues del numero
-    //   x1 = el valor numerico
-    //   x2 = 1 si encontro numero, 0 si no
-    mov x0, x9
-    add x1, x9, #4
-    // x1 = x9 + 4, le damos un margen de 4 bytes que es de sobra
-    // para un numero de un digito como "4"
-
-    bl parse_next_uint
-
-    cbz x2, error_args
-    // si x2 es 0 quiere decir que no encontro ningun numero en el string
-    // entonces es un argumento invalido
+    mov x1, #1
 
     // guardamos la columna en memoria, no en un registro
     ldr x0, =columna_res
     str x1, [x0]
-    // columna_res ahora tiene el numero de columna que nos pidieron
+    // columna_res ahora tiene el numero de columna estatico
 
 
     // ----------------------------------------------------------------
@@ -192,7 +153,7 @@ _start:
 
 
     // ----------------------------------------------------------------
-    // PASO 3: cargar los 30 valores de la columna que nos pidieron
+    // PASO 3: cargar los 30 valores de la columna 
     // ----------------------------------------------------------------
     // load_column_30 recibe:
     //   x0 = puntero despues del encabezado (lo que nos devolvio skip_header)
@@ -208,7 +169,7 @@ _start:
     ldr x2, [x2]
     // primero cargamos la direccion de columna_res en x2
     // luego hacemos otro ldr para traer el VALOR que esta guardado ahi
-    // ahora x2 = numero de columna, por ejemplo 4
+    // ahora x2 = numero de columna (1)
 
     ldr x3, =variable_x
     // x3 apunta a donde vamos a guardar los 30 valores
@@ -330,7 +291,7 @@ calcular_varianza_final:
     // pasamos la varianza como parametro de entrada a la subrutina
 
     bl raiz_cuadrada_entera
-    // retorna la raiz cuadrada entera en x0
+    // retorna la raiz cuadrada entera x0
 
     mov x14, x0
     // x14 = desviacion estandar
