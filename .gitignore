@@ -6,6 +6,8 @@
 # ----- Credenciales y entorno (NUNCA subir) -----
 .env
 .env.*
+!.env.example
+!**/.env.example
 *.pem
 *.key
 config.local.*
@@ -36,6 +38,8 @@ a.out
 # Descomentar si NO quieren versionar los resultados:
 # resultado_*.txt
 # resultados_arm64/
+arm64/lecturas.csv
+resultados_arm64/*.txt
 
 # ----- Node.js / Dashboard web -----
 node_modules/
