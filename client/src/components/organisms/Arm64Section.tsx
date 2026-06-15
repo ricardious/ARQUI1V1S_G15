@@ -54,18 +54,18 @@ export default function Arm64Section() {
             <span className="font-mono">lecturas.csv</span> · 30 datos
           </p>
         </div>
-        <div className="ml-auto flex gap-2">
+        <div className="flex w-full gap-2 sm:ml-auto sm:w-auto">
           <button
             onClick={() => csvMut.mutate()}
             disabled={csvMut.isPending}
-            className="rounded-xl border border-edge px-4 py-2 text-[12px] font-medium hover:border-white hover:text-white transition disabled:opacity-40"
+            className="flex-1 rounded-xl border border-edge px-4 py-2 text-[12px] font-medium transition hover:border-white hover:text-white disabled:opacity-40 sm:flex-none"
           >
             {csvMut.isPending ? "Generando…" : "Generar CSV"}
           </button>
           <button
             onClick={() => runMut.mutate()}
             disabled={runMut.isPending || csvMut.isPending}
-            className="rounded-xl bg-white text-ink px-4 py-2 text-[12px] font-semibold hover:bg-white/90 transition disabled:opacity-40"
+            className="flex-1 rounded-xl bg-white px-4 py-2 text-[12px] font-semibold text-ink transition hover:bg-white/90 disabled:opacity-40 sm:flex-none"
           >
             {runMut.isPending ? "Ejecutando…" : "Ejecutar ARM64"}
           </button>
@@ -91,7 +91,7 @@ export default function Arm64Section() {
         </p>
       )}
 
-      <div className="grid sm:grid-cols-2 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,210px),1fr))] gap-4">
         {cards.map((c) => (
           <Arm64Card key={c.file} {...c} />
         ))}

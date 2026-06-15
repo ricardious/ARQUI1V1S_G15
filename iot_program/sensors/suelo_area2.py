@@ -1,11 +1,8 @@
-import random
+from sensors.suelo_area1 import SueloArea1Sensor
 
 
-class SueloArea2Sensor:
-    """Sensor de humedad de suelo del area 2.
+class SueloArea2Sensor(SueloArea1Sensor):
+    """Sensor de humedad de suelo del area 2 conectado a ADS1115 A2."""
 
-    TODO: implementar lectura real del sensor de suelo del area 2.
-    """
-
-    def read(self) -> float:
-        return round(random.uniform(28.0, 90.0), 1)
+    def __init__(self, channel: int = 1, address: int = 0x48) -> None:
+        super().__init__(channel=channel, address=address)

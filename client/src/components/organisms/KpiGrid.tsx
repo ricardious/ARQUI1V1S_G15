@@ -18,7 +18,7 @@ export default function KpiGrid() {
   const sourceLabel = connectionState === "connected" ? "en vivo" : latestReadingQ.data ? "backend" : "sin datos";
 
   return (
-    <section className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+    <section className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,220px),1fr))] gap-4">
       {KPIS.map((k, i) => (
         <KpiCard
           key={k.key}

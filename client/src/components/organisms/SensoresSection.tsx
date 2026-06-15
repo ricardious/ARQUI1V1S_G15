@@ -28,7 +28,7 @@ export default function SensoresSection() {
   };
 
   return (
-    <section className="grid grid-cols-2 xl:grid-cols-3 gap-4">
+    <section className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))] gap-4">
       {SENSOR_DEFS.map((s, i) => {
         const value = values[s.key];
         const trend = value == null

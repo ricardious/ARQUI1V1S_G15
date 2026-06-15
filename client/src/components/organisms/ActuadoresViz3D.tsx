@@ -431,7 +431,7 @@ function ActuatorCard({
 
   return (
     <article
-      className={`rounded-2xl border border-edge bg-panel p-4 transition ${
+      className={`min-w-0 rounded-2xl border border-edge bg-panel p-4 transition ${
         manual ? "" : "opacity-45 saturate-50"
       }`}
     >
@@ -653,7 +653,7 @@ export default function ActuadoresViz3D({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))] gap-4">
         {ACTS.map((def) => (
           <ActuatorCard
             key={def.id}

@@ -21,7 +21,7 @@ export default function Arm64Card({
 }) {
   return (
     <div
-      className={`tilt rounded-2xl border bg-panel p-5 relative overflow-hidden ${danger ? "border-danger/40" : "border-edge"}`}
+      className={`tilt relative min-w-0 overflow-hidden rounded-2xl border bg-panel p-5 ${danger ? "border-danger/40" : "border-edge"}`}
     >
       {danger && (
         <span className="absolute right-0 top-0 size-16 bg-danger/15 blur-2xl" />
