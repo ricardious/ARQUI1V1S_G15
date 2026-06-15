@@ -223,3 +223,7 @@ Todos los integrantes participan en la construcción física de la maqueta y en 
 ## 📌 Estado del proyecto
 
 🟡 En desarrollo.
+
+---
+
+Referencia de auditoría: 2026-06-15 00:22:17
