@@ -9,9 +9,11 @@ VARIANZA_OBJ := $(BUILD_DIR)/modulo_2_varianza.o
 TENDENCIA_BIN := $(BUILD_DIR)/modulo_5_tendencia
 VARIANZA_BIN := $(BUILD_DIR)/modulo_2_varianza
 
+COL ?= 1
+
 .PHONY: all media varianza anomalias prediccion tendencia run-media run-varianza run-anomalias run-prediccion run-tendencia run-all clean
 
-all: media tendencia
+all: tendencia varianza
 
 media: $(MEDIA_BIN)
 
@@ -45,7 +47,7 @@ run-media:
 	@exit 2
 
 run-varianza: $(VARIANZA_BIN)
-	qemu-aarch64 $(VARIANZA_BIN) $(COL)
+	$(VARIANZA_BIN) $(COL)
 
 run-anomalias:
 	@echo "PENDIENTE: falta arm64/modulo_3_anomalias.s (Kevin)"
