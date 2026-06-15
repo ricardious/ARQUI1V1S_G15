@@ -15,7 +15,6 @@
 .section .rodata
 // strings que se van a escribir en el archivo de salida
 // asciz agrega un cero al final del string automaticamente
-// ese cero es lo que usa write_cstr para saber donde termina
 msg_module:       .asciz "MODULE=VARIANCE\n"
 msg_total:        .asciz "TOTAL_VALUES=30\n"
 msg_mean:         .asciz "MEAN="
