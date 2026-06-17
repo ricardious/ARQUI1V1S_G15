@@ -1,4 +1,0 @@
-{
-  "debug.allowBreakpointsEverywhere": true,
-  "terminal.integrated.cwd": "${fileDirname}"
-}
