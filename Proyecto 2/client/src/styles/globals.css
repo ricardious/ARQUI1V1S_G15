@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Entrada global de estilos.
+   ========================================================================== */
+@import "./theme.css";
+@import "./base.css";
+@import "./utilities.css";
+@import "./components.css";
