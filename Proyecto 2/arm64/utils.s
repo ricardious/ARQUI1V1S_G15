@@ -7,6 +7,9 @@
 //Manejo de errores 
 
 
+//Registros utilizados 
+// x11 = columna selecciona
+// x21 = direccion de buffer 
 
 //Área para navegación de archivo, saltar encabezado
 //skip_to_next_line 
@@ -28,3 +31,20 @@ skip_to_next_line:
 // marca el final de una funcion 
 utils_skip_done:
     ret
+
+
+//Salto de columna
+saltar_columna:
+    ldrb w3, [x21], #1 
+
+    cmp w3, '$'
+    beq utils_skip_done
+
+    cmp w23, #10
+    beq utils_skip_done
+
+    cmp w23, ','        // compara si es una comna entonces marca el fin
+    beq utils_skip_done
+
+    b saltar_columna
+
