@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/hooks/useAuth";
 
 const SEARCH_ITEMS = [
   { label: "Dashboard", detail: "Estado global, temperatura, invernadero 3D", target: "dashboard" },
@@ -35,6 +37,8 @@ function normalize(value: string): string {
 
 /** Organism: cabecera superior. */
 export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
+  const router = useRouter();
+  const { logout } = useAuth();
   const searchRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
@@ -141,6 +145,26 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           <p className="text-[10px] text-dim2">ARQUI1V1S</p>
         </div>
       </div>
+      <button
+        type="button"
+        onClick={() => {
+          logout();
+          router.replace("/login");
+        }}
+        aria-label="Cerrar sesión"
+        className="flex shrink-0 items-center gap-1.5 rounded-xl border border-edge bg-panel px-2.5 py-2 text-dim transition hover:text-white"
+      >
+        <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden="true">
+          <path
+            d="M15 12H3m0 0 4-4m-4 4 4 4M13 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        <span className="hidden text-[12px] sm:inline">Salir</span>
+      </button>
     </header>
   );
 }
