@@ -112,5 +112,5 @@ read_error:
 
 exit_error:
     mov x0, #1
-    ldr x8, #93 // syscall exit
+    mov x8, #93 // syscall exit
     svc #0
