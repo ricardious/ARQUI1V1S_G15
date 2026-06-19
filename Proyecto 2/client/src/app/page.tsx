@@ -14,6 +14,7 @@ import Arm64Section from "@/components/organisms/Arm64Section";
 import Arm64Viz3D from "@/components/organisms/Arm64Viz3D";
 import { useMqttGreenPi } from "@/lib/hooks/useMqttGreenPi";
 import { useLatestReading } from "@/services/readings/queries";
+import { RequireAuth } from "@/lib/hooks/useAuth";
 import type { StateColor } from "@/lib/types/types";
 
 function SectionLabel({ title, sub }: { title: string; sub?: string }) {
@@ -65,6 +66,7 @@ export default function Page() {
   const z2 = zoneEstado(humedadZona2);
 
   return (
+    <RequireAuth>
     <DashboardLayout>
       {/* ── Dashboard ─────────────────────────────────────────────── */}
       <section id="dashboard" className="space-y-6 scroll-mt-20">
@@ -145,5 +147,6 @@ export default function Page() {
         Invernadero Inteligente IoT · Grupo 15 · ARQUI1V1S
       </p>
     </DashboardLayout>
+    </RequireAuth>
   );
 }
