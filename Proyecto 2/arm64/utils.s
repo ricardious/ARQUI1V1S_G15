@@ -35,9 +35,9 @@ utils_skip_done:
 
 //Salto de columna
 saltar_columna:
-    ldrb w3, [x21], #1 
+    ldrb w23, [x21], #1 
 
-    cmp w3, '$'
+    cmp w23, '$'
     beq utils_skip_done
 
     cmp w23, #10
