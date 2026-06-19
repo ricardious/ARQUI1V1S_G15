@@ -11,4 +11,25 @@
   .nav-item.active svg {
     stroke: var(--color-ink);
   }
+
+  .login-submit {
+    background: color-mix(in srgb, #ffffff 95%, transparent);
+    color: var(--color-ink);
+    box-shadow: 0 10px 26px -18px rgba(255, 255, 255, 0.65);
+  }
+
+  .login-submit:hover {
+    background: #ffffff;
+    box-shadow: 0 12px 28px -20px rgba(255, 255, 255, 0.75);
+  }
+
+  .login-submit:disabled {
+    cursor: not-allowed;
+    opacity: 0.75;
+  }
+
+  .login-submit:disabled:hover {
+    background: color-mix(in srgb, #ffffff 95%, transparent);
+    box-shadow: 0 10px 26px -18px rgba(255, 255, 255, 0.65);
+  }
 }
