@@ -34,7 +34,7 @@ function normalize(value: string): string {
 }
 
 /** Organism: cabecera superior. */
-export default function Header() {
+export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const searchRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
@@ -66,6 +66,16 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-40 flex items-center gap-4 px-5 sm:px-8 py-4 border-b border-edge bg-ink/80 backdrop-blur-xl">
+      <button
+        type="button"
+        onClick={onMenuClick}
+        aria-label="Abrir menú de navegación"
+        className="-ml-1 grid size-9 shrink-0 place-items-center rounded-xl border border-edge bg-panel text-dim hover:text-white lg:hidden"
+      >
+        <svg viewBox="0 0 24 24" className="size-5" fill="none" aria-hidden="true">
+          <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </button>
       <div className="min-w-0">
         <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight">
           Invernadero Inteligente
