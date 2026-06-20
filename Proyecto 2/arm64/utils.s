@@ -130,6 +130,19 @@ open_prediccion_write:
     ldr x1, =prediccion_path
     b open_output_file
 
+// Escribir texto con longitud conocida
+// x0: descriptor del archivo
+// x1: direccion del texto
+// x2: cantidad de bytes
+write_text:
+    mov x8, #64 // syscall write
+    svc #0
+
+    cmp x0, #0
+    blt write_error
+
+    ret
+
 // Escribir salto de linea
 write_newline:
     ldr x1, =newline_text
