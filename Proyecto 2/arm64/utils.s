@@ -4,6 +4,24 @@
 csv_path:
     .asciz "../data/lecturas.csv"
 
+tendencia_path:
+    .asciz "../resultados_arm64/resultado_tendencia.txt"
+
+media_path:
+    .asciz "../resultados_arm64/resultado_media.txt"
+
+varianza_path:
+    .asciz "../resultados_arm64/resultado_varianza.txt"
+
+anomalias_path:
+    .asciz "../resultados_arm64/resultado_anomalias.txt"
+
+prediccion_path:
+    .asciz "../resultados_arm64/resultado_prediccion.txt"
+
+newline_text:
+    .asciz "\n"
+
 err_open:
     .ascii "Error: no se pudo abrir el archivo\n"
     len_err_open = . - err_open
@@ -11,6 +29,10 @@ err_open:
 err_read:
     .ascii "Error: no se pudo leer el archivo\n"
     len_err_read = . - err_read
+
+err_write:
+    .ascii "Error: no se pudo escribir el archivo\n"
+    len_err_write = . - err_write
 
 .bss
 
@@ -65,6 +87,63 @@ open_csv_read:
     mov x19, x0 // descriptor del archivo
     ret
 
+// Crear/truncar archivo de salida
+// x1: ruta del archivo a abrir
+open_output_file:
+    mov x0, #-100
+    // x1 trae la ruta del archivo
+    mov x2, #(1 | 64 | 512) // O_WRONLY | O_CREAT | O_TRUNC
+    mov x3, #420 // permisos (0644)
+    mov x8, #56 // syscall openat
+    svc #0
+
+    cmp x0, #0
+    blt write_error
+
+    ret
+
+// Crear/Abrir resultado_tendencia.txt
+open_tendencia_write:
+    ldr x1, =tendencia_path
+    bl open_output_file
+    ret
+
+// Crear/Abrir resultado_media.txt
+open_media_write:
+    ldr x1, =media_path
+    bl open_output_file
+    ret
+
+// Crear/Abrir resultado_varianza.txt
+open_varianza_write:
+    ldr x1, =varianza_path
+    bl open_output_file
+    ret
+
+// Crear/Abrir resultado_anomalias.txt
+open_anomalias_write:
+    ldr x1, =anomalias_path
+    bl open_output_file
+    ret
+
+// Crear/Abrir resultado_prediccion.txt
+open_prediccion_write:
+    ldr x1, =prediccion_path
+    bl open_output_file
+    ret
+
+// Escribir salto de linea
+write_newline:
+    ldr x1, =newline_text
+    mov x2, #1
+    mov x8, #64 // syscall write
+    svc #0
+
+    cmp x0, #0
+    blt write_error
+
+    ret
+
 // Leer archivo hacia buffer
 read_file:
     mov x0, x19
@@ -107,6 +186,14 @@ read_error:
     mov x0, #1
     ldr x1, =err_read
     mov x2, len_err_read
+    mov x8, #64 // syscall write
+    svc #0
+    b exit_error
+
+write_error:
+    mov x0, #1
+    ldr x1, =err_write
+    mov x2, len_err_write
     mov x8, #64 // syscall write
     svc #0
     b exit_error
