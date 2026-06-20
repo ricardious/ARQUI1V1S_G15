@@ -4,6 +4,15 @@
 csv_path:
     .asciz "../data/lecturas.csv"
 
+tendencia_path:
+    .asciz "../resultados_arm64/resultado_tendencia.txt"
+
+media_path:
+    .asciz "../resultados_arm64/resultado_media.txt"
+
+varianza_path:
+    .asciz "../resultados_arm64/resultado_varianza.txt"
+
 anomalias_path:
     .asciz "../resultados_arm64/resultado_anomalias.txt"
 
@@ -260,6 +269,99 @@ save_number_to_stack:
     str x10, [sp] // guardar numero en stack
 
     add x22, x22, #1 // incrementar contador de numeros
+    ret
+
+// leer columna especifica de un archivo CSV y guardarla en el stack
+// Entrada:
+//  x11 = numero de columna a leer
+// Salida:
+//  x0 = inicio de datos en stack
+//  x1 = limite sfinal de datos
+//  x2 = cantidad de datos leidos
+//  x3 = posicion para restaurar el stack
+read_column_to_stack:
+    // guardar direccion de retorno
+    stp x29, x30, [sp, #-16]!
+    mov x29, sp
+
+    // x28 = limite superior de datos
+    mov x28, sp
+
+    // x27 = posicion para restaurar stack
+    add x27, x28, #16
+
+    mov x5, #10             // base 10
+    mov x22, #0             // contador de numeros
+
+    // abrir archivo
+    bl open_csv_read
+
+    // leer archivo
+    bl read_file
+
+    // cerrar archivo
+    bl close_file
+
+    // apuntar al inicio del buffer
+    ldr x21, =buffer
+
+    // saltar encabezado
+    bl skip_to_next_line
+
+    cmp w23, '$'
+    beq read_column_return
+
+read_column_process_line:
+    mov x12, #1             // columna actual
+
+read_column_find_column:
+    cmp x12, x11
+    beq read_column_read_value
+
+    bl saltar_columna
+
+    cmp w23, '$'
+    beq read_column_return
+
+    cmp w23, #10
+    beq read_column_process_line
+
+    // si fue coma, avanzar contador de columna
+    add x12, x12, #1
+    b read_column_find_column
+
+read_column_read_value:
+    bl atoi_csv
+
+    cbz x7, read_column_after_value
+
+    // guardar numero convertido
+    bl save_number_to_stack
+
+// despues de leer la columna, saltar al final de la linea
+read_column_after_value:
+    cmp w23, '$'
+    beq read_column_return
+
+    cmp w23, #10
+    beq read_column_process_line
+
+    // saltar el resto de la fila
+    bl skip_to_next_line
+
+    cmp w23, '$'
+    beq read_column_return
+
+    b read_column_process_line
+
+read_column_return:
+    mov x0, sp              // inicio de datos
+    mov x1, x28             // limite final
+    mov x2, x22             // cantidad de datos
+    mov x3, x27             // restaurar stack
+
+    // recuperar direccion original de retorno
+    ldr x30, [x29, #8]
     ret
 
 // Manejo de errores
