@@ -34,6 +34,10 @@ err_write:
     .ascii "Error: no se pudo escribir el archivo\n"
     len_err_write = . - err_write
 
+err_arg:
+    .ascii "Debe enviar una columna\n"
+    len_err_arg = . - err_arg
+
 .bss
 
 buffer:
@@ -73,6 +77,40 @@ atoi_loop:
     b atoi_loop
 
 atoi_done:
+    ret
+
+// Leer columna desde argumento de consola
+// Espera ejecutar el modulo asi:
+// ./modulo 2
+// Salida:
+// x11 = columna seleccionada
+get_column_arg:
+    // guardar direccion de retorno
+    stp x29, x30, [sp, #-16]!
+    mov x29, sp
+
+    // argc esta en [sp + 16] 
+    ldr x0, [x29, #16]
+
+    // validar que exista argv[1]
+    cmp x0, #2
+    blt arg_error
+
+    // argv[1] esta en [sp + 16] original
+    // como ahora se guardo x29, se debe acceder a [x29 + 32]
+    ldr x21, [x29, #32]
+
+    // convertir parametro a numero
+    bl atoi_csv
+
+    // si no encontro numero, error
+    cbz x7, arg_error
+
+    // x11 = columna seleccionada
+    mov x11, x10
+
+    // recuperar direccion original de retorno
+    ldp x29, x30, [sp], #16
     ret
 
 // Abrir archivo lecturas.csv
@@ -401,3 +439,12 @@ exit_error:
     mov x0, #1
     mov x8, #93 // syscall exit
     svc #0
+
+arg_error:
+    mov x0, #1
+    ldr x1, =err_arg
+    mov x2, len_err_arg
+    mov x8, #64
+    svc #0
+
+    b exit_error
