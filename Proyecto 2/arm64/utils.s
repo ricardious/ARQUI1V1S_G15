@@ -108,32 +108,27 @@ open_output_file:
 // Crear/Abrir resultado_tendencia.txt
 open_tendencia_write:
     ldr x1, =tendencia_path
-    bl open_output_file
-    ret
+    b open_output_file
 
 // Crear/Abrir resultado_media.txt
 open_media_write:
     ldr x1, =media_path
-    bl open_output_file
-    ret
+    b open_output_file
 
 // Crear/Abrir resultado_varianza.txt
 open_varianza_write:
     ldr x1, =varianza_path
-    bl open_output_file
-    ret
+    b open_output_file
 
 // Crear/Abrir resultado_anomalias.txt
 open_anomalias_write:
     ldr x1, =anomalias_path
-    bl open_output_file
-    ret
+    b open_output_file
 
 // Crear/Abrir resultado_prediccion.txt
 open_prediccion_write:
     ldr x1, =prediccion_path
-    bl open_output_file
-    ret
+    b open_output_file
 
 // Escribir salto de linea
 write_newline:
