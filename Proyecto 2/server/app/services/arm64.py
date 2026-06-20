@@ -76,6 +76,8 @@ class Arm64Service:
                     ]
                 )
 
+            csv_file.write("$\n")
+
         return {
             "message": "lecturas.csv generado correctamente",
             "path": str(self.csv_path),
