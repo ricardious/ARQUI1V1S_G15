@@ -4,15 +4,6 @@
 csv_path:
     .asciz "../data/lecturas.csv"
 
-tendencia_path:
-    .asciz "../resultados_arm64/resultado_tendencia.txt"
-
-media_path:
-    .asciz "../resultados_arm64/resultado_media.txt"
-
-varianza_path:
-    .asciz "../resultados_arm64/resultado_varianza.txt"
-
 anomalias_path:
     .asciz "../resultados_arm64/resultado_anomalias.txt"
 
@@ -223,6 +214,45 @@ close_file:
     mov x8, #57 // syscall close
     svc #0
     ret
+    
+//Registros utilizados 
+// x11 = columna selecciona
+// x21 = direccion de buffer 
+
+//Área para navegación de archivo, saltar encabezado
+//skip_to_next_line 
+//Que hace? , salta el caracteres hasta encontrar el final de una linea o caracter especial
+//Registros utilizados:
+// w23=  byte leido en esa direccion 
+// x21 = direccion de memoria / buffer
+skip_to_next_line:
+    ldrb w23, [x21], #1     // lee un byte y lo guarda en w23
+    cmp w23, '$'            //  compara 
+    beq utils_skip_done     // si es igual llama a skip_done
+
+    cmp w23, #10            //compara con 10 = ascii '\n', salto de linea
+    beq utils_skip_done     // si es igual llama a skip_done
+
+    b skip_to_next_line     // si no encontro ni salto o algun caracter extraño entonces vuelve a pasar linea por linea
+
+// marca el final de una funcion 
+utils_skip_done:
+    ret
+
+//Salto de columna
+saltar_columna:
+    ldrb w23, [x21], #1 
+
+    cmp w23, '$'
+    beq utils_skip_done
+
+    cmp w23, #10
+    beq utils_skip_done
+
+    cmp w23, ','        // compara si es una comna entonces marca el fin
+    beq utils_skip_done
+
+    b saltar_columna
 
 // Guardar numero en stack
 save_number_to_stack:
