@@ -31,7 +31,8 @@ msg_weighted_mean:
 // x22 = suma ponderada
 // x23 = indice del dato
 // x24 = apuntador
-//x28 = media ponders
+// x27 = dato actual
+//x28 = peso actual
 _start:
 
     // se obtiene la columna, registro x11
@@ -40,6 +41,7 @@ _start:
     //se lee la columna y se guarda 
     bl read_column_to_stack
 	mov x24, x0	//direccion del primer dato
+	add x24, x24, #(29*16)  //multiplico para llegar al ultimo dato, osae dato 1 porque es una pila
 	mov x25, x2	// cantidad de datos (los 30)
 	mov x26, x3	//direccion para restaurar stack
 
@@ -47,21 +49,26 @@ _start:
     bl open_media_write
     mov x20, x0         //x20 = x0 porque con x0 decolvio el descriptor
 
-
 	//inicializo variables 
 	mov x21, #0		//sum_x = suma de los datos
 	mov x22, #0		//suma pondera
 	mov x23, #0		//indice
 
 calculo_loop:
-	cmp x23, #30
-	b.hs calcular_media	//si datp > 30 procede a calcular la media
+	cmp x23, x25
+	b.hs calcular_media	//si datp > n procede a calcular la media
 
-	ldr x0, [x24], #16
-	add x21, x21, x0
+	ldr x27, [x24], #-16	// carga el dato apuntado por x24 en x27
+	//  -16, mueve al siguiente dato a procesar, dato 2, el movimiento ocurre despues de cargar el dato
+	add x21, x21, x27
+	//peso actual 
+	add x28, x23, #1
+	//x19 = dato * peso
+	mul x19, x28, x27
+	//suma ponderada
+	add x22, x22, x19
 
-	add x23, x23, #1    // indice ++
-
+	add x23, x23, #1    // indice ++ 
 	b calculo_loop
 calcular_media:
 	b imprimir_resultado
@@ -80,7 +87,7 @@ imprimir_resultado:
     mov x2, len_msg_total
     bl write_text
 
-    // falta resultado de suma
+    //  suma_X
     mov x0, x20
     ldr x1, =msg_sum_x
     mov x2, len_msg_sum_x
@@ -98,6 +105,13 @@ imprimir_resultado:
     ldr x1, =msg_weight_sum
     mov x2, len_msg_weight_sum
     bl write_text
+
+	mov x0, x22
+	mov x1, x20
+	bl write_uint 
+
+	mov x0, x20
+	bl write_newline
 
     // falta resultado media 
     mov x0, x20
