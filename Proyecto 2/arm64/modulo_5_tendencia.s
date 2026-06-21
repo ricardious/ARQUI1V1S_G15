@@ -55,6 +55,8 @@ _start:
     mov x26, x2 // cantidad de datos
     mov x27, x3 // posicion para restaurar stack
 
+    mov x22, #0 // racha actual de subidas 
+
     // valores temporales para la base
     mov x15, #0 // incrementos
     mov x16, #0 // decrementos
@@ -88,14 +90,27 @@ count_changes:
     cmp x14, x13
     blt case_decrement
 
+    // si son iguales, se rompe la racha
+    mov x22, #0 // resetea racha
     b next_value
 
 case_increment:
     add x15, x15, #1 // incremento++
+
+    add x22, x22, #1 // racha actual++
+
+    // compara racha actual con max_up_streak
+    cmp x22, x17
+    ble next_value // si racha actual <= max_up_streak, sigue
+
+    mov x17, x22 // nuevo max_up_streak
     b next_value
 
 case_decrement:
     add x16, x16, #1 // decremento++
+
+    // un decremento rompe la racha de subidas
+    mov x22, #0
     b next_value
     
 next_value:
@@ -106,7 +121,6 @@ next_value:
     sub x12, x12, #16
 
     b count_changes
-
 
 write_results:
     // abrir archivo resultado_tendencia.txt
