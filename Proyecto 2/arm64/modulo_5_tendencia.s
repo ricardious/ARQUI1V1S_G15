@@ -84,6 +84,10 @@ count_changes:
 
     ldr x14, [x12] // valor actual
 
+    sub x23, x14, x13 // diferencia actual - anterior
+
+    add x19, x19, x23 // acumula diferencia
+
     // actual > anterior => incremento
     cmp x14, x13
     bgt case_increment
@@ -219,7 +223,7 @@ write_results:
 
     mov x0, x19
     mov x1, x20
-    bl write_uint
+    bl write_int
 
     mov x0, x20
     bl write_newline
