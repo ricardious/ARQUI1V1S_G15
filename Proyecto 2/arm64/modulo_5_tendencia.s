@@ -56,6 +56,7 @@ _start:
     mov x27, x3 // posicion para restaurar stack
 
     mov x22, #0 // racha actual de subidas 
+    mov x28, #0 // racha actual de bajadas
 
     // valores temporales para la base
     mov x15, #0 // incrementos
@@ -92,12 +93,16 @@ count_changes:
 
     // si son iguales, se rompe la racha
     mov x22, #0 // resetea racha
+    mov x28, #0 // resetea racha de bajadas
     b next_value
 
 case_increment:
     add x15, x15, #1 // incremento++
 
     add x22, x22, #1 // racha actual++
+
+    // un incremento rompe la racha de bajadas
+    mov x28, #0
 
     // compara racha actual con max_up_streak
     cmp x22, x17
@@ -109,8 +114,16 @@ case_increment:
 case_decrement:
     add x16, x16, #1 // decremento++
 
+    add x28, x28, #1 // racha actual++
+
     // un decremento rompe la racha de subidas
     mov x22, #0
+
+    // compara racha actual con max_down_streak
+    cmp x28, x18
+    ble next_value // si racha actual <= max_down_streak, sigue
+
+    mov x18, x28 // nuevo max_down_streak
     b next_value
     
 next_value:
