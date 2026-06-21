@@ -32,6 +32,14 @@ msg_trend:
     .ascii "TREND="
     len_msg_trend = . - msg_trend
 
+trend_up:
+    .ascii "UP\n"
+    len_trend_up = . - trend_up
+
+trend_down:
+    .ascii "DOWN\n"
+    len_trend_down = . - trend_down
+
 trend_stable:
     .ascii "STABLE\n"
     len_trend_stable = . - trend_stable
@@ -234,11 +242,43 @@ write_results:
     mov x2, len_msg_trend
     bl write_text
 
+    // si ACCUM_DIFF > 0, tendencia ascendente
+    cmp x19, #0
+    bgt write_trend_up
+
+    // si ACCUM_DIFF < 0, tendencia descendente
+    cmp x19, #0
+    blt write_trend_down
+
+    // si ACCUM_DIFF = 0, tendencia estable
+    b write_trend_stable
+
+write_trend_up:
+    // escribir tendencia ascendente
+    mov x0, x20
+    ldr x1, =trend_up
+    mov x2, len_trend_up
+    bl write_text
+
+    b close_result_file
+
+write_trend_down:
+    // escribir tendencia descendente
+    mov x0, x20
+    ldr x1, =trend_down
+    mov x2, len_trend_down
+    bl write_text
+
+    b close_result_file
+
+write_trend_stable:
+    // escribir tendencia estable
     mov x0, x20
     ldr x1, =trend_stable
     mov x2, len_trend_stable
     bl write_text
 
+close_result_file:
     // cerrar archivo
     mov x0, x20
     bl close_output_file
