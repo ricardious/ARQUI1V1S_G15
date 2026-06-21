@@ -248,9 +248,7 @@ write_int:
     // escribir numero positivo
     mov x0, x10
     mov x1, x9
-    bl write_uint
-
-    ret
+    b write_uint
 
 convert_loop:
     udiv x5, x0, x3
