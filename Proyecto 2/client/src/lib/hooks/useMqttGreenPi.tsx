@@ -11,7 +11,11 @@ import {
 import type { MqttClient } from "mqtt";
 import { ENV } from "@/lib/constants/env";
 import { ALL_SENSOR_TOPICS, TOPICS } from "@/lib/constants/mqtt-topics";
-import { parsePlainBool, parsePlainFloat, buildClientId } from "@/lib/helpers/mqtt";
+import {
+  parsePlainBool,
+  parsePlainFloat,
+  buildClientId,
+} from "@/lib/helpers/mqtt";
 import { estadoToEstadoKey } from "@/lib/helpers/formatters";
 import type {
   ActuatorStates,
@@ -23,54 +27,54 @@ import type {
 // ── Context ────────────────────────────────────────────────────────────────
 
 export interface MqttContextValue {
-  sensors:         SensorReadings;
-  actuators:       ActuatorStates;
-  globalState:     EstadoKey;
+  sensors: SensorReadings;
+  actuators: ActuatorStates;
+  globalState: EstadoKey;
   connectionState: MqttConnectionState;
-  lastMessageAt:    number | null;
+  lastMessageAt: number | null;
   raspberryOnline: boolean;
-  sendCommand:     (cmd: string) => void;
+  sendCommand: (cmd: string) => void;
 }
 
 const DEFAULT_SENSORS: SensorReadings = {
-  temperatura:         null,
-  humedad_ambiente:    null,
+  temperatura: null,
+  humedad_ambiente: null,
   humedad_suelo_area1: null,
   humedad_suelo_area2: null,
-  luz:                 null,
-  gas:                 null,
+  luz: null,
+  gas: null,
 };
 
 const DEFAULT_ACTUATORS: ActuatorStates = {
-  riego:      false,
+  riego: false,
   riego_area1: false,
   riego_area2: false,
   ventilador: false,
-  luces:      false,
-  alarma:     false,
+  luces: false,
+  alarma: false,
 };
 
 export const MqttContext = createContext<MqttContextValue>({
-  sensors:         DEFAULT_SENSORS,
-  actuators:       DEFAULT_ACTUATORS,
-  globalState:     "SIN_DATOS",
+  sensors: DEFAULT_SENSORS,
+  actuators: DEFAULT_ACTUATORS,
+  globalState: "SIN_DATOS",
   connectionState: "disconnected",
-  lastMessageAt:    null,
+  lastMessageAt: null,
   raspberryOnline: false,
-  sendCommand:     () => undefined,
+  sendCommand: () => undefined,
 });
 
 // ── Provider ───────────────────────────────────────────────────────────────
 
 export function MqttProvider({ children }: { children: React.ReactNode }) {
-  const [sensors, setSensors]         = useState<SensorReadings>(DEFAULT_SENSORS);
-  const [actuators, setActuators]     = useState<ActuatorStates>(DEFAULT_ACTUATORS);
+  const [sensors, setSensors] = useState<SensorReadings>(DEFAULT_SENSORS);
+  const [actuators, setActuators] = useState<ActuatorStates>(DEFAULT_ACTUATORS);
   const [globalState, setGlobalState] = useState<EstadoKey>("SIN_DATOS");
-  const [connState, setConnState]     = useState<MqttConnectionState>("connecting");
+  const [connState, setConnState] = useState<MqttConnectionState>("connecting");
   const [lastMessageAt, setLastMessageAt] = useState<number | null>(null);
   const [raspberryOnline, setRaspberryOnline] = useState(false);
-  const clientRef                     = useRef<MqttClient | null>(null);
-  const raspberryTimeoutRef           = useRef<number | null>(null);
+  const clientRef = useRef<MqttClient | null>(null);
+  const raspberryTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     let client: MqttClient;
@@ -78,10 +82,10 @@ export function MqttProvider({ children }: { children: React.ReactNode }) {
     // Dynamic import keeps mqtt out of SSR bundle
     import("mqtt").then(({ default: mqtt }) => {
       client = mqtt.connect(ENV.MQTT_WSS_URL, {
-        clientId:      buildClientId(),
-        clean:         true,
+        clientId: buildClientId(),
+        clean: true,
         reconnectPeriod: 5000,
-        connectTimeout:  10_000,
+        connectTimeout: 10_000,
       });
       clientRef.current = client;
 
@@ -91,8 +95,8 @@ export function MqttProvider({ children }: { children: React.ReactNode }) {
       });
 
       client.on("reconnect", () => setConnState("connecting"));
-      client.on("offline",   () => setConnState("disconnected"));
-      client.on("error",     () => setConnState("error"));
+      client.on("offline", () => setConnState("disconnected"));
+      client.on("error", () => setConnState("error"));
 
       client.on("message", (topic: string, payload: Buffer) => {
         const msg = payload.toString().trim();
@@ -110,13 +114,22 @@ export function MqttProvider({ children }: { children: React.ReactNode }) {
             setSensors((s) => ({ ...s, temperatura: parsePlainFloat(msg) }));
             break;
           case TOPICS.HUM_AMBIENTE:
-            setSensors((s) => ({ ...s, humedad_ambiente: parsePlainFloat(msg) }));
+            setSensors((s) => ({
+              ...s,
+              humedad_ambiente: parsePlainFloat(msg),
+            }));
             break;
           case TOPICS.HUM_SUELO_1:
-            setSensors((s) => ({ ...s, humedad_suelo_area1: parsePlainFloat(msg) }));
+            setSensors((s) => ({
+              ...s,
+              humedad_suelo_area1: parsePlainFloat(msg),
+            }));
             break;
           case TOPICS.HUM_SUELO_2:
-            setSensors((s) => ({ ...s, humedad_suelo_area2: parsePlainFloat(msg) }));
+            setSensors((s) => ({
+              ...s,
+              humedad_suelo_area2: parsePlainFloat(msg),
+            }));
             break;
           case TOPICS.LUZ:
             setSensors((s) => ({ ...s, luz: parsePlainFloat(msg) }));

@@ -2,12 +2,12 @@ import type { Shape } from "@/lib/types/types";
 
 /** Columnas del CSV que los módulos ARM64 pueden analizar (argv = índice). */
 export const ARM64_COLUMNS = [
-  { key: "temp",        label: "Temperatura" },
-  { key: "hum_aire",    label: "Humedad aire" },
+  { key: "temp", label: "Temperatura" },
+  { key: "hum_aire", label: "Humedad aire" },
   { key: "hum_suelo_1", label: "Humedad suelo 1" },
   { key: "hum_suelo_2", label: "Humedad suelo 2" },
-  { key: "luz",         label: "Luz" },
-  { key: "gas",         label: "Gas" },
+  { key: "luz", label: "Luz" },
+  { key: "gas", label: "Gas" },
 ] as const;
 
 export type Arm64ColumnKey = (typeof ARM64_COLUMNS)[number]["key"];
