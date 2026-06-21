@@ -38,7 +38,7 @@ _start:
     bl get_column_arg
 
     //se lee la columna y se guarda 
-    bl read_column_to_stack
+    //bl read_column_to_stack
 
     //se abre el archivo resultado_media.txt
     bl open_media_write
@@ -79,4 +79,9 @@ _start:
     bl write_text
 
 
+    mov x0, x20
+    bl close_output_file
     
+    mov x0, #0      
+    mov x8, #93     // syscall exit
+    svc #0
