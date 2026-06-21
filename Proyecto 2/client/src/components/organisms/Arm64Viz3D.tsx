@@ -3,15 +3,10 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { useArm64Results } from "@/services/arm64/queries";
+import { ARM64_MODULES } from "@/lib/arm64";
 import type { Shape } from "@/lib/types/types";
 
-const MODULES: { key: "media" | "varianza" | "anomalias" | "prediccion" | "tendencia"; label: string; shape: Shape }[] = [
-  { key: "media", label: "Media ponderada", shape: "ico" },
-  { key: "varianza", label: "Desv. estándar", shape: "octa" },
-  { key: "anomalias", label: "Anomalías", shape: "tetra" },
-  { key: "prediccion", label: "Predicción", shape: "torus" },
-  { key: "tendencia", label: "Tendencia", shape: "box" },
-];
+const MODULES = ARM64_MODULES;
 
 function makeGeo(shape: Shape): THREE.BufferGeometry {
   switch (shape) {
@@ -32,11 +27,12 @@ export default function Arm64Viz3D() {
   const resultsQ = useArm64Results(1);
   const valor = resultsQ.data?.[0]?.valor ?? {};
   const cards = MODULES.map((module) => {
-    const value = valor[module.key] ?? "—";
-    const danger = module.key === "anomalias" && value !== "—" && Number(value) > 2;
+    const mod = valor[module.key];
+    const fields = mod?.fields ?? {};
+    const value = (mod ? module.headline(fields) : undefined) ?? "—";
+    const danger = mod ? (module.danger?.(fields) ?? false) : false;
     return {
       ...module,
-      file: `modulo_${module.key}.s`,
       value,
       color: danger ? "#FF2D2D" : value === "—" ? "#5a5a62" : "#ffffff",
       danger,
