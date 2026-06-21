@@ -74,7 +74,7 @@ _start:
     // mover al segundo dato
     sub x12, x12, #16
 
-count_increments:
+count_changes:
     // si x12 queda antes del inicio, terminamos
     cmp x12, x24
     blt write_results
@@ -83,18 +83,30 @@ count_increments:
 
     // actual > anterior => incremento
     cmp x14, x13
-    ble no_increment
+    bgt case_increment
 
+    cmp x14, x13
+    blt case_decrement
+
+    b next_value
+
+case_increment:
     add x15, x15, #1 // incremento++
+    b next_value
 
-no_increment:
+case_decrement:
+    add x16, x16, #1 // decremento++
+    b next_value
+    
+next_value:
     // actual pasa a ser anterior
     mov x13, x14
 
     // avanza al siguiente valor
     sub x12, x12, #16
 
-    b count_increments
+    b count_changes
+
 
 write_results:
     // abrir archivo resultado_tendencia.txt
