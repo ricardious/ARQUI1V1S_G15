@@ -6,7 +6,7 @@ msg_module:
     len_msg_module = . - msg_module
 
 msg_total:
-    .ascii "TOTAL_VALUES=30\n"
+    .ascii "TOTAL_VALUES="
     len_msg_total = . - msg_total
     
 msg_sum_x:
@@ -21,6 +21,10 @@ msg_weighted_mean:
     .ascii "WEIGHTED_MEAN="
     len_msg_weighted_mean = . - msg_weighted_mean
 
+msg_peso:
+    .ascii "PESO="
+    len_msg_peso = . - msg_peso
+
 .section .text
 
 .global _start
@@ -33,6 +37,8 @@ msg_weighted_mean:
 // x24 = apuntador
 // x27 = dato actual
 //x28 = peso actual
+//x17 = suma de pesos
+// x18 = media  = suma ponderada / suma de pesos = x22 / x17
 _start:
 
     // se obtiene la columna, registro x11
@@ -53,6 +59,7 @@ _start:
 	mov x21, #0		//sum_x = suma de los datos
 	mov x22, #0		//suma pondera
 	mov x23, #0		//indice
+	mov x17, #0		//peso
 
 calculo_loop:
 	cmp x23, x25
@@ -67,11 +74,14 @@ calculo_loop:
 	mul x19, x28, x27
 	//suma ponderada
 	add x22, x22, x19
+	//suma de pesos
+	add x17, x17, x28
 
 	add x23, x23, #1    // indice ++ 
+	
 	b calculo_loop
 calcular_media:
-	b imprimir_resultado
+	udiv x18, x22, x17
 
 
 // 3) resultado_media.txt , imprimir 
@@ -82,10 +92,31 @@ imprimir_resultado:
     mov x2, len_msg_module
     bl write_text
 
+	//suma de pesos
+	mov x0, x20
+	ldr x1, =msg_peso
+	mov x2, len_msg_peso
+	bl write_text
+
+	mov x0, x17
+	mov x1, x20
+	bl write_uint 
+
+	mov x0, x20
+	bl write_newline
+
+	//total values
     mov x0, x20
     ldr x1, =msg_total
     mov x2, len_msg_total
     bl write_text
+
+	mov x0, x25
+	mov x1, x20
+	bl write_uint 
+
+	mov x0, x20
+	bl write_newline
 
     //  suma_X
     mov x0, x20
@@ -100,7 +131,7 @@ imprimir_resultado:
 	mov x0, x20
 	bl write_newline
 
-    //falta resultado de suma ponderada
+    //suma ponderada
     mov x0, x20
     ldr x1, =msg_weight_sum
     mov x2, len_msg_weight_sum
@@ -113,13 +144,20 @@ imprimir_resultado:
 	mov x0, x20
 	bl write_newline
 
-    // falta resultado media 
+    // media 
     mov x0, x20
     ldr x1, =msg_weighted_mean
     mov x2, len_msg_weighted_mean
     bl write_text
+	
+	mov x0, x18
+	mov x1, x20
+	bl write_uint 
 
+	mov x0, x20
+	bl write_newline
 
+	//Salida
     mov x0, x20
     bl close_output_file
 
