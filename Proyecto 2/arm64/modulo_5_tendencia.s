@@ -62,6 +62,41 @@ _start:
     mov x18, #0 // max down streak
     mov x19, #0 // accum diff
 
+    // si hay menos de 2 valores, no hay comparaciones
+    cmp x26, #2
+    blt write_results
+
+    // stack quedo en orden inverso
+    // x25 - 16 apuntan al primer dato leido
+    sub x12, x25, #16
+    ldr x13, [x12] // ultimo valor
+
+    // mover al segundo dato
+    sub x12, x12, #16
+
+count_increments:
+    // si x12 queda antes del inicio, terminamos
+    cmp x12, x24
+    blt write_results
+
+    ldr x14, [x12] // valor actual
+
+    // actual > anterior => incremento
+    cmp x14, x13
+    ble no_increment
+
+    add x15, x15, #1 // incremento++
+
+no_increment:
+    // actual pasa a ser anterior
+    mov x13, x14
+
+    // avanza al siguiente valor
+    sub x12, x12, #16
+
+    b count_increments
+
+write_results:
     // abrir archivo resultado_tendencia.txt
     bl open_tendencia_write
     mov x20, x0 // descriptor del archivo
