@@ -10,11 +10,16 @@ const MODULES = ARM64_MODULES;
 
 function makeGeo(shape: Shape): THREE.BufferGeometry {
   switch (shape) {
-    case "ico":   return new THREE.IcosahedronGeometry(0.55, 0);
-    case "octa":  return new THREE.OctahedronGeometry(0.55, 0);
-    case "tetra": return new THREE.TetrahedronGeometry(0.65, 0);
-    case "torus": return new THREE.TorusGeometry(0.4, 0.16, 6, 12);
-    default:      return new THREE.BoxGeometry(0.78, 0.78, 0.78);
+    case "ico":
+      return new THREE.IcosahedronGeometry(0.55, 0);
+    case "octa":
+      return new THREE.OctahedronGeometry(0.55, 0);
+    case "tetra":
+      return new THREE.TetrahedronGeometry(0.65, 0);
+    case "torus":
+      return new THREE.TorusGeometry(0.4, 0.16, 6, 12);
+    default:
+      return new THREE.BoxGeometry(0.78, 0.78, 0.78);
   }
 }
 
@@ -42,7 +47,8 @@ export default function Arm64Viz3D() {
   useEffect(() => {
     const el = elRef.current;
     if (!el) return;
-    const w = el.clientWidth, h = el.clientHeight;
+    const w = el.clientWidth,
+      h = el.clientHeight;
 
     const scene = new THREE.Scene();
     const cam = new THREE.PerspectiveCamera(42, w / h, 0.1, 100);
@@ -83,7 +89,8 @@ export default function Arm64Viz3D() {
       root.add(g);
     });
 
-    let raf = 0, t = 0;
+    let raf = 0,
+      t = 0;
     const loop = () => {
       raf = requestAnimationFrame(loop);
       t += 0.016;
@@ -98,7 +105,8 @@ export default function Arm64Viz3D() {
     loop();
 
     const onResize = () => {
-      const w2 = el.clientWidth, h2 = el.clientHeight;
+      const w2 = el.clientWidth,
+        h2 = el.clientHeight;
       cam.aspect = w2 / h2;
       cam.updateProjectionMatrix();
       ren.setSize(w2, h2);
@@ -116,8 +124,12 @@ export default function Arm64Viz3D() {
   return (
     <div className="rounded-2xl border border-edge bg-panel overflow-hidden">
       <div className="px-5 pt-5 pb-1">
-        <p className="text-[11px] uppercase tracking-[.2em] text-dim2">3D · Módulos</p>
-        <h2 className="font-display text-lg font-bold">Cristales de análisis</h2>
+        <p className="text-[11px] uppercase tracking-[.2em] text-dim2">
+          3D · Módulos
+        </p>
+        <h2 className="font-display text-lg font-bold">
+          Cristales de análisis
+        </h2>
         <p className="text-[12px] text-dim2">
           Cada forma corresponde al módulo ARM64
         </p>
@@ -129,14 +141,20 @@ export default function Arm64Viz3D() {
             key={c.file}
             className="flex flex-col items-center gap-1 py-3 border-r border-edge last:border-r-0"
           >
-            <span className="h-2 w-2 rounded-full" style={{ background: c.color }} />
+            <span
+              className="h-2 w-2 rounded-full"
+              style={{ background: c.color }}
+            />
             <span
               className="text-[10px] font-mono text-center px-1 leading-tight"
               style={{ color: c.danger ? c.color : "#5a5a62" }}
             >
               {c.label}
             </span>
-            <span className="text-[11px] font-mono font-bold" style={{ color: c.color }}>
+            <span
+              className="text-[11px] font-mono font-bold"
+              style={{ color: c.color }}
+            >
               {c.value}
             </span>
           </div>

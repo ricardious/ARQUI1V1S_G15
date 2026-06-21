@@ -11,11 +11,16 @@ export default function KpiGrid() {
   const latestValues = latestReadingQ.data?.valor;
   const vals: Record<string, number | null> = {
     temp: sensors.temperatura ?? latestValues?.temperatura ?? null,
-    hum:  sensors.humedad_ambiente ?? latestValues?.humedad_ambiente ?? null,
-    luz:  sensors.luz ?? latestValues?.luz ?? null,
-    gas:  sensors.gas ?? latestValues?.gas ?? null,
+    hum: sensors.humedad_ambiente ?? latestValues?.humedad_ambiente ?? null,
+    luz: sensors.luz ?? latestValues?.luz ?? null,
+    gas: sensors.gas ?? latestValues?.gas ?? null,
   };
-  const sourceLabel = connectionState === "connected" ? "en vivo" : latestReadingQ.data ? "backend" : "sin datos";
+  const sourceLabel =
+    connectionState === "connected"
+      ? "en vivo"
+      : latestReadingQ.data
+        ? "backend"
+        : "sin datos";
 
   return (
     <section className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,220px),1fr))] gap-4">

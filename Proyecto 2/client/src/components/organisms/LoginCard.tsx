@@ -39,17 +39,24 @@ export default function LoginCard() {
     "group flex items-center gap-2.5 rounded-xl border border-edge bg-ink/60 px-3.5 py-3 transition focus-within:border-ok/60 focus-within:bg-ink";
   const input =
     "w-full bg-transparent text-[14px] text-white outline-none placeholder:text-dim2";
-  const iconCls = "size-4 shrink-0 text-dim2 transition group-focus-within:text-ok";
+  const iconCls =
+    "size-4 shrink-0 text-dim2 transition group-focus-within:text-ok";
 
   return (
-    <div className="animate-rise relative z-10 w-full max-w-100" style={rise(0)}>
+    <div
+      className="animate-rise relative z-10 w-full max-w-100"
+      style={rise(0)}
+    >
       <div className="rounded-3xl border border-white/10 bg-panel/60 shadow-[0_30px_90px_-30px_rgba(0,0,0,0.95)] backdrop-blur-2xl">
         <form
           onSubmit={onSubmit}
           className="relative overflow-hidden rounded-3xl bg-ink/60 p-7"
         >
           {/* Marca */}
-          <div className="animate-rise flex items-center gap-3" style={rise(80)}>
+          <div
+            className="animate-rise flex items-center gap-3"
+            style={rise(80)}
+          >
             <div className="h-12 w-12 rounded-2xl border border-edge bg-ink">
               <Object3D shape="ico" color="#ffffff" className="h-full w-full" />
             </div>
@@ -85,8 +92,19 @@ export default function LoginCard() {
               Usuario
             </span>
             <div className={field}>
-              <svg viewBox="0 0 24 24" className={iconCls} fill="none" aria-hidden="true">
-                <circle cx="12" cy="8" r="3.2" stroke="currentColor" strokeWidth="2" />
+              <svg
+                viewBox="0 0 24 24"
+                className={iconCls}
+                fill="none"
+                aria-hidden="true"
+              >
+                <circle
+                  cx="12"
+                  cy="8"
+                  r="3.2"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
                 <path
                   d="M5 20a7 7 0 0 1 14 0"
                   stroke="currentColor"
@@ -113,9 +131,27 @@ export default function LoginCard() {
               Contraseña
             </span>
             <div className={field}>
-              <svg viewBox="0 0 24 24" className={iconCls} fill="none" aria-hidden="true">
-                <rect x="4" y="10" width="16" height="10" rx="2" stroke="currentColor" strokeWidth="2" />
-                <path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <svg
+                viewBox="0 0 24 24"
+                className={iconCls}
+                fill="none"
+                aria-hidden="true"
+              >
+                <rect
+                  x="4"
+                  y="10"
+                  width="16"
+                  height="10"
+                  rx="2"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M8 10V7a4 4 0 0 1 8 0v3"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
               </svg>
               <input
                 value={password}
@@ -135,7 +171,12 @@ export default function LoginCard() {
                 className="shrink-0 text-dim2 transition hover:text-white"
               >
                 {show ? (
-                  <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="size-4"
+                    fill="none"
+                    aria-hidden="true"
+                  >
                     <path
                       d="M3 3l18 18M10.6 10.6a3 3 0 0 0 4.2 4.2M9.9 5.2A9.6 9.6 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.1 3.9M6.1 6.1A17 17 0 0 0 2 12s3.5 7 10 7a9.6 9.6 0 0 0 3-.5"
                       stroke="currentColor"
@@ -145,7 +186,12 @@ export default function LoginCard() {
                     />
                   </svg>
                 ) : (
-                  <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="size-4"
+                    fill="none"
+                    aria-hidden="true"
+                  >
                     <path
                       d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"
                       stroke="currentColor"
@@ -153,7 +199,13 @@ export default function LoginCard() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
-                    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="3"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
                   </svg>
                 )}
               </button>
@@ -162,8 +214,18 @@ export default function LoginCard() {
 
           {error && (
             <p className="mt-3 flex items-center gap-2 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-[12px] text-danger">
-              <svg viewBox="0 0 24 24" className="size-4 shrink-0" fill="none" aria-hidden="true">
-                <path d="M12 8v5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <svg
+                viewBox="0 0 24 24"
+                className="size-4 shrink-0"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 8v5"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
                 <circle cx="12" cy="16.5" r="1.1" fill="currentColor" />
                 <path
                   d="M10.3 3.9 2.6 17.5A2 2 0 0 0 4.3 20.5h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"
@@ -209,8 +271,7 @@ export default function LoginCard() {
             className="animate-rise mt-5 border-t border-edge pt-4 text-center font-mono text-[10px] text-dim2"
             style={rise(360)}
           >
-            Demo · usuario{" "}
-            <span className="text-dim">admin</span> · clave{" "}
+            Demo · usuario <span className="text-dim">admin</span> · clave{" "}
             <span className="text-dim">greenpi15</span>
           </p>
         </form>

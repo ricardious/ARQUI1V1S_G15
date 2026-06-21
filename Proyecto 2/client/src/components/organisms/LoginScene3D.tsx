@@ -35,7 +35,13 @@ export default function LoginScene3D() {
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       });
-    const boxEdges = (bw: number, bh: number, bd: number, hex: string, op?: number) =>
+    const boxEdges = (
+      bw: number,
+      bh: number,
+      bd: number,
+      hex: string,
+      op?: number,
+    ) =>
       new THREE.LineSegments(
         new THREE.EdgesGeometry(new THREE.BoxGeometry(bw, bh, bd)),
         lineMat(hex, op),
@@ -67,7 +73,13 @@ export default function LoginScene3D() {
             lineMat(hex, op),
           ),
         );
-      seg(0, 4); seg(3, 5); seg(1, 4); seg(2, 5); seg(4, 5); seg(0, 1); seg(3, 2);
+      seg(0, 4);
+      seg(3, 5);
+      seg(1, 4);
+      seg(2, 5);
+      seg(4, 5);
+      seg(0, 1);
+      seg(3, 2);
       return g;
     };
 
@@ -77,7 +89,11 @@ export default function LoginScene3D() {
     spin.scale.setScalar(1.15);
     scene.add(spin);
 
-    const W = 8, D = 4.4, Hh = 2.2, peak = 1.1, secW = W / 3;
+    const W = 8,
+      D = 4.4,
+      Hh = 2.2,
+      peak = 1.1,
+      secW = W / 3;
     const colors = { z1: "#ffffff", z2: "#2D9BFF", cc: "#00ff6a" };
 
     const floor = new THREE.GridHelper(W * 1.6, 20, 0x2a5a40, 0x163424);

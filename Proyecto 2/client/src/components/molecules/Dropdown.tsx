@@ -109,7 +109,11 @@ export default function Dropdown({
           stroke="currentColor"
           strokeWidth="1.5"
         >
-          <path d="M3 4.5 6 7.5 9 4.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M3 4.5 6 7.5 9 4.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </button>
 
@@ -117,7 +121,7 @@ export default function Dropdown({
         <ul
           role="listbox"
           aria-label={ariaLabel}
-          className="absolute z-20 mt-1.5 max-h-64 w-full min-w-[11rem] origin-top overflow-auto rounded-xl border border-edge bg-panel p-1 shadow-xl shadow-black/50"
+          className="absolute z-20 mt-1.5 max-h-64 w-full min-w-44 origin-top overflow-auto rounded-xl border border-edge bg-panel p-1 shadow-xl shadow-black/50"
         >
           {options.map((opt, i) => {
             const isSelected = opt.value === value;
@@ -143,7 +147,11 @@ export default function Dropdown({
                       stroke="currentColor"
                       strokeWidth="1.6"
                     >
-                      <path d="M2.5 6.5 5 9l4.5-5" strokeLinecap="round" strokeLinejoin="round" />
+                      <path
+                        d="M2.5 6.5 5 9l4.5-5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
                     </svg>
                   )}
                 </button>

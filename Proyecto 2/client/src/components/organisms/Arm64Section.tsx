@@ -17,15 +17,15 @@ const COLUMN_OPTIONS = ARM64_COLUMNS.map((c) => ({
 export default function Arm64Section() {
   const [col, setCol] = useState<string>("temp");
   const resultsQ = useArm64Results(1);
-  const csvMut   = useGenerateCsv();
-  const runMut   = useRunArm64();
+  const csvMut = useGenerateCsv();
+  const runMut = useRunArm64();
 
   const latest = resultsQ.data?.[0];
-  const valor  = latest?.valor ?? {};
+  const valor = latest?.valor ?? {};
 
   const runningModule = runMut.isPending ? runMut.variables?.module : undefined;
-  const runningAll    = runMut.isPending && !runMut.variables?.module;
-  const busy          = runMut.isPending || csvMut.isPending;
+  const runningAll = runMut.isPending && !runMut.variables?.module;
+  const busy = runMut.isPending || csvMut.isPending;
 
   return (
     <section>
@@ -39,7 +39,9 @@ export default function Arm64Section() {
           </p>
         </div>
         <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
-          <span className="hidden text-[12px] text-dim2 sm:inline">Columna</span>
+          <span className="hidden text-[12px] text-dim2 sm:inline">
+            Columna
+          </span>
           <Dropdown
             ariaLabel="Columna a analizar"
             options={COLUMN_OPTIONS}
@@ -88,12 +90,12 @@ export default function Arm64Section() {
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,210px),1fr))] gap-4">
         {ARM64_MODULES.map((m) => {
-          const mod      = valor[m.key];
-          const fields   = mod?.fields ?? {};
+          const mod = valor[m.key];
+          const fields = mod?.fields ?? {};
           const headline = (mod ? m.headline(fields) : undefined) ?? "—";
-          const danger   = mod ? (m.danger?.(fields) ?? false) : false;
-          const stats    = mod ? m.stats(fields).filter((s) => s.v != null) : [];
-          const time     = latest
+          const danger = mod ? (m.danger?.(fields) ?? false) : false;
+          const stats = mod ? m.stats(fields).filter((s) => s.v != null) : [];
+          const time = latest
             ? new Date(latest.timestamp).toLocaleTimeString("es")
             : "";
           const foot = mod
