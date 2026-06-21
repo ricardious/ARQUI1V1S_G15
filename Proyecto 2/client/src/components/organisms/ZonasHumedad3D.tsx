@@ -4,14 +4,14 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
 const BW = 1.8, BH = 1.8, BD = 1.2;
+const FILL_EASE = 4.5;
 
 function clampHumidity(humidity: number | null) {
   return Math.max(0, Math.min(100, humidity ?? 0));
 }
 
-function updateFill(fill: THREE.Mesh | undefined, humidity: number | null) {
+function setFillLevel(fill: THREE.Mesh | undefined, ratio: number) {
   if (!fill) return;
-  const ratio = clampHumidity(humidity) / 100;
   fill.scale.y = ratio;
   fill.position.y = -(BH / 2) + (BH * ratio) / 2;
 }
@@ -86,6 +86,8 @@ export default function ZonasHumedad3D({
 }) {
   const elRef = useRef<HTMLDivElement>(null);
   const fillsRef = useRef<THREE.Mesh[]>([]);
+  const fillLevelsRef = useRef([0, 0]);
+  const fillTargetsRef = useRef([0, 0]);
 
   useEffect(() => {
     const el = elRef.current;
@@ -128,8 +130,20 @@ export default function ZonasHumedad3D({
     };
 
     let raf = 0;
+    let lastTime = performance.now();
     const loop = () => {
       raf = requestAnimationFrame(loop);
+      const now = performance.now();
+      const delta = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+
+      const fillStep = 1 - Math.exp(-FILL_EASE * delta);
+      fillsRef.current.forEach((fill, index) => {
+        const levels = fillLevelsRef.current;
+        levels[index] += (fillTargetsRef.current[index] - levels[index]) * fillStep;
+        setFillLevel(fill, levels[index]);
+      });
+
       if (!drag) rotY += 0.0025;
       apply();
       ren.render(scene, cam);
@@ -194,8 +208,10 @@ export default function ZonasHumedad3D({
   }, []);
 
   useEffect(() => {
-    updateFill(fillsRef.current[0], humedad1);
-    updateFill(fillsRef.current[1], humedad2);
+    fillTargetsRef.current = [
+      clampHumidity(humedad1) / 100,
+      clampHumidity(humedad2) / 100,
+    ];
   }, [humedad1, humedad2]);
 
   return (
