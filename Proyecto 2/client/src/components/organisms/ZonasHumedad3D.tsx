@@ -202,6 +202,7 @@ export default function ZonasHumedad3D({
           material?.dispose();
         }
       });
+      ren.forceContextLoss();
       ren.dispose();
       if (ren.domElement.parentNode === el) el.removeChild(ren.domElement);
     };
