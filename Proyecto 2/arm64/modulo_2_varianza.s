@@ -72,6 +72,29 @@ ciclo_varianza:
 calcular_varianza_final:
     udiv x13, x12, x20   // x13 (varianza) = suma de cuadrados / N
 
+    // calcular desviacion estandar (raiz cuadrada de la varianza)
+    mov x0, x13     // varianza
+    mov x1, #1      // iterador
+
+loop_sqrt:
+    mul x2, x1, x1  // x2 = x1 * x1
+    
+    // realizar comparacion para saber si ya nos pasamos
+    cmp x2, x0      // x2 > x0
+    bgt end_loop_sqrt
+
+    add x1, x1, #1
+
+    b loop_sqrt
+
+end_loop_sqrt:
+    // el add anterior deja una posicion arriba del resultado, entonces restar
+    sub x1, x1, #1  // restamos uno
+    mov x14, x1     // resultado
+
+    // limpiar los datos temporales del stack 
+    mov sp, x21
+
     mov x0, #0
     mov x8, #93
     svc #0
