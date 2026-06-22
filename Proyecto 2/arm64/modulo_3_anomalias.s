@@ -72,3 +72,32 @@ _start:
 
     mov x0, x20 // fd de salida
     bl write_newline // escribir nueva línea en archivo de salida
+
+    //Cacular media
+    mov x28, #0 //acumulador para la suma de los valores
+    mov x9, x24 //puntero actual al primer valor en el stack
+
+calc_mean_loop:
+    cmp x9, x25 //comprobar si se han procesado todos los valores
+    b.ge calc_mean_done //si se han procesado todos los valores, salir del bucle
+
+    ldr x10, [x9] //cargar el valor actual desde el stack
+    add x28, x28, x10 //sumar el valor al acumulador
+    add x9, x9, #16 //mover el puntero al siguiente valor en el stack (cada valor ocupa 16 bytes)
+
+    b calc_mean_loop //repetir el bucle
+
+calc_mean_done:
+    udiv x19, x28, x26 //dividir la suma total por el número de valores para obtener la media
+
+    mov x0, x20 // fd de salida
+    ldr x1, =msg_mean // mensaje de media
+    mov x2, len_msg_mean // longitud del mensaje de media
+    bl write_text // escribir mensaje de media en archivo de salida
+
+    mov x0, x19 // media calculada
+    mov x1, x20 // fd de salida
+    bl write_uint // escribir media en archivo de salida
+
+    mov x0, x20 // fd de salida
+    bl write_newline // escribir nueva línea en archivo de salida
