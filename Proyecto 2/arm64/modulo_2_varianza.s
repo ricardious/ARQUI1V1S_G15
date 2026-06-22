@@ -95,6 +95,67 @@ end_loop_sqrt:
     // limpiar los datos temporales del stack 
     mov sp, x21
 
+    bl open_varianza_write
+    mov x15, x0          // almacenar el fd del archivo de salida en x15
+
+    // MODULE=VARIANCE
+    mov x0, x15
+    ldr x1, =msg_module
+    mov x2, len_msg_module
+    bl write_text
+
+    // TOTAL_VALUES=N
+    mov x0, x15
+    ldr x1, =msg_total
+    mov x2, len_msg_total
+    bl write_text
+
+    mov x0, x20          // pasar el valor total de N
+    mov x1, x15          // fd
+    bl write_uint
+    mov x0, x15
+    bl write_newline
+
+    // MEAN=
+    mov x0, x15
+    ldr x1, =msg_mean
+    mov x2, len_msg_mean
+    bl write_text
+
+    mov x0, x11          // pasar la media
+    mov x1, x15          // fd
+    bl write_uint
+    mov x0, x15
+    bl write_newline
+
+    // VARIANCE=
+    mov x0, x15
+    ldr x1, =msg_variance
+    mov x2, len_msg_variance
+    bl write_text
+
+    mov x0, x13          // pasar la varianza
+    mov x1, x15          // fd
+    bl write_uint
+    mov x0, x15
+    bl write_newline
+
+    // STD_DEV=
+    mov x0, x15
+    ldr x1, =msg_std_dev
+    mov x2, len_msg_std_dev
+    bl write_text
+
+    mov x0, x14          // pasar la desviacion estandar
+    mov x1, x15          // fd
+    bl write_uint
+    mov x0, x15
+    bl write_newline
+
+    // cerrar archivo
+    mov x0, x15
+    bl close_output_file
+
     mov x0, #0
     mov x8, #93
     svc #0
