@@ -15,6 +15,8 @@ VARIANZA_BIN := $(BUILD_DIR)/modulo_2_varianza
 ANOMALIAS_BIN := $(BUILD_DIR)/modulo_3_anomalias
 PREDICCION_BIN := $(BUILD_DIR)/modulo_4_prediccion
 
+COL ?= 1
+
 .PHONY: all media varianza anomalias prediccion tendencia run-media run-varianza run-anomalias run-prediccion run-tendencia run-all clean
 
 all: media varianza anomalias prediccion tendencia
@@ -54,19 +56,19 @@ $(PREDICCION_BIN): $(PREDICCION_OBJ) $(UTILS_OBJ)
 	$(LD) -o $@ $^
 
 run-media: $(MEDIA_BIN)
-	$(MEDIA_BIN)
+	$(MEDIA_BIN) $(COL)
 
 run-varianza: $(VARIANZA_BIN)
-	$(VARIANZA_BIN)
+	$(VARIANZA_BIN) $(COL)
 
 run-anomalias: $(ANOMALIAS_BIN)
-	$(ANOMALIAS_BIN)
+	$(ANOMALIAS_BIN) $(COL)
 
 run-prediccion: $(PREDICCION_BIN)
-	$(PREDICCION_BIN)
+	$(PREDICCION_BIN) $(COL)
 
 run-tendencia: $(TENDENCIA_BIN)
-	$(TENDENCIA_BIN)
+	$(TENDENCIA_BIN) $(COL)
 
 run-all: run-media run-varianza run-anomalias run-prediccion run-tendencia
 	@echo "Todos los modulos ARM64 ejecutados."
