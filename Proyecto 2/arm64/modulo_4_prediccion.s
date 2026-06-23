@@ -231,6 +231,9 @@ next_print_frac:
     bl write_newline
 
 
+    mov x0, x20
+    bl close_output_file
+
 
 exit_ok:
     mov x0, #0      // Codigo de salida 0
