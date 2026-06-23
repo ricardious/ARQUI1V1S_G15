@@ -38,11 +38,21 @@ str_zero:
     .ascii "0"
 
 .text
+.include "utils.s
 .global _start
 
 // inicio 
 _start:
   
+    bl get_column_arg  // llama a utils.s lee el argumento y lo prepara internamente.
+
+   
+    bl read_column_to_stack //  busca los numeros, los convierte y los apila.
+
+    //  Guardar los resultados que nos devolvio utils.s 
+    mov x24, x0 // x0 trae el puntero a la cima de la pila ultimodato
+    mov x25, x1 // x1 trae el puntero al fondo de la pila primerdato
+    mov x18, x3 // x3 trae la direccion original del stack para poder restaurar la memoria al terminar el programa 
 
 
 exit_ok:
