@@ -213,7 +213,7 @@ integer_sqrt:
 sqrt_loop:
     mul x2, x1, x1 // calcular el cuadrado del resultado actual
     cmp x2, x0 // comparar el cuadrado con el número original
-    b.hi sqrt_done // si el cuadrado es mayor que el número original, salir del bucle
+    bgt sqrt_done // si el cuadrado es mayor que el número original, salir del bucle
     add x1, x1, #1 // incrementar el resultado
     b sqrt_loop // repetir el bucle
 
