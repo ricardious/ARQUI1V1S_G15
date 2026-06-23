@@ -135,6 +135,41 @@ calc_var_done:
     mov x0, x20 // fd de salida
     bl write_newline // escribir nueva línea en archivo de salida
 
+    // Detectar anomalías
+    mov x9, x24 //puntero actual al primer valor en el stack
+    mov x23, #0 //contador de anomalías
+
+    mov x4, #2 //factor de desviación estándar para determinar anomalías (2 * std_dev)
+    mul x4, x22, x4 // calcular el umbral de anomalía (2 * std_dev)
+anomaly_loop:
+    cmp x9, x25 //comprobar si se han procesado todos los valores
+    b.ge anomaly_done // si se han procesado todos los valores, salir del bucle
+    ldr x10, [x9] // cargar el valor actual desde el stack
+    sub x5, x10, x19 // calcular la diferencia entre el valor y la media (diff = valor - media)
+    cmp x5, #0 // comparar la diferencia con 0
+    b.ge abs_ok // si la diferencia es positiva, continuar
+    neg x5, x5 // si la diferencia es negativa, tomar el valor absoluto
+
+abs_ok:
+    cmp x5, x4 // comparar la diferencia absoluta con el umbral de anomalía
+    b.lt not_anomaly // si la diferencia es menor que el umbral, no es una anomalía
+    add x23, x23, #1 // incrementar el contador de anomalías
+
+not_anomaly:
+    add x9, x9, #16 // mover el puntero al siguiente valor en el stack (cada valor ocupa 16 bytes)
+    b anomaly_loop // repetir el bucle
+
+anomaly_done:
+    mov x0, x20 // fd de salida
+    ldr x1, =msg_anomalies // mensaje de número de anomalías
+    mov x2, len_msg_anomalies // longitud del mensaje de número de anomalías
+    bl write_text // escribir mensaje de número de anomalías en archivo de salida
+    mov x0, x23 // número de anomalías detectadas
+    mov x1, x20 // fd de salida
+    bl write_uint // escribir número de anomalías en archivo de salida
+    mov x0, x20 // fd de salida
+    bl write_newline // escribir nueva línea en archivo de salida
+
 integer_sqrt:
     mov x1, #1 // inicializar el resultado con 1
 sqrt_loop:
