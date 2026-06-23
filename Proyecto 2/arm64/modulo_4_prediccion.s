@@ -52,7 +52,7 @@ _start:
     //  Guardar los resultados que nos devolvio utils.s 
     mov x24, x0 // x0 trae el puntero a la cima de la pila ultimodato
     mov x25, x1 // x1 trae el puntero al fondo de la pila primerdato
-    mov x18, x3 // x3 trae la direccion original del stack para poder restaurar la memoria al terminar el programa 
+    mov x18, x3 // x3 trae la direccion original del stack, restaurar la memoria al terminar el programa 
 
     sub x12, x25, #16  // Calculamos la direccion del primer dato
     ldr x22, [x12]     // Cargamos en x22 el valor inicial
@@ -131,14 +131,33 @@ _start:
     mov x2, len_msg_avg
     bl write_text
 
-    mov x15, x27             
+   mov x15, x27               // Cargar promedio de cambio en x15
+    cmp x15, #0                //Comprobar si es negativo
+    bge avg_positive           // Si es mayor o igual a 0 lo saltamos
+
+    // Si es negativo hacerlo positivo
+    mov x0, x20
+    ldr x1, =str_minus
+    mov x2, #1
+    bl write_text
+    neg x15, x15               // Convertir a positivo
+
+avg_positive:
     mov x2, #100
-    udiv x16, x15, x2        
+    udiv x16, x15, x2          // x16 = parte entera
+    msub x17, x16, x2, x15     // x17 = parte decimal
+
 
     // Imprimir parte entera
     mov x0, x16
     mov x1, x20
     bl write_uint
+
+    // Imprimir punto
+    mov x0, x20
+    ldr x1, =str_dot
+    mov x2, #1
+    bl write_text
 
 
 
