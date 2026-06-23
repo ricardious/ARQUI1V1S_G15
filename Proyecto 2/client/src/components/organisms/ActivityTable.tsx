@@ -5,29 +5,18 @@ import ActivityRow from "../molecules/ActivityRow";
 import { useEvents } from "@/services/events/queries";
 import { useCommands } from "@/services/commands/queries";
 import { useActuatorLogs } from "@/services/actuator-logs/queries";
-import {
-  formatTimestamp,
-  estadoRelacionadoToColor,
-} from "@/lib/helpers/formatters";
+import { formatTimestamp, estadoRelacionadoToColor } from "@/lib/helpers/formatters";
 import type { LogEntry } from "@/lib/types/types";
 
 type Tab = "eventos" | "comandos" | "actuadores";
 
-function recordsToLog(
-  records: {
-    timestamp: string;
-    tipo_dato: string;
-    valor: Record<string, unknown>;
-    origen: string;
-    estado_relacionado: string;
-  }[],
-): LogEntry[] {
+function recordsToLog(records: { timestamp: string; tipo_dato: string; valor: Record<string, unknown>; origen: string; estado_relacionado: string }[]): LogEntry[] {
   return records.map((r) => ({
-    hora: formatTimestamp(r.timestamp),
+    hora:   formatTimestamp(r.timestamp),
     origen: r.origen,
     evento: r.tipo_dato.replace(/_/g, " "),
-    valor: Object.values(r.valor).slice(0, 1).join(", ") || "—",
-    color: estadoRelacionadoToColor(r.estado_relacionado),
+    valor:  Object.values(r.valor).slice(0, 1).join(", ") || "—",
+    color:  estadoRelacionadoToColor(r.estado_relacionado),
     estado: r.estado_relacionado,
   }));
 }
@@ -36,19 +25,17 @@ function recordsToLog(
 export default function ActivityTable() {
   const [tab, setTab] = useState<Tab>("eventos");
 
-  const eventsQ = useEvents(20);
+  const eventsQ   = useEvents(20);
   const commandsQ = useCommands(20);
-  const logsQ = useActuatorLogs(20);
+  const logsQ     = useActuatorLogs(20);
 
-  const activeQuery =
-    tab === "eventos" ? eventsQ : tab === "comandos" ? commandsQ : logsQ;
-  const rows: LogEntry[] = activeQuery.data
-    ? recordsToLog(activeQuery.data)
-    : [];
+  const activeQuery = tab === "eventos" ? eventsQ : tab === "comandos" ? commandsQ : logsQ;
+  const rows: LogEntry[] =
+    activeQuery.data ? recordsToLog(activeQuery.data) : [];
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: "eventos", label: "Eventos" },
-    { id: "comandos", label: "Comandos" },
+    { id: "eventos",    label: "Eventos"    },
+    { id: "comandos",   label: "Comandos"   },
     { id: "actuadores", label: "Actuadores" },
   ];
 
@@ -100,10 +87,7 @@ export default function ActivityTable() {
           <tbody className="divide-y divide-edge font-mono">
             {rows.length === 0 ? (
               <tr>
-                <td
-                  colSpan={5}
-                  className="px-5 py-6 text-center text-dim2 text-[12px]"
-                >
+                <td colSpan={5} className="px-5 py-6 text-center text-dim2 text-[12px]">
                   Sin registros disponibles
                 </td>
               </tr>

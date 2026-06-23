@@ -22,9 +22,5 @@ async def generate_csv(service: Arm64Service = Depends(get_arm64_service)) -> di
 
 
 @router.post("/run")
-async def run_arm64(
-    col: str = Query(default="temp"),
-    module: str | None = Query(default=None),
-    service: Arm64Service = Depends(get_arm64_service),
-) -> dict[str, Any]:
-    return await service.run(col=col, module=module)
+async def run_arm64(service: Arm64Service = Depends(get_arm64_service)) -> dict[str, Any]:
+    return await service.run_modules()

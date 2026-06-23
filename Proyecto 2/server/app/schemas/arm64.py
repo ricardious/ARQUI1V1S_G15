@@ -1,5 +1,3 @@
-from typing import Any
-
 from pydantic import BaseModel
 
 
@@ -11,4 +9,4 @@ class CsvGenerationResponse(BaseModel):
 
 class Arm64RunResponse(BaseModel):
     message: str
-    results: dict[str, Any]
+    results: dict[str, str]

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { arm64Api, type Arm64RunOptions } from "./api";
+import { arm64Api } from "./api";
 import { arm64Keys } from "./keys";
 
 export function useGenerateCsv() {
@@ -11,7 +11,7 @@ export function useGenerateCsv() {
 export function useRunArm64() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (opts: Arm64RunOptions = {}) => arm64Api.run(opts),
+    mutationFn: arm64Api.run,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: arm64Keys.all() });
     },
