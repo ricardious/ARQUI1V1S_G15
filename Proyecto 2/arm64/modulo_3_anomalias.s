@@ -1,456 +1,223 @@
-// GreenPi Grupo 15 - Modulo 3: Deteccion de Anomalias
-// Responsable: Kevin Rodrigo Sandoval Hernandez
-//
-// Entrada:
-//   ../data/lecturas.csv
-//
-// Salida:
-//   ../resultados_arm64/resultado_anomalias.txt
-//
-// Algoritmo:
-//   1. Leer CSV completo generado por backend.
-//   2. Saltar encabezado.
-//   3. Procesar hasta 30 registros, 9 columnas por registro.
-//   4. Para cada columna sensora (TEMP, HUM_AIRE, HUM_SUELO_1,
-//      LUZ, GAS):
-//      a. Calcular media aritmetica de los valores.
-//      b. Calcular Desviacion Absoluta Media (MAD):
-//         MAD = sum(|valor - media|) / n
-//      c. Umbral de anomalia = MAD * 3.
-//      d. Marcar como anomalia todo valor donde
-//         |valor - media| > umbral.
-//   5. Reportar anomalias por columna y total general.
-//
-// Notas:
-//   - ARM64 trabaja solo con enteros.
-//   - No hay datos simulados.
-//   - Si el CSV tiene menos de 30 registros, se procesan los disponibles.
-//   - La MAD (Mean Absolute Deviation) es diferente de la desviacion
-//     estandar (modulo 2) y de la media ponderada (modulo 1).
+.data
 
-.equ CSV_MAX_BYTES, 8192
-.equ MAX_RECORDS, 30
-.equ COLS_PER_RECORD, 9
-.equ MAD_MULTIPLIER, 3
+msg_module:
+    .ascii "MODULE=ANOMALY_DETECTION\n" //Etiqueta para identificar el módulo
+    len_msg_module = . - msg_module
 
-.section .rodata
-msg_title:
-    .asciz "Modulo 3 - Deteccion de Anomalias\n"
-msg_responsable:
-    .asciz "Responsable: Kevin Rodrigo Sandoval Hernandez\n"
-msg_records:
-    .asciz "Registros procesados: "
-msg_total_title:
-    .asciz "\nTotal de anomalias detectadas: "
-msg_col_temp:
-    .asciz "\n--- TEMP ---\n"
-msg_col_hum_aire:
-    .asciz "\n--- HUM_AIRE ---\n"
-msg_col_hum_s1:
-    .asciz "\n--- HUM_SUELO_1 ---\n"
+msg_total:
+    .ascii "TOTAL_VALUES="          //Etiqueta para identificar el total de valores
+    len_msg_total = . - msg_total
 
-msg_col_luz:
-    .asciz "\n--- LUZ ---\n"
-msg_col_gas:
-    .asciz "\n--- GAS ---\n"
 msg_mean:
-    .asciz "Media: "
-msg_mad:
-    .asciz "MAD: "
+    .ascii "MEAN="                 //Etiqueta para identificar la media
+    len_msg_mean = . - msg_mean
+
+msg_stddev:
+    .ascii "STD_DEV="               //Etiqueta para identificar la desviación estándar
+    len_msg_stddev = . - msg_stddev
+
 msg_anomalies:
-    .asciz "Anomalias: "
-msg_regs:
-    .asciz "Registros: "
-msg_comma:
-    .asciz ", "
-msg_none:
-    .asciz "ninguno"
-msg_open_csv_error:
-    .asciz "ERROR: no se pudo abrir ../data/lecturas.csv\n"
-msg_read_error:
-    .asciz "ERROR: no se pudo leer ../data/lecturas.csv\n"
-msg_open_result_error:
-    .asciz "ERROR: no se pudo crear ../resultados_arm64/resultado_anomalias.txt\n"
+    .ascii "ANOMALIES="             //Etiqueta para identificar el número de anomalías
+    len_msg_anomalies = . - msg_anomalies
 
-.section .bss
-.align 3
-csv_buffer:
-    .skip CSV_MAX_BYTES
-col_array:
-    .skip 8 * MAX_RECORDS
-anomaly_indices:
-    .skip 8 * MAX_RECORDS
+msg_risk:
+    .ascii "SYSTEM_RISK="            //Etiqueta para identificar el nivel de riesgo
+    len_msg_risk = . - msg_risk
 
-.section .text
-.global _start
-.extern open_csv_read
-.extern open_anomalias_write
-.extern read_fd
-.extern close_fd
-.extern write_cstr
-.extern write_newline
-.extern write_uint
-.extern skip_header
-.extern load_column_30
-.extern count_records
-.extern exit_program
+risk_normal:
+    .ascii "NORMAL\n"               //Etiqueta para identificar el nivel de riesgo normal
+    len_risk_normal = . - risk_normal
 
-// ---------------------------------------------------------------------------
-// Registros persistentes del modulo:
-//   x19 = fd CSV (se salva en stack al entrar al bucle de columnas)
-//   x20 = media de la columna actual (reutiliza buffer_start)
-//   x21 = buffer end
-//   x22 = post-header pointer
-//   x23 = MAD de la columna actual (reutiliza record_count)
-//   x24 = fd resultado
-//   x25 = total anomalias (acumulado entre columnas)
-//   x26 = indice de columna actual (1..3, 5..6)
-//   x27 = cantidad de valores en la columna actual
-// ---------------------------------------------------------------------------
+risk_medium:
+    .ascii "MEDIUM\n"               //Etiqueta para identificar el nivel de riesgo medio
+    len_risk_medium = . - risk_medium
+
+risk_high:
+    .ascii "HIGH\n"                 //Etiqueta para identificar el nivel de riesgo alto
+    len_risk_high = . - risk_high
+
+.text               // Incluir el archivo utils.s para utilizar sus funciones
+.include "utils.s"  // arm64/utils.s
+.global _start        
 
 _start:
-    bl open_csv_read
-    cmp x0, #0
-    b.lt fail_open_csv
-    mov x19, x0
+    // obtener columna desde argumento
+    bl get_column_arg
+    add x11, x11, #1 // ajustar columna a base 1 (columna 1 = columna 0 en el CSV)
 
-    ldr x1, =csv_buffer
-    mov x2, #CSV_MAX_BYTES
-    bl read_fd
-    cmp x0, #0
-    b.lt fail_read_csv
+    // leer columna del CSV y guardarla en stack
+    bl read_column_to_stack
 
-    ldr x20, =csv_buffer
-    add x21, x20, x0
+    // guardar salidas
+    mov x24, x0 // inicio de datos en stack
+    mov x25, x1 // limite final de datos
+    mov x26, x2 // salir cantidad de datos leidos
+    mov x27, x3 // posicion para restaurar el stack
 
-    mov x0, x20
-    mov x1, x21
-    bl skip_header
-    mov x22, x0
+    bl open_anomalias_write // abrir archivo de salida para escribir resultados
+    mov x20, x0 // fd de salida(resultado)
 
-    mov x0, x22
-    mov x1, x21
-    bl count_records
-    mov x23, x0
+    mov x0, x20 // fd de salida
+    ldr x1, =msg_module // mensaje de módulo
+    mov x2, len_msg_module // longitud del mensaje de módulo
+    bl write_text // escribir mensaje de módulo en archivo de salida
 
-    bl open_anomalias_write
-    cmp x0, #0
-    b.lt fail_open_result
-    mov x24, x0
+    mov x0, x20 // fd de salida
+    ldr x1, =msg_total // mensaje de total de valores
+    mov x2, len_msg_total // longitud del mensaje de total de valores
+    bl write_text // escribir mensaje de total de valores en archivo de salida
 
-    // ---- Escribir encabezado del reporte ----
-    mov x0, x24
-    ldr x1, =msg_title
-    bl write_cstr
-    mov x0, x24
-    ldr x1, =msg_responsable
-    bl write_cstr
-    mov x0, x24
-    ldr x1, =msg_records
-    bl write_cstr
-    mov x0, x24
-    mov x1, x23
-    bl write_uint
-    mov x0, x24
-    bl write_newline
+    mov x0, x26 // cantidad de datos (total_values)
+    mov x1, x20 // fd de salida
+    bl write_uint // escribir total_values en archivo de salida
 
-    // ---- Salvar fd CSV en stack para reutilizar x19 en el bucle ----
-    stp x19, xzr, [sp, #-16]!
+    mov x0, x20 // fd de salida
+    bl write_newline // escribir nueva línea en archivo de salida
 
-    // ---- Inicializar contadores ----
-    mov x25, #0          // total anomalias
-    mov x26, #1          // columna inicial = 1 (TEMP)
+    //Cacular media
+    mov x28, #0 //acumulador para la suma de los valores
+    mov x9, x24 //puntero actual al primer valor en el stack
 
-// ===================================================================
-// Bucle principal: procesa columnas 1..3, 5..6 (salta Area 2)
-// ===================================================================
-column_loop:
-    cmp x26, #7
-    b.hs write_summary
+calc_mean_loop:
+    cmp x9, x25 //comprobar si se han procesado todos los valores
+    b.ge calc_mean_done //si se han procesado todos los valores, salir del bucle
 
-    // Cargar columna actual con load_column_30 de utils.s
-    mov x0, x22
-    mov x1, x21
-    mov x2, x26
-    ldr x3, =col_array
-    bl load_column_30
-    mov x27, x0          // x27 = cantidad de valores cargados
+    ldr x10, [x9] //cargar el valor actual desde el stack
+    add x28, x28, x10 //sumar el valor al acumulador
+    add x9, x9, #16 //mover el puntero al siguiente valor en el stack (cada valor ocupa 16 bytes)
 
-    cbz x27, next_column
+    b calc_mean_loop //repetir el bucle
 
-    // ---- Escribir nombre de la columna ----
-    mov x0, x24
-    bl select_column_name
-    bl write_cstr
+calc_mean_done:
+    udiv x19, x28, x26 //dividir la suma total por el número de valores para obtener la media
 
-    // ---- Calcular media ----
-    ldr x0, =col_array
-    mov x1, x27
-    bl sum_array
-    mov x1, x27
-    udiv x9, x0, x1
-    mov x20, x9           // x20 = media (callee-saved, sobrevive llamadas)
+    mov x0, x20 // fd de salida
+    ldr x1, =msg_mean // mensaje de media
+    mov x2, len_msg_mean // longitud del mensaje de media
+    bl write_text // escribir mensaje de media en archivo de salida
 
-    // Escribir "Media: "
-    mov x0, x24
-    ldr x1, =msg_mean
-    bl write_cstr
-    mov x0, x24
-    mov x1, x20
-    bl write_uint
-    mov x0, x24
-    bl write_newline
+    mov x0, x19 // media calculada
+    mov x1, x20 // fd de salida
+    bl write_uint // escribir media en archivo de salida
 
-    // ---- Calcular MAD (Desviacion Absoluta Media) ----
-    ldr x0, =col_array
-    mov x1, x27
-    mov x2, x20           // media (callee-saved)
-    bl mad_sum
-    mov x1, x27
-    udiv x10, x0, x1
-    mov x23, x10          // x23 = MAD (callee-saved, x23 era record_count ya usado)
+    mov x0, x20 // fd de salida
+    bl write_newline // escribir nueva línea en archivo de salida
 
-    // Escribir "MAD: "
-    mov x0, x24
-    ldr x1, =msg_mad
-    bl write_cstr
-    mov x0, x24
-    mov x1, x23
-    bl write_uint
-    mov x0, x24
-    bl write_newline
+    mov x9, x24 //puntero actual al primer valor en el stack
+    mov x28, #0 //acumulador para la suma de las diferencias al cuadrado
 
-    // ---- Calcular umbral = MAD * 3 ----
-    mov x11, #MAD_MULTIPLIER
-    mul x11, x23, x11
-    mov x19, x11          // x19 = umbral (callee-saved, fd CSV esta en stack)
+calc_var_loop:
+    cmp x9, x25 //comprobar si se han procesado todos los valores
+    b.ge calc_var_done //si se han procesado todos los valores, salir del bu
 
-    // ---- Detectar anomalias y guardar indices ----
-    // Fase 1: escanear y almacenar indices en anomaly_indices
-    mov x12, #0           // indice dentro del arreglo
-    mov x28, #0           // contador de anomalias de esta columna
-    ldr x13, =anomaly_indices
+    ldr x10, [x9] //cargar el valor actual desde el stack
+    sub x10, x10, x19 //restar la media al valor actual (diff = valor - media)
+    mul x10, x10, x10 //elevar la diferencia al cuadrado (diff^2)
+    add x28, x28, x10 //sumar la diferencia al cuadrado al acumulador
+    add x9, x9, #16 //mover el puntero al siguiente valor en el stack (cada valor ocupa 16 bytes)
+    b calc_var_loop //repetir el bucle
 
-detect_loop:
-    cmp x12, x27
-    b.hs detect_done
+calc_var_done:
+    udiv x21, x28, x26 //variable = suma de diferencias al cuadrado / número de valores
+    
+    mov x0, x21 // variable (varianza)
+    bl integer_sqrt 
+    mov x22, x0 // desviación estándar
 
-    ldr x0, =col_array
-    ldr x14, [x0, x12, lsl #3]   // valor = col_array[indice]
+    mov x0, x20 // fd de salida
+    ldr x1, =msg_stddev // mensaje de desviación estándar
+    mov x2, len_msg_stddev // longitud del mensaje de desviación estándar
+    bl write_text // escribir mensaje de desviación estándar en archivo de salida
 
-    // diff = |valor - media|
-    subs x15, x14, x20
-    b.ge diff_non_neg
-    neg x15, x15
-diff_non_neg:
+    mov x0, x22 // desviación estándar calculada
+    mov x1, x20 // fd de salida
+    bl write_uint // escribir desviación estándar en archivo de salida
+    mov x0, x20 // fd de salida
+    bl write_newline // escribir nueva línea en archivo de salida
 
-    // Si diff > umbral  =>  ANOMALIA
-    cmp x15, x19
-    b.le not_anomaly
+    // Detectar anomalías
+    mov x9, x24 //puntero actual al primer valor en el stack
+    mov x23, #0 //contador de anomalías
 
-    // Guardar indice (1-based) en anomaly_indices
-    add x16, x12, #1
-    str x16, [x13, x28, lsl #3]
-    add x28, x28, #1
+    mov x4, #2 //factor de desviación estándar para determinar anomalías (2 * std_dev)
+    mul x4, x22, x4 // calcular el umbral de anomalía (2 * std_dev)
+anomaly_loop:
+    cmp x9, x25 //comprobar si se han procesado todos los valores
+    b.ge anomaly_done // si se han procesado todos los valores, salir del bucle
+    ldr x10, [x9] // cargar el valor actual desde el stack
+    sub x5, x10, x19 // calcular la diferencia entre el valor y la media (diff = X - media)
+    cmp x5, #0 // comparar la diferencia con 0
+    b.ge abs_ok // si la diferencia es positiva, continuar
+    neg x5, x5 // si la diferencia es negativa, tomar el valor absoluto (diff = |X - media|)
+
+abs_ok:
+    cmp x5, x4 // comparar la diferencia absoluta con el umbral de anomalía (|diff| >= 2 * std_dev)
+    b.lt not_anomaly // si la diferencia es menor que el umbral, no es una anomalía
+    add x23, x23, #1 // incrementar el contador de anomalías
 
 not_anomaly:
-    add x12, x12, #1
-    b detect_loop
+    add x9, x9, #16 // mover el puntero al siguiente valor en el stack (cada valor ocupa 16 bytes)
+    b anomaly_loop // repetir el bucle
 
-detect_done:
-    // x28 = cantidad de anomalias en esta columna
+anomaly_done:
+    mov x0, x20 // fd de salida
+    ldr x1, =msg_anomalies // mensaje de número de anomalías
+    mov x2, len_msg_anomalies // longitud del mensaje de número de anomalías
+    bl write_text // escribir mensaje de número de anomalías en archivo de salida
+    mov x0, x23 // número de anomalías detectadas
+    mov x1, x20 // fd de salida
+    bl write_uint // escribir número de anomalías en archivo de salida
+    mov x0, x20 // fd de salida
+    bl write_newline // escribir nueva línea en archivo de salida
 
-    // ---- Escribir "Anomalias: " + contador ----
-    mov x0, x24
-    ldr x1, =msg_anomalies
-    bl write_cstr
-    mov x0, x24
-    mov x1, x28
-    bl write_uint
-    mov x0, x24
-    bl write_newline
+    //Clasificar riesgo del sistema
+    mov x0, x20 // fd de salida
+    ldr x1, =msg_risk // mensaje de nivel de riesgo
+    mov x2, len_msg_risk // longitud del mensaje de nivel de riesgo
+    bl write_text // escribir mensaje de nivel de riesgo en archivo de salida
 
-    // ---- Escribir "Registros: " + lista de indices (o "ninguno") ----
-    mov x0, x24
-    ldr x1, =msg_regs
-    bl write_cstr
+    cbz x23, risk_normal_case // si no hay anomalías, riesgo normal
+    
+    cmp x23, #4 // si hay 4 o mas anomalías, riesgo alto
+    b.ge risk_high_case // si hay 4 o más anomalías, riesgo alto
 
-    cbz x28, write_none
+    ldr x1, =risk_medium // mensaje de riesgo medio
+    mov x2, len_risk_medium // longitud del mensaje de riesgo medio
+    b write_risk_label // escribir mensaje de riesgo medio en archivo de salida
 
-    // Escribir indices separados por coma
-    mov x12, #0
-    ldr x13, =anomaly_indices
+risk_high_case:
+    ldr x1, =risk_high // mensaje de riesgo alto
+    mov x2, len_risk_high // longitud del mensaje de riesgo alto
+    b write_risk_label // escribir mensaje de riesgo alto en archivo de salida
 
-write_indices_loop:
-    cmp x12, x28
-    b.hs indices_done
+risk_normal_case:
+    ldr x1, =risk_normal // mensaje de riesgo normal
+    mov x2, len_risk_normal // longitud del mensaje de riesgo normal
 
-    // Coma antes del segundo en adelante
-    cbz x12, write_one_index
-    mov x0, x24
-    ldr x1, =msg_comma
-    bl write_cstr
+write_risk_label:
+    mov x0, x20 // fd de salida
+    bl write_text // escribir mensaje de nivel de riesgo en archivo de salida
 
-write_one_index:
-    ldr x1, [x13, x12, lsl #3]
-    mov x0, x24
-    bl write_uint
-    add x12, x12, #1
-    b write_indices_loop
+    mov x0, x20 // fd de salida
+    bl close_output_file // cerrar archivo de salida
 
-indices_done:
-    mov x0, x24
-    bl write_newline
-    b after_regs
+    mov sp, x27 // restaurar el stack pointer
 
-write_none:
-    mov x0, x24
-    ldr x1, =msg_none
-    bl write_cstr
-    mov x0, x24
-    bl write_newline
+exit_ok:
+    mov x0, #0 // código de salida 0 (éxito)
+    mov x8, #93 // syscall exit
+    svc #0
 
-after_regs:
-    add x25, x25, x28    // acumular al total
+integer_sqrt:
+    mov x1, #1 // inicializar el resultado con 1
+sqrt_loop:
+    mul x2, x1, x1 // calcular el cuadrado del resultado actual
+    cmp x2, x0 // comparar el cuadrado con el número original
+    b.hi sqrt_done // si el cuadrado es mayor que el número original, salir del bucle
+    add x1, x1, #1 // incrementar el resultado
+    b sqrt_loop // repetir el bucle
 
-next_column:
-    cmp x26, #3
-    b.eq skip_area2
-    add x26, x26, #1
-    b column_loop
-skip_area2:
-    mov x26, #5
-    b column_loop
-
-// ===================================================================
-// Escribir total general y terminar
-// ===================================================================
-write_summary:
-    mov x0, x24
-    ldr x1, =msg_total_title
-    bl write_cstr
-    mov x0, x24
-    mov x1, x25
-    bl write_uint
-    mov x0, x24
-    bl write_newline
-
-    // Restaurar fd CSV desde stack
-    ldp x19, xzr, [sp], #16
-
-    mov x0, x19
-    bl close_fd
-
-    mov x0, x24
-    bl close_fd
-
-    mov x0, #0
-    bl exit_program
-
-// ===================================================================
-// select_column_name -- devuelve en x1 el puntero al nombre de
-//   la columna segun x26 (1..3, 5..6).
-// ===================================================================
-select_column_name:
-    cmp x26, #1
-    b.eq scn_temp
-    cmp x26, #2
-    b.eq scn_hum_aire
-    cmp x26, #3
-    b.eq scn_hum_s1
-    cmp x26, #5
-    b.eq scn_luz
-    ldr x1, =msg_col_gas
-    ret
-scn_temp:
-    ldr x1, =msg_col_temp
-    ret
-scn_hum_aire:
-    ldr x1, =msg_col_hum_aire
-    ret
-scn_hum_s1:
-    ldr x1, =msg_col_hum_s1
-    ret
-scn_luz:
-    ldr x1, =msg_col_luz
+sqrt_done:
+    sub x0, x1, #1 // restar 1 al resultado final
     ret
 
-// ===================================================================
-// sum_array(array, count) -> sum
-//   Entradas:
-//     x0 = direccion base del arreglo
-//     x1 = cantidad de elementos
-//   Salida:
-//     x0 = suma total
-//   Registros usados: x9, x10, x11 (no necesita salvar)
-// ===================================================================
-sum_array:
-    mov x9, #0           // indice
-    mov x10, x0          // base
-    mov x11, #0          // acumulador
-sum_loop:
-    cmp x9, x1
-    b.hs sum_done
-    ldr x12, [x10, x9, lsl #3]
-    add x11, x11, x12
-    add x9, x9, #1
-    b sum_loop
-sum_done:
-    mov x0, x11
-    ret
-
-// ===================================================================
-// mad_sum(array, count, mean) -> sum of absolute deviations
-//   Entradas:
-//     x0 = direccion base del arreglo
-//     x1 = cantidad de elementos
-//     x2 = media
-//   Salida:
-//     x0 = sum(|valor - media|)
-//   Registros usados: x9, x10, x11, x12, x13 (no necesita salvar)
-// ===================================================================
-mad_sum:
-    mov x9, #0           // indice
-    mov x10, x0          // base
-    mov x11, #0          // acumulador
-    mov x12, x2          // media
-mad_loop:
-    cmp x9, x1
-    b.hs mad_done
-    ldr x13, [x10, x9, lsl #3]
-    subs x14, x13, x12   // valor - media
-    b.ge mad_non_neg
-    neg x14, x14
-mad_non_neg:
-    add x11, x11, x14
-    add x9, x9, #1
-    b mad_loop
-mad_done:
-    mov x0, x11
-    ret
-
-// ===================================================================
-// Manejadores de error
-// ===================================================================
-fail_open_csv:
-    mov x0, #2
-    ldr x1, =msg_open_csv_error
-    bl write_cstr
-    mov x0, #1
-    bl exit_program
-
-fail_read_csv:
-    mov x0, x19
-    bl close_fd
-    mov x0, #2
-    ldr x1, =msg_read_error
-    bl write_cstr
-    mov x0, #1
-    bl exit_program
-
-fail_open_result:
-    mov x0, #2
-    ldr x1, =msg_open_result_error
-    bl write_cstr
-    mov x0, #1
-    bl exit_program
