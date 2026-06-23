@@ -54,7 +54,13 @@ _start:
     mov x25, x1 // x1 trae el puntero al fondo de la pila primerdato
     mov x18, x3 // x3 trae la direccion original del stack para poder restaurar la memoria al terminar el programa 
 
-
+    sub x12, x25, #16  // Calculamos la direccion del primer dato
+    ldr x22, [x12]     // Cargamos en x22 el valor inicial
+    ldp x23, x24, [x24] // x23 = ultimo valor, x24 = penultimo valor
+    
+    // El ULTIMO dato que se leyo
+    ldr x23, [x24]     // Cargamos en x23 el valor final
+    
 exit_ok:
     mov x0, #0      // Codigo de salida 0
     mov x8, #93     // Numero de syscall 
