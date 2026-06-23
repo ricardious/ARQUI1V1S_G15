@@ -77,6 +77,54 @@ _start:
     mul x10, x23, x9       // x10 = valor final * 100
     add x28, x10, x27      // x28 = proximo valor escalado x100
 
+    bl open_prediccion_write // abrimos el archivo para escribir
+    mov x20, x0 // Guardamos en x20
+
+    //escribimos el modulo
+    mov x0, x20
+    ldr x1, =msg_module
+    mov x2, len_msg_module
+    bl write_text
+
+    //escribimos el valor incial
+    mov x0, x20
+    ldr x1, =msg_initial
+    mov x2, len_msg_initial
+    bl write_text
+    
+    mov x0, x22      // Pasamos el valor inicial
+    mov x1, x20      // Pasamos la etiqueta del archivo
+    bl write_int     // Imprime el numero
+    
+    mov x0, x20
+    bl write_newline // salto de linea
+
+    //escribimos el valor final
+    mov x0, x20
+    ldr x1, =msg_final
+    mov x2, len_msg_final
+    bl write_text
+    
+    mov x0, x23      // Pasamos el valor final
+    mov x1, x20
+    bl write_int
+    
+    mov x0, x20
+    bl write_newline
+
+    // Escribimos la diferencia total 
+    mov x0, x20
+    ldr x1, =msg_diff
+    mov x2, len_msg_diff
+    bl write_text
+    
+    mov x0, x26      // Pasamos la diferencia total 
+    mov x1, x20
+    bl write_int
+    
+    mov x0, x20
+    bl write_newline
+
 
 
 exit_ok:
