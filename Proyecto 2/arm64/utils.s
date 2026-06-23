@@ -86,6 +86,8 @@ atoi_done:
 // Espera ejecutar el modulo asi:
 // ./modulo 2
 // Salida:
+// x13 = linea inicial
+// x14 = linea final
 // x11 = columna seleccionada
 get_column_arg:
     // guardar direccion de retorno
@@ -96,7 +98,7 @@ get_column_arg:
     ldr x0, [x29, #16]
 
     // validar que exista argv[1]
-    cmp x0, #2
+    cmp x0, #4      //ahora tambien validara arg[2] y 3 que son las lineas para el rango
     blt arg_error
 
     // argv[1] esta en [sp + 16] original
@@ -109,7 +111,17 @@ get_column_arg:
     // si no encontro numero, error
     cbz x7, arg_error
 
-    // x11 = columna seleccionada
+    // linea inicial
+    mov x13, x10
+
+    ldr x21, [x29, #40]     // línea final
+    bl atoi_csv
+    cbz x7, arg_error
+    mov x14, x10            // x14 = linea final
+
+    ldr x21, [x29, #48]     // columna
+    bl atoi_csv
+    cbz x7, arg_error
     mov x11, x10
 
     // recuperar direccion original de retorno
@@ -326,7 +338,16 @@ skip_to_next_line:
 // marca el final de una funcion 
 utils_skip_done:
     ret
+//x15 = contador de fila
+saltar_linea:   //salta la fila actuañ
+    bl skip_to_next_line
 
+    add x15, x15, #1    // contador de linea/fila ++
+
+    cmp w23, '$'    //w23 = ultimo byte leido 
+    beq read_column_return
+
+    b read_column_process_line
 //Salto de columna
 saltar_columna:
     ldrb w23, [x21], #1 
@@ -353,6 +374,9 @@ save_number_to_stack:
 // leer columna especifica de un archivo CSV y guardarla en el stack
 // Entrada:
 //  x11 = numero de columna a leer
+// x13 = linea inicial
+// x14 = linea final
+//x15 = contador de fila
 // Salida:
 //  x0 = inicio de datos en stack
 //  x1 = limite sfinal de datos
@@ -390,7 +414,16 @@ read_column_to_stack:
     cmp w23, '$'
     beq read_column_return
 
+    mov x15, #1 
+
 read_column_process_line:
+    //verificamos que existan las filas
+    cmp x15, x13    // linea actual < linia inial
+    blt saltar_linea //salto porque todavia no estoy en la linea que quiero
+
+    cmp x15, x14    // si linea actual > linea final
+    bgt read_column_return //como es mayor finalizo
+
     mov x12, #1             // columna actual
 
 read_column_find_column:
@@ -403,11 +436,14 @@ read_column_find_column:
     beq read_column_return
 
     cmp w23, #10
-    beq read_column_process_line
-
+    beq next_line_no_column //llego al final antes de encontrar la columna, por eso pasa a la siguiente fila
     // si fue coma, avanzar contador de columna
     add x12, x12, #1
     b read_column_find_column
+
+next_line_no_column:    //continua a la siguiente fila si la column no existe en mi fila actual
+    add x15, x15, #1
+    b read_column_process_line
 
 read_column_read_value:
     bl atoi_csv
@@ -423,15 +459,21 @@ read_column_after_value:
     beq read_column_return
 
     cmp w23, #10
-    beq read_column_process_line
+    bne continue_after_value
 
-    // saltar el resto de la fila
+    add x15, x15, #1
+    b read_column_process_line
+
+continue_after_value: 
+    //salta el resto de la fila actual
     bl skip_to_next_line
+
+    add x15, x15, #1    //paso a la sig fila
 
     cmp w23, '$'
     beq read_column_return
 
-    b read_column_process_line
+    b read_column_process_line  // se procesa la siguiente fila
 
 read_column_return:
     mov x0, sp              // inicio de datos
