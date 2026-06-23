@@ -159,6 +159,24 @@ avg_positive:
     mov x2, #1
     bl write_text
 
+    cmp x17, #10
+    bge avg_print_frac
+    
+    // Imprimir 0 a la izquierda
+    mov x0, x20
+    ldr x1, =str_zero
+    mov x2, #1
+    bl write_text
+
+avg_print_frac:
+    // Imprimir la fraccion
+    mov x0, x17
+    mov x1, x20
+    bl write_uint
+
+    mov x0, x20
+    bl write_newline
+
 
 
 exit_ok:
