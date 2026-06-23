@@ -26,7 +26,7 @@ $(MEDIA_BIN): $(MEDIA_OBJ) $(UTILS_OBJ)
 	$(LD) -o $@ $^
 
 run-media: $(MEDIA_BIN)
-	$(MEDIA_BIN) $(COL)
+	$(MEDIA_BIN) $(INI) $(FIN) $(COL)
 
 clean:
 	rm -rf $(BUILD_DIR)

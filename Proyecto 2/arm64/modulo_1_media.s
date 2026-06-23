@@ -47,9 +47,13 @@ _start:
     //se lee la columna y se guarda 
     bl read_column_to_stack
 	mov x24, x0	//direccion del primer dato
-	add x24, x24, #(29*16)  //multiplico para llegar al ultimo dato, osae dato 1 porque es una pila
 	mov x25, x2	// cantidad de datos (los 30)
 	mov x26, x3	//direccion para restaurar stack
+
+	mov x4, x25
+	sub x4, x4, #1
+	lsl x4, x4, #4
+	add x24,x24, x4	// apunta al ultimo dato guardado
 
     //se abre el archivo resultado_media.txt
     bl open_media_write
@@ -58,18 +62,18 @@ _start:
 	//inicializo variables 
 	mov x21, #0		//sum_x = suma de los datos
 	mov x22, #0		//suma pondera
-	mov x23, #0		//indice
+	mov x23, x13	//indice que ahora empieza con la linea 
 	mov x17, #0		//peso
 
 calculo_loop:
-	cmp x23, x25
-	b.hs calcular_media	//si datp > n procede a calcular la media
+	cmp x23, x14
+	bgt calcular_media	//si datp > n procede a calcular la media
 
 	ldr x27, [x24], #-16	// carga el dato apuntado por x24 en x27
 	//  -16, mueve al siguiente dato a procesar, dato 2, el movimiento ocurre despues de cargar el dato
 	add x21, x21, x27
-	//peso actual 
-	add x28, x23, #1
+	//peso actual = numero de la fila 
+	mov x28, x23
 	//x19 = dato * peso
 	mul x19, x28, x27
 	//suma ponderada
