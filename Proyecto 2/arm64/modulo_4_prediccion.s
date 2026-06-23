@@ -177,6 +177,59 @@ avg_print_frac:
     mov x0, x20
     bl write_newline
 
+   
+    // IMPRIMIR prediccion siguiente 
+    mov x0, x20
+    ldr x1, =msg_next
+    mov x2, len_msg_next
+    bl write_text
+
+    mov x15, x28               // Cargar prediccion siguiente
+    cmp x15, #0                // Comprobar si es negativo
+    bge next_positive
+
+    // hacerlo positivo
+    mov x0, x20
+    ldr x1, =str_minus
+    mov x2, #1
+    bl write_text
+    neg x15, x15
+
+next_positive:
+    mov x2, #100
+    udiv x16, x15, x2          // x16 parte entera
+    msub x17, x16, x2, x15     // x17 parte decimal
+
+    // Imprimir parte entera
+    mov x0, x16
+    mov x1, x20
+    bl write_uint
+
+    // Imprimir punto
+    mov x0, x20
+    ldr x1, =str_dot
+    mov x2, #1
+    bl write_text
+
+    // Revisar si el decimal es menor a 10 
+    cmp x17, #10
+    bge next_print_frac
+    
+    // Imprimir 0 a la izquierda
+    mov x0, x20
+    ldr x1, =str_zero
+    mov x2, #1
+    bl write_text
+
+next_print_frac:
+    // Imprimir la fraccion
+    mov x0, x17
+    mov x1, x20
+    bl write_uint
+
+    mov x0, x20
+    bl write_newline
+
 
 
 exit_ok:
