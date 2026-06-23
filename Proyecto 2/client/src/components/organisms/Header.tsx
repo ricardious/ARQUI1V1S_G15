@@ -1,28 +1,78 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/hooks/useAuth";
 
 const SEARCH_ITEMS = [
-  { label: "Dashboard", detail: "Estado global, temperatura, invernadero 3D", target: "dashboard" },
-  { label: "Estado global", detail: "Estado global del sistema", target: "dashboard" },
-  { label: "Gráficas históricas", detail: "Temperatura, humedad, suelo, luz y gas", target: "dashboard" },
-  { label: "Temperatura", detail: "Gráfica histórica y lectura actual", target: "dashboard" },
+  {
+    label: "Dashboard",
+    detail: "Estado global, temperatura, invernadero 3D",
+    target: "dashboard",
+  },
+  {
+    label: "Estado global",
+    detail: "Estado global del sistema",
+    target: "dashboard",
+  },
+  {
+    label: "Gráficas históricas",
+    detail: "Temperatura, humedad, suelo, luz y gas",
+    target: "dashboard",
+  },
+  {
+    label: "Temperatura",
+    detail: "Gráfica histórica y lectura actual",
+    target: "dashboard",
+  },
   { label: "Humedad ambiental", detail: "Sensor DHT22", target: "sensores" },
-  { label: "Áreas de cultivo", detail: "Zona 1, Zona 2, humedad de suelo", target: "areas" },
+  {
+    label: "Áreas de cultivo",
+    detail: "Zona 1, Zona 2, humedad de suelo",
+    target: "areas",
+  },
   { label: "Humedad suelo Área 1", detail: "Zona 1", target: "areas" },
   { label: "Humedad suelo Área 2", detail: "Zona 2", target: "areas" },
-  { label: "Sensores", detail: "Temperatura, humedad, luz, gas, suelo", target: "sensores" },
+  {
+    label: "Sensores",
+    detail: "Temperatura, humedad, luz, gas, suelo",
+    target: "sensores",
+  },
   { label: "Luz", detail: "Sensor LDR", target: "sensores" },
   { label: "Gas", detail: "Sensor MQ-2", target: "sensores" },
-  { label: "Actuadores", detail: "Riego, ventilación, luces, alarma", target: "actuadores" },
-  { label: "Riego", detail: "Control remoto y selección de área", target: "actuadores" },
-  { label: "Ventilación", detail: "Control del ventilador", target: "actuadores" },
+  {
+    label: "Actuadores",
+    detail: "Riego, ventilación, luces, alarma",
+    target: "actuadores",
+  },
+  {
+    label: "Riego",
+    detail: "Control remoto y selección de área",
+    target: "actuadores",
+  },
+  {
+    label: "Ventilación",
+    detail: "Control del ventilador",
+    target: "actuadores",
+  },
   { label: "Iluminación", detail: "Control de luces", target: "actuadores" },
-  { label: "Alarma / Buzzer", detail: "Silenciar alarma", target: "actuadores" },
-  { label: "Historial", detail: "Eventos, comandos y actuadores", target: "historial" },
+  {
+    label: "Alarma / Buzzer",
+    detail: "Silenciar alarma",
+    target: "actuadores",
+  },
+  {
+    label: "Historial",
+    detail: "Eventos, comandos y actuadores",
+    target: "historial",
+  },
   { label: "Eventos", detail: "Actividad reciente", target: "historial" },
   { label: "Comandos", detail: "Comandos publicados", target: "historial" },
-  { label: "Análisis ARM64", detail: "Media, varianza, anomalías, predicción, tendencia", target: "arm64" },
+  {
+    label: "Análisis ARM64",
+    detail: "Media, varianza, anomalías, predicción, tendencia",
+    target: "arm64",
+  },
   { label: "ARM64", detail: "Resultados de ensamblador", target: "arm64" },
 ];
 
@@ -34,7 +84,9 @@ function normalize(value: string): string {
 }
 
 /** Organism: cabecera superior. */
-export default function Header() {
+export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
+  const router = useRouter();
+  const { logout } = useAuth();
   const searchRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
@@ -48,7 +100,9 @@ export default function Header() {
   }, [query]);
 
   const goTo = (target: string) => {
-    document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document
+      .getElementById(target)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
     setQuery("");
     setFocused(false);
   };
@@ -66,6 +120,26 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-40 flex items-center gap-4 px-5 sm:px-8 py-4 border-b border-edge bg-ink/80 backdrop-blur-xl">
+      <button
+        type="button"
+        onClick={onMenuClick}
+        aria-label="Abrir menú de navegación"
+        className="-ml-1 grid size-9 shrink-0 place-items-center rounded-xl border border-edge bg-panel text-dim hover:text-white lg:hidden"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          className="size-5"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </svg>
+      </button>
       <div className="min-w-0">
         <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight">
           Invernadero Inteligente
@@ -105,7 +179,9 @@ export default function Header() {
         {focused && (
           <div className="absolute left-0 right-0 top-full mt-2 overflow-hidden rounded-xl border border-edge bg-panel shadow-2xl">
             {results.length === 0 ? (
-              <p className="px-3 py-3 text-[12px] text-dim2">Sin coincidencias</p>
+              <p className="px-3 py-3 text-[12px] text-dim2">
+                Sin coincidencias
+              </p>
             ) : (
               results.map((item) => (
                 <button
@@ -114,8 +190,12 @@ export default function Header() {
                   onClick={() => goTo(item.target)}
                   className="block w-full border-b border-edge px-3 py-2.5 text-left last:border-b-0 hover:bg-white/5"
                 >
-                  <span className="block text-[13px] font-medium text-white">{item.label}</span>
-                  <span className="block text-[11px] text-dim2">{item.detail}</span>
+                  <span className="block text-[13px] font-medium text-white">
+                    {item.label}
+                  </span>
+                  <span className="block text-[11px] text-dim2">
+                    {item.detail}
+                  </span>
                 </button>
               ))
             )}
@@ -131,6 +211,31 @@ export default function Header() {
           <p className="text-[10px] text-dim2">ARQUI1V1S</p>
         </div>
       </div>
+      <button
+        type="button"
+        onClick={() => {
+          logout();
+          router.replace("/login");
+        }}
+        aria-label="Cerrar sesión"
+        className="flex shrink-0 items-center gap-1.5 rounded-xl border border-edge bg-panel px-2.5 py-2 text-dim transition hover:text-white"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          className="size-4"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M15 12H3m0 0 4-4m-4 4 4 4M13 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        <span className="hidden text-[12px] sm:inline">Salir</span>
+      </button>
     </header>
   );
 }
