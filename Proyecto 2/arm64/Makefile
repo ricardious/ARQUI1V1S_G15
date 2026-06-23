@@ -11,7 +11,7 @@ MEDIA_BIN := $(BUILD_DIR)/modulo_1_media
 
 all: media
 
-media: $(MEDIA_BIN)
+media: $(MEDIA_BIN)	
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
@@ -26,7 +26,7 @@ $(MEDIA_BIN): $(MEDIA_OBJ) $(UTILS_OBJ)
 	$(LD) -o $@ $^
 
 run-media: $(MEDIA_BIN)
-	$(MEDIA_BIN) $(INI) $(FIN) $(COL)
+	$(MEDIA_BIN) $(LEC) $(INI) $(FIN) $(COL)
 
 clean:
 	rm -rf $(BUILD_DIR)

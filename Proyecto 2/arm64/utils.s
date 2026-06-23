@@ -89,6 +89,7 @@ atoi_done:
 // x13 = linea inicial
 // x14 = linea final
 // x11 = columna seleccionada
+// x24 = direccion del archivo
 get_column_arg:
     // guardar direccion de retorno
     stp x29, x30, [sp, #-16]!
@@ -98,12 +99,15 @@ get_column_arg:
     ldr x0, [x29, #16]
 
     // validar que exista argv[1]
-    cmp x0, #4      //ahora tambien validara arg[2] y 3 que son las lineas para el rango
+    cmp x0, #5      //ahora tambien validara arg[2] y 3 que son las lineas para el rango
     blt arg_error
 
-    // argv[1] esta en [sp + 16] original
+    //direccion del archivo archivo
+    ldr x24, [x29, #32]
+
+    // argv[2] esta en [sp + 16] original
     // como ahora se guardo x29, se debe acceder a [x29 + 32]
-    ldr x21, [x29, #32]
+    ldr x21, [x29, #40]
 
     // convertir parametro a numero
     bl atoi_csv
@@ -114,12 +118,12 @@ get_column_arg:
     // linea inicial
     mov x13, x10
 
-    ldr x21, [x29, #40]     // línea final
+    ldr x21, [x29, #48]     // línea final
     bl atoi_csv
     cbz x7, arg_error
     mov x14, x10            // x14 = linea final
 
-    ldr x21, [x29, #48]     // columna
+    ldr x21, [x29, #56]     // columna
     bl atoi_csv
     cbz x7, arg_error
     mov x11, x10
@@ -131,7 +135,7 @@ get_column_arg:
 // Abrir archivo lecturas.csv
 open_csv_read:
     mov x0, #-100
-    ldr x1, =csv_path
+    mov x1, x24     //ahora tiene la direccion el arvhico
     mov x2, #0
     mov x3, #0
     mov x8, #56 // syscall openat
