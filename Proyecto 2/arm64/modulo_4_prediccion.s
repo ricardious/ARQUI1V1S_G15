@@ -61,6 +61,12 @@ _start:
     // El ULTIMO dato que se leyo
     ldr x23, [x24]     // Cargamos en x23 el valor final
     
+ 
+    //  TOTAL_DIFF = valor final - valor inicial
+    sub x26, x23, x22
+
+
+
 exit_ok:
     mov x0, #0      // Codigo de salida 0
     mov x8, #93     // Numero de syscall 
