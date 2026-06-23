@@ -59,7 +59,7 @@ run-media: $(MEDIA_BIN)
 	$(MEDIA_BIN) $(COL)
 
 run-varianza: $(VARIANZA_BIN)
-	$(VARIANZA_BIN) $(COL)
+	$(VARIANZA_BIN) $(INI) $(FIN) $(COL)
 
 run-anomalias: $(ANOMALIAS_BIN)
 	$(ANOMALIAS_BIN) $(COL)
