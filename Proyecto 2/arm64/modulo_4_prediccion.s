@@ -38,7 +38,7 @@ str_zero:
     .ascii "0"
 
 .text
-.include "utils.s
+.include "utils.s"
 .global _start
 
 // inicio 
@@ -56,7 +56,7 @@ _start:
 
     sub x12, x25, #16  // Calculamos la direccion del primer dato
     ldr x22, [x12]     // Cargamos en x22 el valor inicial
-    ldp x23, x24, [x24] // x23 = ultimo valor, x24 = penultimo valor
+    
     
     // El ULTIMO dato que se leyo
     ldr x23, [x24]     // Cargamos en x23 el valor final
@@ -233,6 +233,9 @@ next_print_frac:
 
     mov x0, x20
     bl close_output_file
+
+    //restaurar el stack
+    mov sp, x18 
 
 
 exit_ok:
