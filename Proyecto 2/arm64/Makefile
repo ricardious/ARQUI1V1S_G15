@@ -3,6 +3,7 @@ LD := aarch64-linux-gnu-ld
 
 BUILD_DIR := build
 
+LEC ?= ../data/lecturas.csv
 INI ?= 1
 FIN ?= 30
 COL ?= 1
@@ -59,19 +60,19 @@ $(TENDENCIA_BIN): $(TENDENCIA_OBJ) $(UTILS_OBJ)
 	$(LD) -o $@ $^
 
 run-media: $(MEDIA_BIN)
-	$(MEDIA_BIN) $(INI) $(FIN) $(COL)
+	$(MEDIA_BIN) $(LEC) $(INI) $(FIN) $(COL)
 
 run-varianza: $(VARIANZA_BIN)
-	$(VARIANZA_BIN) $(INI) $(FIN) $(COL)
+	$(VARIANZA_BIN) $(LEC) $(INI) $(FIN) $(COL)
 
 run-anomalias: $(ANOMALIAS_BIN)
-	$(ANOMALIAS_BIN) $(INI) $(FIN) $(COL)
+	$(ANOMALIAS_BIN) $(LEC) $(INI) $(FIN) $(COL)
 
 run-prediccion: $(PREDICCION_BIN)
-	$(PREDICCION_BIN) $(INI) $(FIN) $(COL)
+	$(PREDICCION_BIN) $(LEC) $(INI) $(FIN) $(COL)
 
 run-tendencia: $(TENDENCIA_BIN)
-	$(TENDENCIA_BIN) $(INI) $(FIN) $(COL)
+	$(TENDENCIA_BIN) $(LEC) $(INI) $(FIN) $(COL)
 
 run-all: run-media run-varianza run-anomalias run-prediccion run-tendencia
 
