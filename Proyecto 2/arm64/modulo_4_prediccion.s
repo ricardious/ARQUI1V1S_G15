@@ -64,6 +64,18 @@ _start:
  
     //  TOTAL_DIFF = valor final - valor inicial
     sub x26, x23, x22
+    
+    
+
+    //calculo promedio de cambio
+    mov x9, #100           // Cargamos la constante 100 
+    mul x10, x26, x9       // x10 = TOTAL_DIFF * 100
+    mov x11, #29           // x11 = N - 1
+    sdiv x27, x10, x11     // x27 = cambio escalado x100
+    
+    // calculo proximo valor
+    mul x10, x23, x9       // x10 = valor final * 100
+    add x28, x10, x27      // x28 = proximo valor escalado x100
 
 
 
