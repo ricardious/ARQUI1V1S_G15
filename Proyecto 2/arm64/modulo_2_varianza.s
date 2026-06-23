@@ -25,12 +25,14 @@ msg_std_dev:
 
 _start:
 
-    bl get_column_arg           // obtener la columna desde los argumentos de la consola
+    // obtener rangos y la columna desde los argumentos de la consola
+    // dejando x13 = linea inicial, x14 = linea final, x11 = columna
+    bl get_column_arg
     bl read_column_to_stack     // leer columna del csv y cargarla al stack
 
     // guardar los retornos de utils en registros estables
     mov x19, x0     // direccion de inicio de datos en el stack
-    mov x20, x2     // cantidad de datos leidos
+    mov x20, x2     // cantidad de datos leidos en el rango
     mov x21, x3     // posicion original para restaurar el stack
 
     // calcular media
@@ -49,7 +51,7 @@ ciclo_media:
     b ciclo_media
 
 calcular_media_final:
-    udiv x11, x10, x20
+    udiv x16, x10, x20
 
     // calcular varianza
     mov x12, #0  // acumulador de suma de diferencias al cuadrado
@@ -62,7 +64,7 @@ ciclo_varianza:
     lsl x24, x23, #4    // i*16 (x24 = numero de bytes de desplazamiento) 
     ldr x4, [x19, x24]  // cargar el dato actual del stack
 
-    sub x6, x4, x11     // x6 = x - media
+    sub x6, x4, x16     // x6 = x - media
     mul x7, x6, x6      // x7 = (x - media) al cuadrado
     add x12, x12, x7    // sumar al acumulador de la suma de cuadrados (numerador)
 
@@ -70,10 +72,10 @@ ciclo_varianza:
     b ciclo_varianza
 
 calcular_varianza_final:
-    udiv x13, x12, x20   // x13 (varianza) = suma de cuadrados / N
+    udiv x17, x12, x20   // x17 (varianza) = suma de cuadrados / N
 
     // calcular desviacion estandar (raiz cuadrada de la varianza)
-    mov x0, x13     // varianza
+    mov x0, x17     // varianza
     mov x1, #1      // iterador
 
 loop_sqrt:
@@ -90,7 +92,7 @@ loop_sqrt:
 end_loop_sqrt:
     // el add anterior deja una posicion arriba del resultado, entonces restar
     sub x1, x1, #1  // restamos uno
-    mov x14, x1     // resultado
+    mov x25, x1     // resultado
 
     // limpiar los datos temporales del stack 
     mov sp, x21
@@ -122,7 +124,7 @@ end_loop_sqrt:
     mov x2, len_msg_mean
     bl write_text
 
-    mov x0, x11          // pasar la media
+    mov x0, x16          // pasar la media
     mov x1, x15          // fd
     bl write_uint
     mov x0, x15
@@ -134,7 +136,7 @@ end_loop_sqrt:
     mov x2, len_msg_variance
     bl write_text
 
-    mov x0, x13          // pasar la varianza
+    mov x0, x17          // pasar la varianza
     mov x1, x15          // fd
     bl write_uint
     mov x0, x15
@@ -146,7 +148,7 @@ end_loop_sqrt:
     mov x2, len_msg_std_dev
     bl write_text
 
-    mov x0, x14          // pasar la desviacion estandar
+    mov x0, x25          // pasar la desviacion estandar
     mov x1, x15          // fd
     bl write_uint
     mov x0, x15
