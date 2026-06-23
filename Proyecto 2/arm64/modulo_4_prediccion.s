@@ -125,6 +125,21 @@ _start:
     mov x0, x20
     bl write_newline
 
+    //escribimos el promedio de cambio
+    mov x0, x20
+    ldr x1, =msg_avg
+    mov x2, len_msg_avg
+    bl write_text
+
+    mov x15, x27             
+    mov x2, #100
+    udiv x16, x15, x2        
+
+    // Imprimir parte entera
+    mov x0, x16
+    mov x1, x20
+    bl write_uint
+
 
 
 exit_ok:
