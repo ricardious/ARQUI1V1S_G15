@@ -80,12 +80,13 @@ _start:
 
 calc_mean_loop:
     cmp x9, x25 //comprobar si se han procesado todos los valores
-    b.ge calc_mean_done //si se han procesado todos los valores, salir del bucle
+    blt mean_body //si no se han procesado todos los valores, continuar con el bucle
+    b calc_mean_done //si se han procesado todos los valores, salir del bucle
 
+mean_body:
     ldr x10, [x9] //cargar el valor actual desde el stack
     add x28, x28, x10 //sumar el valor al acumulador
     add x9, x9, #16 //mover el puntero al siguiente valor en el stack (cada valor ocupa 16 bytes)
-
     b calc_mean_loop //repetir el bucle
 
 calc_mean_done:
@@ -108,8 +109,10 @@ calc_mean_done:
 
 calc_var_loop:
     cmp x9, x25 //comprobar si se han procesado todos los valores
-    b.ge calc_var_done //si se han procesado todos los valores, salir del bu
+    blt var_body //si no se han procesado todos los valores, continuar con el bucle
+    b calc_var_done //si se han procesado todos los valores, salir del bucle
 
+var_body:
     ldr x10, [x9] //cargar el valor actual desde el stack
     sub x10, x10, x19 //restar la media al valor actual (diff = valor - media)
     mul x10, x10, x10 //elevar la diferencia al cuadrado (diff^2)
@@ -141,18 +144,26 @@ calc_var_done:
 
     mov x4, #2 //factor de desviación estándar para determinar anomalías (2 * std_dev)
     mul x4, x22, x4 // calcular el umbral de anomalía (2 * std_dev)
+
 anomaly_loop:
     cmp x9, x25 //comprobar si se han procesado todos los valores
-    b.ge anomaly_done // si se han procesado todos los valores, salir del bucle
+    blt anomaly_body //si no se han procesado todos los valores, continuar con el bucle
+    b anomaly_done //si se han procesado todos los valores, salir del bucle
+
+anomaly_body:
     ldr x10, [x9] // cargar el valor actual desde el stack
     sub x5, x10, x19 // calcular la diferencia entre el valor y la media (diff = X - media)
     cmp x5, #0 // comparar la diferencia con 0
-    b.ge abs_ok // si la diferencia es positiva, continuar
-    neg x5, x5 // si la diferencia es negativa, tomar el valor absoluto (diff = |X - media|)
+
+    blt do_neg // si la diferencia es negativa, ir a do_neg
+    b abs_ok // si la diferencia es positiva, continuar 
+
+do_neg:
+    sub x5, xzr, x5 // si la diferencia es negativa, tomar el valor absoluto (diff = |X - media|)
 
 abs_ok:
     cmp x5, x4 // comparar la diferencia absoluta con el umbral de anomalía (|diff| >= 2 * std_dev)
-    b.lt not_anomaly // si la diferencia es menor que el umbral, no es una anomalía
+    blt not_anomaly // si la diferencia absoluta es menor que el umbral, no es una anomalía
     add x23, x23, #1 // incrementar el contador de anomalías
 
 not_anomaly:
@@ -176,11 +187,14 @@ anomaly_done:
     mov x2, len_msg_risk // longitud del mensaje de nivel de riesgo
     bl write_text // escribir mensaje de nivel de riesgo en archivo de salida
 
-    cbz x23, risk_normal_case // si no hay anomalías, riesgo normal
+    cmp x23, #0 // si no hay anomalías, riesgo normal
+    beq risk_normal_case // si no hay anomalías, riesgo normal
     
     cmp x23, #4 // si hay 4 o mas anomalías, riesgo alto
-    b.ge risk_high_case // si hay 4 o más anomalías, riesgo alto
+    blt risk_medium_case // si hay mas de 4 anomalías, riesgo medio
+    b risk_high_case // si hay 4 o más anomalías, riesgo alto
 
+risk_medium_case:
     ldr x1, =risk_medium // mensaje de riesgo medio
     mov x2, len_risk_medium // longitud del mensaje de riesgo medio
     b write_risk_label // escribir mensaje de riesgo medio en archivo de salida
@@ -213,7 +227,7 @@ integer_sqrt:
 sqrt_loop:
     mul x2, x1, x1 // calcular el cuadrado del resultado actual
     cmp x2, x0 // comparar el cuadrado con el número original
-    b.hi sqrt_done // si el cuadrado es mayor que el número original, salir del bucle
+    bgt sqrt_done // si el cuadrado es mayor que el número original, salir del bucle
     add x1, x1, #1 // incrementar el resultado
     b sqrt_loop // repetir el bucle
 
