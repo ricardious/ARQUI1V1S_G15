@@ -145,13 +145,13 @@ anomaly_loop:
     cmp x9, x25 //comprobar si se han procesado todos los valores
     b.ge anomaly_done // si se han procesado todos los valores, salir del bucle
     ldr x10, [x9] // cargar el valor actual desde el stack
-    sub x5, x10, x19 // calcular la diferencia entre el valor y la media (diff = valor - media)
+    sub x5, x10, x19 // calcular la diferencia entre el valor y la media (diff = X - media)
     cmp x5, #0 // comparar la diferencia con 0
     b.ge abs_ok // si la diferencia es positiva, continuar
-    neg x5, x5 // si la diferencia es negativa, tomar el valor absoluto
+    neg x5, x5 // si la diferencia es negativa, tomar el valor absoluto (diff = |X - media|)
 
 abs_ok:
-    cmp x5, x4 // comparar la diferencia absoluta con el umbral de anomalía
+    cmp x5, x4 // comparar la diferencia absoluta con el umbral de anomalía (|diff| >= 2 * std_dev)
     b.lt not_anomaly // si la diferencia es menor que el umbral, no es una anomalía
     add x23, x23, #1 // incrementar el contador de anomalías
 
@@ -169,6 +169,44 @@ anomaly_done:
     bl write_uint // escribir número de anomalías en archivo de salida
     mov x0, x20 // fd de salida
     bl write_newline // escribir nueva línea en archivo de salida
+
+    //Clasificar riesgo del sistema
+    mov x0, x20 // fd de salida
+    ldr x1, =msg_risk // mensaje de nivel de riesgo
+    mov x2, len_msg_risk // longitud del mensaje de nivel de riesgo
+    bl write_text // escribir mensaje de nivel de riesgo en archivo de salida
+
+    cbz x23, risk_normal_case // si no hay anomalías, riesgo normal
+    
+    cmp x23, #4 // si hay 4 o mas anomalías, riesgo alto
+    b.ge risk_high_case // si hay 4 o más anomalías, riesgo alto
+
+    ldr x1, =risk_medium // mensaje de riesgo medio
+    mov x2, len_risk_medium // longitud del mensaje de riesgo medio
+    b write_risk_label // escribir mensaje de riesgo medio en archivo de salida
+
+risk_high_case:
+    ldr x1, =risk_high // mensaje de riesgo alto
+    mov x2, len_risk_high // longitud del mensaje de riesgo alto
+    b write_risk_label // escribir mensaje de riesgo alto en archivo de salida
+
+risk_normal_case:
+    ldr x1, =risk_normal // mensaje de riesgo normal
+    mov x2, len_risk_normal // longitud del mensaje de riesgo normal
+
+write_risk_label:
+    mov x0, x20 // fd de salida
+    bl write_text // escribir mensaje de nivel de riesgo en archivo de salida
+
+    mov x0, x20 // fd de salida
+    bl close_output_file // cerrar archivo de salida
+
+    mov sp, x27 // restaurar el stack pointer
+
+exit_ok:
+    mov x0, #0 // código de salida 0 (éxito)
+    mov x8, #93 // syscall exit
+    svc #0
 
 integer_sqrt:
     mov x1, #1 // inicializar el resultado con 1
