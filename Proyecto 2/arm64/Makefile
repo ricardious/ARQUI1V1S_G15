@@ -25,8 +25,7 @@ $(BUILD_DIR)/%.o: %.s | $(BUILD_DIR)
 $(MEDIA_BIN): $(MEDIA_OBJ) $(UTILS_OBJ)
 	$(LD) -o $@ $^
 
-run-media: $(MEDIA_BIN)
-	$(MEDIA_BIN) $(LEC) $(INI) $(FIN) $(COL)
+run-media: 	$(MEDIA_BIN) $(LEC) $(INI) $(FIN) $(COL)
 
 clean:
 	rm -rf $(BUILD_DIR)
