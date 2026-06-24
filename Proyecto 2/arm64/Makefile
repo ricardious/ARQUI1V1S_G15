@@ -6,7 +6,7 @@ BUILD_DIR := build
 LEC ?= ../data/lecturas.csv
 INI ?= 1
 FIN ?= 30
-COL ?= 1
+COL ?= TEMP
 
 UTILS_OBJ := $(BUILD_DIR)/utils.o
 MEDIA_OBJ := $(BUILD_DIR)/modulo_1_media.o
