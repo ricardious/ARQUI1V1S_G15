@@ -80,12 +80,13 @@ atoi_done:
 
 // Leer columna desde argumento de consola
 // Espera ejecutar el modulo asi:
-// ./modulo 2
+// ./modulo archivo.csv linea_inicial linea_final columna
 // Salida:
 // x13 = linea inicial
 // x14 = linea final
 // x11 = columna seleccionada
 // x24 = direccion del archivo
+// x25 = puntero al nombre de la columna
 get_column_arg:
     // guardar direccion de retorno
     stp x29, x30, [sp, #-16]!
@@ -118,6 +119,14 @@ get_column_arg:
     bl atoi_csv
     cbz x7, arg_error
     mov x14, x10            // x14 = linea final
+
+    // validar que linea inicial sea mayor o igual a 1
+    cmp x13, #1
+    blt arg_error
+
+    // validar que linea final sea mayor o igual que linea inicial
+    cmp x14, x13
+    blt arg_error
 
     ldr x25, [x29, #56]     // puntero de la columna
 
