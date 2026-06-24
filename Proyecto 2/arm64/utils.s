@@ -34,8 +34,20 @@ err_write:
     len_err_write = . - err_write
 
 err_arg:
-    .ascii "Debe enviar una columna\n"
+    .ascii "Error: debe enviar una columna\n"
     len_err_arg = . - err_arg
+
+err_col:
+    .ascii "Error: columna no encontrada\n"
+    len_err_col = . - err_col
+
+err_range:
+    .ascii "Error: rango invalido o sin datos\n"
+    len_err_range = . - err_range
+
+err_num:
+    .ascii "Error: valor no numerico en la columna\n"
+    len_err_num = . - err_num
 
 .bss
 
@@ -602,4 +614,28 @@ arg_error:
     mov x8, #64
     svc #0
 
+    b exit_error
+
+col_error:
+    mov x0, #1
+    ldr x1, =err_col
+    mov x2, len_err_col
+    mov x8, #64
+    svc #0
+    b exit_error
+
+range_error:
+    mov x0, #1
+    ldr x1, =err_range
+    mov x2, len_err_range
+    mov x8, #64
+    svc #0
+    b exit_error
+
+num_error:
+    mov x0, #1
+    ldr x1, =err_num
+    mov x2, len_err_num
+    mov x8, #64
+    svc #0
     b exit_error
