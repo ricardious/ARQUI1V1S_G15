@@ -25,8 +25,8 @@ msg_std_dev:
 
 _start:
 
-    // obtener rangos y la columna desde los argumentos de la consola
-    // dejando x13 = linea inicial, x14 = linea final, x11 = columna
+    // obtener rangos y la columna desde los argumentos de la consola (Archivo, Rango e Hilo de Columna)
+    // dejando x24 = path archivo, x13 = linea inicial, x14 = linea final, x25 = ptr nombre columna
     bl get_column_arg
     bl read_column_to_stack     // leer columna del csv y cargarla al stack
 
@@ -92,7 +92,7 @@ loop_sqrt:
 end_loop_sqrt:
     // el add anterior deja una posicion arriba del resultado, entonces restar
     sub x1, x1, #1  // restamos uno
-    mov x25, x1     // resultado
+    mov x26, x1     // resultado
 
     // limpiar los datos temporales del stack 
     mov sp, x21
@@ -148,7 +148,7 @@ end_loop_sqrt:
     mov x2, len_msg_std_dev
     bl write_text
 
-    mov x0, x25          // pasar la desviacion estandar
+    mov x0, x26          // pasar la desviacion estandar
     mov x1, x15          // fd
     bl write_uint
     mov x0, x15
