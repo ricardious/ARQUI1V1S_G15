@@ -25,7 +25,7 @@ TENDENCIA_BIN := $(BUILD_DIR)/modulo_5_tendencia
 
 all: media varianza anomalias prediccion tendencia
 
-media: $(MEDIA_BIN)
+media: $(MEDIA_BIN)	
 
 varianza: $(VARIANZA_BIN)
 

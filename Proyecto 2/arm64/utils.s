@@ -1,9 +1,5 @@
 // Biblioteca comun ARM64 del Proyecto
 .data
-
-csv_path:
-    .asciz "../data/lecturas.csv"
-
 tendencia_path:
     .asciz "../resultados_arm64/resultado_tendencia.txt"
 
@@ -89,6 +85,7 @@ atoi_done:
 // x13 = linea inicial
 // x14 = linea final
 // x11 = columna seleccionada
+// x24 = direccion del archivo
 get_column_arg:
     // guardar direccion de retorno
     stp x29, x30, [sp, #-16]!
@@ -98,12 +95,15 @@ get_column_arg:
     ldr x0, [x29, #16]
 
     // validar que exista argv[1]
-    cmp x0, #4      //ahora tambien validara arg[2] y 3 que son las lineas para el rango
+    cmp x0, #5      //ahora tambien validara arg[2] y 3 que son las lineas para el rango
     blt arg_error
 
-    // argv[1] esta en [sp + 16] original
+    //direccion del archivo archivo
+    ldr x24, [x29, #32]
+
+    // argv[2] esta en [sp + 16] original
     // como ahora se guardo x29, se debe acceder a [x29 + 32]
-    ldr x21, [x29, #32]
+    ldr x21, [x29, #40]
 
     // convertir parametro a numero
     bl atoi_csv
@@ -114,15 +114,12 @@ get_column_arg:
     // linea inicial
     mov x13, x10
 
-    ldr x21, [x29, #40]     // línea final
+    ldr x21, [x29, #48]     // línea final
     bl atoi_csv
     cbz x7, arg_error
     mov x14, x10            // x14 = linea final
 
-    ldr x21, [x29, #48]     // columna
-    bl atoi_csv
-    cbz x7, arg_error
-    mov x11, x10
+    ldr x25, [x29, #56]     // puntero de la columna
 
     // recuperar direccion original de retorno
     ldp x29, x30, [sp], #16
@@ -131,7 +128,7 @@ get_column_arg:
 // Abrir archivo lecturas.csv
 open_csv_read:
     mov x0, #-100
-    ldr x1, =csv_path
+    mov x1, x24     //ahora tiene la direccion el arvhico
     mov x2, #0
     mov x3, #0
     mov x8, #56 // syscall openat
@@ -362,7 +359,79 @@ saltar_columna:
     beq utils_skip_done
 
     b saltar_columna
+//entrada 
+//x21 = direccion de buffer
+// x25 = ptr al nombre de la columna 
+// salida x11 = # de columna encontrada
+// x7 = 1 si encontro || 0 si no encontro
+find_column_by_name:    //busca la column por donbre
+    sub sp, sp, #16          // reservar espacio
+    str x30, [sp]            // guardar la direccion de retorno que es x30
 
+    mov x11, #1 //columna actual = 1
+
+find_column_loop:       //loop para buscar la columna
+    //inicio del nombre actual
+    mov x0, x21     //x0 = direccion del buffer
+    mov x1, x25  //nombre buscado que es el puntero de la columna
+    bl compare_column_name  // compara ambos nombres de las columna
+
+    cbnz x7, find_column_done //1 = coincide y 0 sino
+
+    bl saltar_columna   // si ni una collumn coincide entonces salta al final del nombre actual
+
+    cmp w23, '$'    //llega al final entonces no existe la columna
+    beq arg_error
+
+    cmp w23, #10
+    beq arg_error
+
+    add x11, x11, #1  //columna ++
+
+    b find_column_loop
+
+find_column_done:
+    ldr x30, [sp]             // recuperar la direccion de retorno
+    add sp, sp, #16           // liberar el espacio reservado
+    ret
+
+compare_column_name:    //compara nombre actual con el nombre solicitado
+    mov x7, #0      // por ahora no hay coincidenci
+
+    mov x2, x0          // nombre del CSV
+    mov x3, x1          // nombre buscado
+
+compare_loop:   //lee c/caracter de cada cadena
+    ldrb w4, [x2], #1   // se carga un byte del CSV que viene de compare
+    ldrb w5, [x3], #1   
+
+    // si llegamos al final del nombre del CSV se termina
+    cmp w4, ','
+    beq compare_end
+
+    cmp w4, #10 //si es \n entonces llama a compare_end
+    beq compare_end
+
+    cmp w4, '$'     //fin de archivo
+    beq compare_end
+
+    // si los caracteres !=
+    cmp w4, w5
+    bne compare_not_equal
+
+    b compare_loop
+
+compare_end:
+    // verificar que también termino el nombre buscado
+    cmp w5, #0          // '\0'
+    bne compare_not_equal
+
+    mov x7, #1
+    ret
+
+compare_not_equal:
+    mov x7, #0
+    ret
 // Guardar numero en stack
 save_number_to_stack:
     sub sp, sp, #16 // reservar espacio en stack
@@ -407,6 +476,8 @@ read_column_to_stack:
 
     // apuntar al inicio del buffer
     ldr x21, =buffer
+    // obtiene el # de la columna desde el encabezado
+    bl find_column_by_name
 
     // saltar encabezado
     bl skip_to_next_line
