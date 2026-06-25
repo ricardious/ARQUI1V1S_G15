@@ -43,7 +43,7 @@ input_buffer:
 .include "utils.s"
 .include "motor/array.s"
 .include "motor/promedio.s"
-//.include "motor/tendencia.s"
+.include "motor/tendencia.s"
 //.include "motor/amplitud.s"
 _start:
 
@@ -72,13 +72,9 @@ main_loop:
     ldr x3, =temp_buffer 
     bl guardar_dato
 
-    // promedio de temperatura
-    ldr x3, =temp_buffer
-    ldr x2, =temp_count
-    ldr x2, [x2]
-    bl calcular_promedio
-    // IR GUARDAN SECUENCIALMENTE TODOS
-    // LOS DATOS EN LOS ARRAY /TEMP /HUM /...
+    ldr x0, =temp_buffer
+    ldr x1, =temp_count
+    bl calcular_indicadores
     //Humedad
     bl atoi_csv
 
@@ -87,11 +83,9 @@ main_loop:
     ldr x3,=hum_buffer
     bl guardar_dato
 
-    // promedio de humedad
-    ldr x3, =hum_buffer
-    ldr x2, =hum_count
-    ldr x2, [x2]
-    bl calcular_promedio
+    ldr x0, =hum_buffer
+    ldr x1, =hum_count
+    bl calcular_indicadores
 
     // soil1
     bl atoi_csv
@@ -100,11 +94,10 @@ main_loop:
     ldr x1,=soil1_count
     ldr x3,=soil1_buffer
     bl guardar_dato
-    // promedio de soil
-    ldr x3, =soil1_buffer
-    ldr x2, =soil1_count
-    ldr x2, [x2]
-    bl calcular_promedio
+
+    ldr x0, =soil1_buffer
+    ldr x1, =soil1_count
+    bl calcular_indicadores
 
     //soli2
     bl atoi_csv
@@ -114,11 +107,9 @@ main_loop:
     ldr x3,=soil2_buffer
     bl guardar_dato
 
-    // promedio de soil
-    ldr x3, =soil2_buffer
-    ldr x2, =soil2_count
-    ldr x2, [x2]
-    bl calcular_promedio
+    ldr x0, =soil2_buffer
+    ldr x1, =soil2_count
+    bl calcular_indicadores
 
     //luz
     bl atoi_csv
@@ -128,12 +119,9 @@ main_loop:
     ldr x3,=luz_buffer
     bl guardar_dato
 
-    // promedio de luz
-    ldr x3, =luz_buffer
-    ldr x2, =luz_count
-    ldr x2, [x2]
-    bl calcular_promedio
-
+    ldr x0, =luz_buffer
+    ldr x1, =luz_count
+    bl calcular_indicadores
 
     //gas
     bl atoi_csv
@@ -143,22 +131,26 @@ main_loop:
     ldr x3,=gas_buffer
     bl guardar_dato
 
-    // promedio de luz
-    ldr x3, =gas_buffer
-    ldr x2, =gas_count
-    ldr x2, [x2]
-    bl calcular_promedio
-
+    ldr x0, =gas_buffer
+    ldr x1, =gas_count
+    bl calcular_indicadores
 
     b main_loop
 
-    // calcular el promedio de cada array
-    // calcular promedio
-    // del array
-    // x3 = direccion del array
-    // x2 = cantidad de elementos en el array
-    //bl calcular_promedio //metodo que vendra de motor
+calcular_indicadores:
+    // x0 = buffer
+    // x1 = contador
 
+    mov x3, x0
+    ldr x2, [x1]
+
+    bl calcular_promedio
+    mov x17, x0
+
+    bl calcular_tendencia
+    mov x18, x0
+
+    ret
 
 end_program:
     mov x0, #0
