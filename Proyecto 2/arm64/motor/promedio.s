@@ -2,21 +2,36 @@
 // promedio = suma de xi / n
 // n cantidad de datos
 
+// entrada
+// x3 = direccion del array
+// x2 = cantidad de datos
+// salida x0 con el calculo del promedio 
 
-// algoritmo planificado
-// recibo los datos de motor
-// pueden venir de regitro x17
+calcular_promedio:
+    mov x4, #0      // indice
+    mov x5, #0      // suma
 
-calcular_datos:
-    cmp x17, #5     // si hay 5 datos entonces mando a calcular promedio
-    b calcular_promedio
+sumar_loop:
+    cmp x4, x2
+    beq dividir_promedio
 
+    mov x6, #8
+    mul x7, x4, x6  //  offset del dato en el array
 
+    ldr x8, [x3, x7]        // lee el elemento del arreglo
+    add x5, x5, x8      // x5 = x5 + x8
 
-calcular_promedio_loop:
-    // cargo  el primer dato de los 5 con un  desplazamiento para que despues vaya al segundo numero
+    add x4, x4, #1      // indice ++
+    b sumar_loop
 
-    //con add en un registro que inicializo en 0 procedo a sumar lo que me vino del anterior
+dividir_promedio:
+    cmp x2, #0
+    beq promedio_cero
 
-    // si lo datos cumplieron con ser 5 entonces divido_en_5 y retorno que ese sera el valor que llegara a luz.s
-    
+    udiv x0, x5, x2     // suma (x5)/ N (x2)
+    ret
+
+promedio_cero:
+    mov x0, #0
+    ret
+
