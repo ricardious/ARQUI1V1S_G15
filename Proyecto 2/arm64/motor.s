@@ -1,40 +1,57 @@
 .data
-
+//buffers
 temp_array:
     .quad 0, 0, 0, 0, 0
 
-temp_count:
-    .quad 0
+hum_array:
+    .quad 0, 0, 0, 0, 0
 
-temp_ideal:
-    .quad 30
+soil1_array:
+    .quad 0, 0, 0, 0, 0
 
-msg_led_on:
-    .ascii "ACTION=LED_ON\n"
-    len_led_on = . - msg_led_on
+soil2_array:
+    .quad 0, 0, 0, 0, 0
 
-msg_led_off:
-    .ascii "ACTION=LED_OFF\n"
-    len_led_off = . - msg_led_off
+luz_array:
+    .quad 0, 0, 0, 0, 0
+
+gas_array:
+    .quad 0, 0, 0, 0, 0
+
+//contadores
+temp_count:  .quad 0
+hum_count:   .quad 0
+soil1_count: .quad 0
+soil2_count: .quad 0
+luz_count:   .quad 0
+gas_count:   .quad 0
+
+
+msg_no_action:
+    .ascii "ACTION=NO_ACTION\n"
+    len_led_on = . - msg_no_action
+
 
 .bss
 
 input_buffer:
-    .skip 64
+    .skip 128
 
 .text
 .global _start
 
-.include "utils/atoi.s"
-.include "utils/array.s"
-
+.include "utils.s"
+.include "motor/array.s"
+.include "motor/promedio.s"
+//.include "motor/tendencia.s"
+//.include "motor/amplitud.s"
 _start:
 
 main_loop:
     // read(stdin, input_buffer, 64)
     mov x0, #0
     ldr x1, =input_buffer
-    mov x2, #64
+    mov x2, #128
     mov x8, #63
     svc #0
 
@@ -44,7 +61,6 @@ main_loop:
 
     // convertir a entero
     ldr x21, =input_buffer
-    mov x5, #10
     bl atoi_csv
 
     // si no hay numero al inicio
@@ -53,79 +69,60 @@ main_loop:
     // guardar en array
     mov x0, x10
     ldr x1, =temp_count
-    ldr x3, =temp_array
+    ldr x3, =temp_array 
     bl guardar_dato
 
     // IR GUARDAN SECUENCIALMENTE TODOS
     // LOS DATOS EN LOS ARRAY /TEMP /HUM /...
+    //Humedad
+    bl atoi_csv
 
+    mov x0,x10
+    ldr x1,=hum_count
+    ldr x3,=hum_array
+    bl guardar_dato
+
+    // soil1
+    bl atoi_csv
+
+    mov x0,x10
+    ldr x1,=soil1_count
+    ldr x3,=soil1_array
+    bl guardar_dato
+
+    //soli2
+    bl atoi_csv
+
+    mov x0,x10
+    ldr x1,=soil2_count
+    ldr x3,=soil2_array
+    bl guardar_dato
+
+    //luz
+    bl atoi_csv
+
+    mov x0,x10
+    ldr x1,=luz_count
+    ldr x3,=luz_array
+    bl guardar_dato
+
+    //gas
+    bl atoi_csv
+
+    mov x0,x10
+    ldr x1,=gas_count
+    ldr x3,=gas_array
+    bl guardar_dato
+
+    b main_loop
 
     // calcular el promedio de cada array
     // calcular promedio
     // del array
     // x3 = direccion del array
     // x2 = cantidad de elementos en el array
-    bl calcular_promedio
+    //bl calcular_promedio //metodo que vendra de motor
 
-    // comparar con temp_ideal
-    ldr x0, =temp_ideal
-    ldr x0, [x0]
-
-    // VER QUE ACCION SE HACE CON CADA VALIDACION ( ustes tienen 2)
-    // promedio la tendencia y amplitud
-    // ver accion a tomar
-    cmp x13, x0
-    bgt imprimir_led_on
-
-    b imprimir_led_off
-
-calcular_promedio:
-    ldr x1, =temp_array
-    ldr x2, =temp_count
-    ldr x2, [x2]
-
-    mov x3, #0
-    mov x4, #0
-
-sumar_loop:
-    cmp x4, x2
-    beq dividir_promedio
-
-    mov x5, #8
-    mul x6, x4, x5
-
-    ldr x7, [x1, x6]
-    add x3, x3, x7
-
-    add x4, x4, #1
-    b sumar_loop
-
-dividir_promedio:
-    cmp x2, #0
-    beq promedio_cero
-
-    udiv x13, x3, x2
-    ret
-
-promedio_cero:
-    mov x13, #0
-    ret
-
-imprimir_led_on:
-    mov x0, #1
-    ldr x1, =msg_led_on
-    mov x2, len_led_on
-    mov x8, #64
-    svc #0
-    b main_loop
-
-imprimir_led_off:
-    mov x0, #1
-    ldr x1, =msg_led_off
-    mov x2, len_led_off
-    mov x8, #64
-    svc #0
-    b main_loop
 
 end_program:
     mov x0, #0
