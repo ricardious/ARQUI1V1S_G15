@@ -34,7 +34,7 @@ err_write:
     len_err_write = . - err_write
 
 err_arg:
-    .ascii "Error: debe enviar una columna\n"
+    .ascii "Error: use ./modulo archivo.csv linea_inicial linea_final columna\n"
     len_err_arg = . - err_arg
 
 err_col:
@@ -96,7 +96,6 @@ atoi_done:
 // Salida:
 // x13 = linea inicial
 // x14 = linea final
-// x11 = columna seleccionada
 // x24 = direccion del archivo
 // x25 = puntero al nombre de la columna
 get_column_arg:
@@ -356,6 +355,7 @@ skip_to_next_line:
 // marca el final de una funcion 
 utils_skip_done:
     ret
+
 //x15 = contador de fila
 saltar_linea:   //salta la fila actuañ
     bl skip_to_next_line
@@ -366,6 +366,7 @@ saltar_linea:   //salta la fila actuañ
     beq read_column_return
 
     b read_column_process_line
+
 //Salto de columna
 saltar_columna:
     ldrb w23, [x21], #1 
@@ -402,10 +403,10 @@ find_column_loop:       //loop para buscar la columna
     bl saltar_columna   // si ni una collumn coincide entonces salta al final del nombre actual
 
     cmp w23, '$'    //llega al final entonces no existe la columna
-    beq arg_error
+    beq col_error
 
     cmp w23, #10
-    beq arg_error
+    beq col_error
 
     add x11, x11, #1  //columna ++
 
@@ -568,6 +569,14 @@ continue_after_value:
     b read_column_process_line  // se procesa la siguiente fila
 
 read_column_return:
+    // si no se guardaron datos, el rango no existe o no produjo datos
+    cmp x22, #0
+    beq range_error
+
+    // Si el archivo terminó antes de llegar a la línea final, el rango no existe completo
+    cmp x15, x14
+    blt range_error
+
     mov x0, sp              // inicio de datos
     mov x1, x28             // limite final
     mov x2, x22             // cantidad de datos
