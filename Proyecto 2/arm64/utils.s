@@ -76,8 +76,19 @@ atoi_loop:
     b atoi_loop
 
 atoi_done:
-    ret
+    cmp w23, ','
+    beq fin
 
+    cmp w23, #13    // \r
+    beq fin
+
+    cmp w23, #0
+    beq fin
+
+    mov x7, #0  //caracter invalido
+
+fin:
+    ret
 // Leer columna desde argumento de consola
 // Espera ejecutar el modulo asi:
 // ./modulo 2
