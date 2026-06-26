@@ -28,6 +28,9 @@ gas_count:   .quad 0
 
 soil_ideal:     .quad 65 
 SOIL_BAJO:      .quad 40
+gas_ideal:      .quad 150
+GAS_ALTO:       .quad 400
+GAS_AMP_ALTA:   .quad 80
 
 msg_no_action:
     .ascii "ACTION=NO_ACTION\n"
