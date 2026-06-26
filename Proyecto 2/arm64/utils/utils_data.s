@@ -1,0 +1,58 @@
+// Biblioteca comun ARM64 del Proyecto
+.data
+tendencia_path:
+    .asciz "../resultados_arm64/resultado_tendencia.txt"
+
+media_path:
+    .asciz "../resultados_arm64/resultado_media.txt"
+
+varianza_path:
+    .asciz "../resultados_arm64/resultado_varianza.txt"
+
+anomalias_path:
+    .asciz "../resultados_arm64/resultado_anomalias.txt"
+
+prediccion_path:
+    .asciz "../resultados_arm64/resultado_prediccion.txt"
+
+newline_text:
+    .asciz "\n"
+
+minus_text:
+    .ascii "-"
+
+err_open:
+    .ascii "Error: no se pudo abrir el archivo\n"
+    len_err_open = . - err_open
+
+err_read:
+    .ascii "Error: no se pudo leer el archivo\n"
+    len_err_read = . - err_read
+
+err_write:
+    .ascii "Error: no se pudo escribir el archivo\n"
+    len_err_write = . - err_write
+
+err_arg:
+    .ascii "Error: use ./modulo archivo.csv linea_inicial linea_final columna\n"
+    len_err_arg = . - err_arg
+
+err_col:
+    .ascii "Error: columna no encontrada\n"
+    len_err_col = . - err_col
+
+err_range:
+    .ascii "Error: rango invalido o sin datos\n"
+    len_err_range = . - err_range
+
+err_num:
+    .ascii "Error: valor no numerico en la columna\n"
+    len_err_num = . - err_num
+
+.bss
+
+buffer:
+    .skip 131072
+
+num_buffer:
+    .skip 32 // espacio para convertir uint a string
