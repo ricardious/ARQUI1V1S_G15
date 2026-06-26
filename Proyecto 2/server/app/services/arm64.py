@@ -15,10 +15,17 @@ from app.services.records import base_record
 COLUMN_NAMES = {
     "temp": "TEMP",
     "hum_aire": "HUM_AIRE",
+    "soil1": "SOIL1",
+    "soil2": "SOIL2",
     "hum_suelo_1": "SOIL1",
     "hum_suelo_2": "SOIL2",
     "luz": "LUZ",
     "gas": "GAS",
+}
+
+COLUMN_ALIASES = {
+    "hum_suelo_1": "soil1",
+    "hum_suelo_2": "soil2",
 }
 
 # Modulo -> target del Makefile que lo compila y ejecuta.
@@ -128,6 +135,7 @@ class Arm64Service:
                 detail=f"Columna invalida: {col}. Use una de {list(COLUMN_NAMES)}.",
             )
         col_name = COLUMN_NAMES[col_key]
+        result_col_key = COLUMN_ALIASES.get(col_key, col_key)
 
         if line_end is None:
             line_end = count
@@ -187,7 +195,7 @@ class Arm64Service:
         # usan la columna actual; los demas conservan la de su corrida anterior.
         for key, mod in parsed.items():
             if key in ran:
-                mod["column"] = col_key
+                mod["column"] = result_col_key
             else:
                 prev_mod = prev_valor.get(key)
                 mod["column"] = (
@@ -195,7 +203,7 @@ class Arm64Service:
                 )
 
         valor: dict[str, Any] = {
-            "column": col_key,
+            "column": result_col_key,
             "ran": ran,
             "count": count,
             "line_start": line_start,
@@ -214,7 +222,7 @@ class Arm64Service:
         label = "Modulo " + ran[0] if module is not None else "Modulos ARM64"
         return {
             "message": (
-                f"{label} ejecutado sobre columna {col_key}, "
+                f"{label} ejecutado sobre columna {result_col_key}, "
                 f"lineas {line_start}-{line_end}, ultimos {count} datos"
             ),
             "results": valor,

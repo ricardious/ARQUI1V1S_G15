@@ -4,8 +4,8 @@ import type { Shape } from "@/lib/types/types";
 export const ARM64_COLUMNS = [
   { key: "temp", label: "Temperatura" },
   { key: "hum_aire", label: "Humedad aire" },
-  { key: "hum_suelo_1", label: "Humedad suelo 1" },
-  { key: "hum_suelo_2", label: "Humedad suelo 2" },
+  { key: "soil1", label: "Suelo 1" },
+  { key: "soil2", label: "Suelo 2" },
   { key: "luz", label: "Luz" },
   { key: "gas", label: "Gas" },
 ] as const;
@@ -95,5 +95,10 @@ export const ARM64_MODULES: Arm64ModuleMeta[] = [
 
 /** Etiqueta legible de una columna a partir de su clave. */
 export function columnLabel(key?: string | null): string {
-  return ARM64_COLUMNS.find((c) => c.key === key)?.label ?? "—";
+  const aliases: Record<string, Arm64ColumnKey> = {
+    hum_suelo_1: "soil1",
+    hum_suelo_2: "soil2",
+  };
+  const normalized = key ? (aliases[key] ?? key) : key;
+  return ARM64_COLUMNS.find((c) => c.key === normalized)?.label ?? "—";
 }
