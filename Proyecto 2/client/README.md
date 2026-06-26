@@ -1,6 +1,6 @@
-# 🖥️ Dashboard IoT — GreenPi Grupo 15
+# 🖥️ Dashboard IoT — Invernadero ARM64 Grupo 15
 
-Frontend web del proyecto **GreenPi**. Dashboard interactivo de monitoreo y control IoT para el invernadero inteligente. Se comunica con el **backend FastAPI** para consultar históricos y con el **broker MQTT** para datos en tiempo real y envío de comandos.
+Frontend web del proyecto **Invernadero ARM64**. Dashboard interactivo de monitoreo y control IoT para el invernadero inteligente. Se comunica con el **backend FastAPI** para consultar históricos y con el **broker MQTT** para datos en tiempo real y envío de comandos.
 
 ---
 
@@ -9,7 +9,7 @@ Frontend web del proyecto **GreenPi**. Dashboard interactivo de monitoreo y cont
 ```mermaid
 flowchart LR
     subgraph CLIENT["client (Navegador)"]
-        MQTT_WS["MQTT.js WebSocket"] --> STATE["useMqttGreenPi (estado)"]
+        MQTT_WS["MQTT.js WebSocket"] --> STATE["useMqttDashboard (estado)"]
         API["React Query"] --> STATE
         STATE --> UI["Dashboard (secciones)"]
     end
@@ -76,7 +76,7 @@ Cada integrante trabaja en su **propio componente** para evitar conflictos de Gi
 src/app/layout.tsx
 src/app/page.tsx
 src/app/providers.tsx
-src/lib/hooks/useMqttGreenPi.tsx
+src/lib/hooks/useMqttDashboard.tsx
 src/services/http-client.ts
 ```
 
@@ -138,7 +138,7 @@ client/
     │   │   ├── formatters.ts
     │   │   └── mqtt.ts
     │   ├── hooks/
-    │   │   └── useMqttGreenPi.tsx
+    │   │   └── useMqttDashboard.tsx
     │   └── types.ts
     ├── services/
     │   ├── http-client.ts
@@ -269,7 +269,7 @@ El dashboard es una **single-page app** con scroll anclado a estas secciones:
 
 ### Conexión en tiempo real
 
-El hook `useMqttGreenPi` mantiene la conexión MQTT vía WebSocket y expone:
+El hook `useMqttDashboard` mantiene la conexión MQTT vía WebSocket y expone:
 
 ```ts
 {

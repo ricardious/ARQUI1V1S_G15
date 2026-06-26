@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import { COMMANDS } from "@/lib/constants/commands";
-import { useMqttGreenPi } from "@/lib/hooks/useMqttGreenPi";
+import { useMqttDashboard } from "@/lib/hooks/useMqttDashboard";
 import type { StateColor } from "@/lib/types/types";
 
 type ActKey = "riego" | "vent" | "luces" | "alarma";
@@ -471,7 +471,7 @@ export default function ActuadoresViz3D({
   on: Record<string, boolean>;
   onEvent: (o: string, e: string, v: string, c: StateColor) => void;
 }) {
-  const { actuators, connectionState, sendCommand } = useMqttGreenPi();
+  const { actuators, connectionState, sendCommand } = useMqttDashboard();
   const [manual, setManual] = useState(false);
   const [log, setLog] = useState<LogItem[]>([]);
   const [localStates, setLocalStates] = useState<Partial<Record<ActKey, boolean>>>({});

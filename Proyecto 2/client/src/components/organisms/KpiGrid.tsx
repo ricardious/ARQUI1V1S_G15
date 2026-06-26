@@ -1,12 +1,12 @@
 "use client";
 import KpiCard from "../molecules/KpiCard";
 import { KPIS } from "@/lib/constants/dashboard-data";
-import { useMqttGreenPi } from "@/lib/hooks/useMqttGreenPi";
+import { useMqttDashboard } from "@/lib/hooks/useMqttDashboard";
 import { useLatestReading } from "@/services/readings/queries";
 
 /** Organism: grilla de KPIs con lecturas reales. */
 export default function KpiGrid() {
-  const { sensors, connectionState } = useMqttGreenPi();
+  const { sensors, connectionState } = useMqttDashboard();
   const latestReadingQ = useLatestReading();
   const latestValues = latestReadingQ.data?.valor;
   const vals: Record<string, number | null> = {

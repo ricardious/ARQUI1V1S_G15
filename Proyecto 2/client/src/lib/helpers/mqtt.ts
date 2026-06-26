@@ -8,5 +8,5 @@ export function parsePlainBool(payload: string): boolean {
 }
 
 export function buildClientId(): string {
-  return `greenpi-dash-${Math.random().toString(16).slice(2, 8)}`;
+  return `arqui1-g15-dash-${Math.random().toString(16).slice(2, 8)}`;
 }
