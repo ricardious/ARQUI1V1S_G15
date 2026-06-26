@@ -10,16 +10,16 @@ len_luz_off = . - msg_luz_off
 
 .text 
 // determinar si el nivel de luz es bajo
-//x25 = promedio
-// x26 = tendencia 
+//x27 = promedio
+// x28 = tendencia 
 evaluar_luz:
     ldr x0, =LUZ_IDEAL //n x0 = direecion del umbral
     ldr x0, [x0]        //cargo en x0 el umbral
     
-    cmp x25, x0         // comprao el umbral con el valor de la luz
+    cmp x27, x0         // comprao el umbral con el valor de la luz
     bge apagar_luces   // luz >= umbral se prenderan luces
     
-    cmp x26, #0         // comprao el umbral con el valor de la luz
+    cmp x28, #0         // comprao el umbral con el valor de la luz
     bge apagar_luces   // luz >= umbral se prenderan luces
     
     // Si hay suficiente luz (>= 250), apagar luces
