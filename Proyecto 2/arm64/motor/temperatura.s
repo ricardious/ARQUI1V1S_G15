@@ -29,12 +29,10 @@ evaluar_temperatura:
     mov x0, #1
     ldr x1, =msg_fan_on 
     mov x2, len_fan_on
-    bl write_text
-    ret //se retorna al motor principal
+    b write_text //se retorna al motor principal
 
 mantener_apagado:
     mov x0, #1
     ldr x1, =msg_fan_off
     mov x2, len_fan_off
-    bl write_text
-    ret
+    b write_text
