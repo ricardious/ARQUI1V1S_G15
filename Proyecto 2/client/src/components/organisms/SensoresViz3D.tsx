@@ -44,20 +44,20 @@ export default function SensoresViz3D() {
   const latestValues = latestReadingQ.data?.valor;
   const vals = useMemo<Record<string, number | null>>(
     () => ({
-      temp:    sensors.temperatura ?? latestValues?.temp ?? null,
-      hum_amb: sensors.humedad_ambiente ?? latestValues?.hum_aire ?? null,
-      suelo_1: sensors.humedad_suelo_area1 ?? latestValues?.hum_suelo_1 ?? null,
-      suelo_2: sensors.humedad_suelo_area2 ?? latestValues?.hum_suelo_2 ?? null,
+      temp:    sensors.temperatura ?? latestValues?.temperatura ?? null,
+      hum_amb: sensors.humedad_ambiente ?? latestValues?.humedad_ambiente ?? null,
+      suelo_1: sensors.humedad_suelo_area1 ?? latestValues?.humedad_suelo_area1 ?? null,
+      suelo_2: sensors.humedad_suelo_area2 ?? latestValues?.humedad_suelo_area2 ?? null,
       luz:     sensors.luz ?? latestValues?.luz ?? null,
       gas:     sensors.gas ?? latestValues?.gas ?? null,
     }),
     [
       latestValues?.gas,
-      latestValues?.hum_aire,
-      latestValues?.hum_suelo_1,
-      latestValues?.hum_suelo_2,
+      latestValues?.humedad_ambiente,
+      latestValues?.humedad_suelo_area1,
+      latestValues?.humedad_suelo_area2,
       latestValues?.luz,
-      latestValues?.temp,
+      latestValues?.temperatura,
       sensors.gas,
       sensors.humedad_ambiente,
       sensors.humedad_suelo_area1,

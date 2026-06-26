@@ -28,8 +28,8 @@ export default function EstadoGlobal() {
 
   const latestValues = latestReadingQ.data?.valor;
   const kpiVals: Record<string, number | null> = {
-    temp: sensors.temperatura ?? latestValues?.temp ?? null,
-    hum:  sensors.humedad_ambiente ?? latestValues?.hum_aire ?? null,
+    temp: sensors.temperatura ?? latestValues?.temperatura ?? null,
+    hum:  sensors.humedad_ambiente ?? latestValues?.humedad_ambiente ?? null,
     luz:  sensors.luz ?? latestValues?.luz ?? null,
     gas:  sensors.gas ?? latestValues?.gas ?? null,
   };

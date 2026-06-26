@@ -90,6 +90,12 @@ export interface SystemStatus {
   estado_relacionado: string;
 }
 
+export interface Arm64ModuleResult {
+  raw: string;
+  fields: Record<string, string>;
+  column?: string | null;
+}
+
 export interface Arm64Result {
   _id: string;
   timestamp: string;

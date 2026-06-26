@@ -19,10 +19,10 @@ export default function SensoresSection() {
   const latestReadingQ = useLatestReading();
   const latestValues = latestReadingQ.data?.valor;
   const values = {
-    temperatura: sensors.temperatura ?? latestValues?.temp ?? null,
-    humedad_ambiente: sensors.humedad_ambiente ?? latestValues?.hum_aire ?? null,
-    humedad_suelo_area1: sensors.humedad_suelo_area1 ?? latestValues?.hum_suelo_1 ?? null,
-    humedad_suelo_area2: sensors.humedad_suelo_area2 ?? latestValues?.hum_suelo_2 ?? null,
+    temperatura: sensors.temperatura ?? latestValues?.temperatura ?? null,
+    humedad_ambiente: sensors.humedad_ambiente ?? latestValues?.humedad_ambiente ?? null,
+    humedad_suelo_area1: sensors.humedad_suelo_area1 ?? latestValues?.humedad_suelo_area1 ?? null,
+    humedad_suelo_area2: sensors.humedad_suelo_area2 ?? latestValues?.humedad_suelo_area2 ?? null,
     luz: sensors.luz ?? latestValues?.luz ?? null,
     gas: sensors.gas ?? latestValues?.gas ?? null,
   };
