@@ -29,6 +29,9 @@ gas_count:   .quad 0
 temp_ideal:     .quad 24 
 TEMP_ALTA:      .quad 35
 
+LUZ_IDEAL:      .quad 200
+LUZ_ALTA:       .quad 500
+
 msg_no_action:
     .ascii "ACTION=NO_ACTION\n"
     len_led_on = . - msg_no_action
@@ -48,6 +51,7 @@ input_buffer:
 .include "motor/tendencia.s"
 .include "motor/amplitud.s"
 .include "motor/temperatura.s"
+.include "motor/luz.s"
 _start:
 
 main_loop:
@@ -87,7 +91,7 @@ main_loop:
     mov x20, x0
 
     bl evaluar_temperatura
-    
+
     //Humedad
     bl atoi_csv
 
@@ -153,6 +157,8 @@ main_loop:
     ldr x1, =luz_count
     bl tendencia
     mov x26, x0
+
+    bl evaluar_luz
 
     //gas
     bl atoi_csv
