@@ -92,6 +92,7 @@ main_loop:
     mov x0, x10
     ldr x1, =temp_count
     ldr x3, =temp_buffer 
+    str x21, [sp, #-16]!
     bl guardar_dato
 
     ldr x0, =temp_buffer
@@ -104,6 +105,7 @@ main_loop:
     ldr x1, =temp_count
     bl tendencia
     mov x20, x0
+    ldr x21, [sp], #16
 
     //Humedad
     bl atoi_csv
@@ -111,6 +113,7 @@ main_loop:
     mov x0,x10
     ldr x1,=hum_count
     ldr x3,=hum_buffer
+    str x21, [sp, #-16]!
     bl guardar_dato
 
     ldr x0, =hum_buffer
@@ -121,12 +124,15 @@ main_loop:
     ldr x1, =hum_count
     bl amplitud
 
+    ldr x21, [sp], #16
+
     // soil1
     bl atoi_csv
 
     mov x0,x10
     ldr x1,=soil1_count
     ldr x3,=soil1_buffer
+    str x21, [sp, #-16]!
     bl guardar_dato
 
     ldr x0, =soil1_buffer
@@ -139,12 +145,14 @@ main_loop:
     bl tendencia
     mov x24, x0         // tendencia de soil1
 
+    ldr x21, [sp], #16
     //soli2
     bl atoi_csv
 
     mov x0,x10
     ldr x1,=soil2_count
     ldr x3,=soil2_buffer
+    str x21, [sp, #-16]!
     bl guardar_dato
 
     ldr x0, =soil2_buffer
@@ -156,13 +164,14 @@ main_loop:
     ldr x1, =soil2_count
     bl tendencia
     mov x26, x0         // tendencia de soil2
-
+    ldr x21, [sp], #16
     //luz
     bl atoi_csv
 
     mov x0,x10
     ldr x1,=luz_count
     ldr x3,=luz_buffer
+    str x21, [sp, #-16]!
     bl guardar_dato
 
     ldr x0, =luz_buffer
@@ -175,12 +184,14 @@ main_loop:
     bl tendencia
     mov x28, x0
 
+    ldr x21, [sp], #16
     //gas
     bl atoi_csv
 
     mov x0,x10
     ldr x1,=gas_count
     ldr x3,=gas_buffer
+    str x21, [sp, #-16]!
     bl guardar_dato
 
     ldr x0, =gas_buffer
@@ -193,6 +204,7 @@ main_loop:
     ldr x1, =gas_count
     bl amplitud
     mov x12, x0
+    ldr x21, [sp], #16
 
     //Modo
     bl atoi_csv
@@ -207,16 +219,21 @@ promedio:
 
     mov x3, x0
     ldr x2, [x1]
+    str x30, [sp, #-16]!
+    bl calcular_promedio
+    ldr x30, [sp], #16
+    ret
 
-    b calcular_promedio
 tendencia:
     // x0 = buffer
     // x1 = contador
 
     mov x3, x0
     ldr x2, [x1]
-
-    b calcular_tendencia
+    str x30, [sp, #-16]!
+    bl calcular_tendencia
+    ldr x30, [sp], #16
+    ret
 
 amplitud:
     // x0 = buffer
@@ -224,8 +241,12 @@ amplitud:
 
     mov x3, x0
     ldr x2, [x1]
+    str x30, [sp, #-16]!
 
-    b calcular_amplitud
+    bl calcular_amplitud
+    ldr x30, [sp], #16
+    ret
+
 end_program:
     mov x0, #0
     mov x8, #93
