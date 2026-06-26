@@ -11,5 +11,6 @@
 .include "utils/utils_write.s"
 .include "utils/utils_csv.s"
 .include "utils/utils_stack.s"
+.include "utils/utils_math.s"
 .include "utils/utils_read_column.s"
 .include "utils/utils_errors.s"
