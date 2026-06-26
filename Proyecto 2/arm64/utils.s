@@ -52,7 +52,7 @@ err_num:
 .bss
 
 buffer:
-    .skip 4096
+    .skip 131072
 
 num_buffer:
     .skip 32 // espacio para convertir uint a string
@@ -315,7 +315,7 @@ close_output_file:
 read_file:
     mov x0, x19
     ldr x1, =buffer
-    mov x2, #4096
+    mov x2, #131072
     mov x8, #63 // syscall read
     svc #0
 
