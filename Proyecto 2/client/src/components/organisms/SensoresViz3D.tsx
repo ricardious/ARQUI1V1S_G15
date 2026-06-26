@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { useMqttGreenPi } from "@/lib/hooks/useMqttGreenPi";
+import { useMqttDashboard } from "@/lib/hooks/useMqttDashboard";
 import { useLatestReading } from "@/services/readings/queries";
 
 const DEFS: {
@@ -95,7 +95,7 @@ const HC = {
 export default function SensoresViz3D() {
   const elRef = useRef<HTMLDivElement>(null);
   const matsRef = useRef<THREE.LineBasicMaterial[]>([]);
-  const { sensors } = useMqttGreenPi();
+  const { sensors } = useMqttDashboard();
   const latestReadingQ = useLatestReading();
   const latestValues = latestReadingQ.data?.valor;
   const vals = useMemo<Record<string, number | null>>(

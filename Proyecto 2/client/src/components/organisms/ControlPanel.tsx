@@ -3,7 +3,7 @@
 import { useState } from "react";
 import ControlToggle from "../molecules/ControlToggle";
 import { COMMANDS, CONTROL_DEFS } from "@/lib/constants/commands";
-import { useMqttGreenPi } from "@/lib/hooks/useMqttGreenPi";
+import { useMqttDashboard } from "@/lib/hooks/useMqttDashboard";
 import type { StateColor } from "@/lib/types/types";
 
 /** Organism: panel de control remoto — envía comandos MQTT en texto plano. */
@@ -12,7 +12,7 @@ export default function ControlPanel({
 }: {
   onEvent: (o: string, e: string, v: string, c: StateColor) => void;
 }) {
-  const { actuators, sendCommand, connectionState } = useMqttGreenPi();
+  const { actuators, sendCommand, connectionState } = useMqttDashboard();
   const [manual, setManual] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
 

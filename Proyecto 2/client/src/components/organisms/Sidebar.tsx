@@ -5,7 +5,7 @@ import Object3D from "../atoms/Object3D";
 import StatusDot from "../atoms/StatusDot";
 import NavItem from "../molecules/NavItem";
 import { NAV_ITEMS } from "@/lib/constants/dashboard-data";
-import { useMqttGreenPi } from "@/lib/hooks/useMqttGreenPi";
+import { useMqttDashboard } from "@/lib/hooks/useMqttDashboard";
 import { ENV } from "@/lib/constants/env";
 
 /** Organism: barra lateral de navegación con scroll-spy. */
@@ -18,7 +18,7 @@ export default function Sidebar({
 }) {
   const [activeId, setActiveId] = useState<string>("dashboard");
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
-  const { connectionState, raspberryOnline } = useMqttGreenPi();
+  const { connectionState, raspberryOnline } = useMqttDashboard();
   const mqttOnline = connectionState === "connected";
 
   // Bloquear scroll del body y cerrar con Escape mientras el drawer está abierto.
@@ -98,7 +98,7 @@ export default function Sidebar({
           </div>
           <div className="leading-tight">
             <p className="font-display font-bold text-[15px] tracking-tight">
-              GreenPi
+              Invernadero ARM64
             </p>
             <p className="text-[10px] text-dim2 tracking-[.2em] uppercase">
               Grupo&nbsp;15

@@ -62,7 +62,7 @@ export default function LoginCard() {
             </div>
             <div>
               <p className="font-display text-[18px] font-bold leading-none tracking-tight">
-                GreenPi
+                Invernadero ARM64
               </p>
               <div className="mt-1.5 flex items-center gap-1.5">
                 <span className="pulse size-1.5 rounded-full bg-ok" />
@@ -272,7 +272,7 @@ export default function LoginCard() {
             style={rise(360)}
           >
             Demo · usuario <span className="text-dim">admin</span> · clave{" "}
-            <span className="text-dim">greenpi15</span>
+            <span className="text-dim">1234</span>
           </p>
         </form>
       </div>

@@ -197,6 +197,6 @@ export function MqttProvider({ children }: { children: React.ReactNode }) {
 
 // ── Hook ───────────────────────────────────────────────────────────────────
 
-export function useMqttGreenPi(): MqttContextValue {
+export function useMqttDashboard(): MqttContextValue {
   return useContext(MqttContext);
 }

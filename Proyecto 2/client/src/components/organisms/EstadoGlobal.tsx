@@ -2,7 +2,7 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { ESTADOS, KPIS } from "@/lib/constants/dashboard-data";
-import { useMqttGreenPi } from "@/lib/hooks/useMqttGreenPi";
+import { useMqttDashboard } from "@/lib/hooks/useMqttDashboard";
 import { estadoToEstadoKey } from "@/lib/helpers/formatters";
 import { useLatestReading } from "@/services/readings/queries";
 import { useSystemStatus } from "@/services/status/queries";
@@ -17,7 +17,7 @@ export default function EstadoGlobal() {
     sensors,
     globalState: mqttGlobalState,
     connectionState,
-  } = useMqttGreenPi();
+  } = useMqttDashboard();
   const statusQ = useSystemStatus();
   const latestReadingQ = useLatestReading();
   const backendState = statusQ.data?.estado_relacionado
