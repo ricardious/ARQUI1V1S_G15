@@ -5,7 +5,7 @@ import { statusKeys } from "./keys";
 export function useSystemStatus() {
   return useQuery({
     queryKey: statusKeys.current(),
-    queryFn:  statusApi.get,
+    queryFn: statusApi.get,
     refetchInterval: 10_000,
     retry: 2,
   });
