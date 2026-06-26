@@ -26,6 +26,8 @@ soil2_count: .quad 0
 luz_count:   .quad 0
 gas_count:   .quad 0
 
+temp_ideal:     .quad 24 
+TEMP_ALTA:      .quad 35
 
 msg_no_action:
     .ascii "ACTION=NO_ACTION\n"
@@ -45,6 +47,7 @@ input_buffer:
 .include "motor/promedio.s"
 .include "motor/tendencia.s"
 .include "motor/amplitud.s"
+.include "motor/temperatura.s"
 _start:
 
 main_loop:
@@ -75,11 +78,16 @@ main_loop:
     ldr x0, =temp_buffer
     ldr x1, =temp_count
     bl promedio
+    // x0 promedio 
+    mov x19, x0
 
     ldr x0, =temp_buffer
     ldr x1, =temp_count
     bl tendencia
+    mov x20, x0
 
+    bl evaluar_temperatura
+    
     //Humedad
     bl atoi_csv
 
@@ -164,6 +172,10 @@ main_loop:
     ldr x1, =gas_count
     bl amplitud
     mov x12, x0
+
+    //Modo
+    bl atoi_csv
+    mov x13, x10        //modo(0= automatico, 1= manual)
 
     b main_loop
 
