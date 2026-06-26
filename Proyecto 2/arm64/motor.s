@@ -208,8 +208,7 @@ promedio:
     mov x3, x0
     ldr x2, [x1]
 
-    bl calcular_promedio
-    ret
+    b calcular_promedio
 tendencia:
     // x0 = buffer
     // x1 = contador
@@ -217,8 +216,7 @@ tendencia:
     mov x3, x0
     ldr x2, [x1]
 
-    bl calcular_tendencia
-    ret
+    b calcular_tendencia
 
 amplitud:
     // x0 = buffer
@@ -227,8 +225,7 @@ amplitud:
     mov x3, x0
     ldr x2, [x1]
 
-    bl calcular_amplitud
-    ret
+    b calcular_amplitud
 end_program:
     mov x0, #0
     mov x8, #93
