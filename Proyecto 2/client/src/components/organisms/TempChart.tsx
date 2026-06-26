@@ -9,54 +9,12 @@ const pw = VW - PAD.l - PAD.r,
   ph = VH - PAD.t - PAD.b;
 
 const METRICS = [
-  {
-    key: "temperatura",
-    label: "Temperatura",
-    title: "Temperatura ambiental",
-    unit: "°C",
-    min: 0,
-    max: 50,
-  },
-  {
-    key: "humedad_ambiente",
-    label: "Humedad",
-    title: "Humedad ambiental",
-    unit: "%",
-    min: 0,
-    max: 100,
-  },
-  {
-    key: "humedad_suelo_area1",
-    label: "Suelo A1",
-    title: "Humedad suelo Área 1",
-    unit: "%",
-    min: 0,
-    max: 100,
-  },
-  {
-    key: "humedad_suelo_area2",
-    label: "Suelo A2",
-    title: "Humedad suelo Área 2",
-    unit: "%",
-    min: 0,
-    max: 100,
-  },
-  {
-    key: "luz",
-    label: "Luz",
-    title: "Nivel de luz",
-    unit: "lx",
-    min: 0,
-    max: 1024,
-  },
-  {
-    key: "gas",
-    label: "Gas",
-    title: "Nivel de gas",
-    unit: "ppm",
-    min: 0,
-    max: 1000,
-  },
+  { key: "temperatura", label: "Temperatura", title: "Temperatura ambiental", unit: "°C", min: 0, max: 50 },
+  { key: "humedad_ambiente", label: "Humedad", title: "Humedad ambiental", unit: "%", min: 0, max: 100 },
+  { key: "humedad_suelo_area1", label: "Suelo A1", title: "Humedad suelo Área 1", unit: "%", min: 0, max: 100 },
+  { key: "humedad_suelo_area2", label: "Suelo A2", title: "Humedad suelo Área 2", unit: "%", min: 0, max: 100 },
+  { key: "luz", label: "Luz", title: "Nivel de luz", unit: "lx", min: 0, max: 1024 },
+  { key: "gas", label: "Gas", title: "Nivel de gas", unit: "ppm", min: 0, max: 1000 },
 ] as const;
 
 type MetricKey = (typeof METRICS)[number]["key"];
@@ -113,10 +71,7 @@ export default function TempChart() {
           v: record.valor[metricKey],
           label: formatLabel(record.timestamp),
         }))
-        .filter(
-          (item): item is { v: number; label: string } =>
-            typeof item.v === "number",
-        ),
+        .filter((item): item is { v: number; label: string } => typeof item.v === "number"),
     [metricKey, readingsQ.data],
   );
   const [active, setActive] = useState<number | null>(null);
@@ -131,10 +86,9 @@ export default function TempChart() {
     [metric.max, metric.min, pointsData],
   );
   const lineD = useMemo(() => smooth(P), [P]);
-  const areaD =
-    P.length > 0
-      ? `${lineD} L ${P[P.length - 1].x} ${yAt(metric.min, metric.min, metric.max)} L ${P[0].x} ${yAt(metric.min, metric.min, metric.max)} Z`
-      : "";
+  const areaD = P.length > 0
+    ? `${lineD} L ${P[P.length - 1].x} ${yAt(metric.min, metric.min, metric.max)} L ${P[0].x} ${yAt(metric.min, metric.min, metric.max)} Z`
+    : "";
 
   const onMove = (e: React.MouseEvent) => {
     if (P.length === 0) return;
@@ -151,13 +105,15 @@ export default function TempChart() {
     });
     setActive(best);
   };
-  const ap = active != null ? P[active] : (P[P.length - 1] ?? null);
+  const ap = active != null ? P[active] : P[P.length - 1] ?? null;
 
   return (
     <div className="xl:col-span-2 rounded-2xl border border-edge bg-panel p-5 sm:p-6">
       <div className="flex flex-wrap items-center gap-4 mb-2">
         <div>
-          <h2 className="font-display text-lg font-bold">{metric.title}</h2>
+          <h2 className="font-display text-lg font-bold">
+            {metric.title}
+          </h2>
           <p className="text-[12px] text-dim2">
             Histórico · últimas 50 lecturas
           </p>
@@ -212,12 +168,7 @@ export default function TempChart() {
           </g>
           <g fontFamily="var(--font-jetbrains)" fontSize={11} fill="#5A5A62">
             {ticks.map((v) => (
-              <text
-                key={v}
-                x={PAD.l - 8}
-                y={yAt(v, metric.min, metric.max) + 3}
-                textAnchor="end"
-              >
+              <text key={v} x={PAD.l - 8} y={yAt(v, metric.min, metric.max) + 3} textAnchor="end">
                 {v}
               </text>
             ))}
@@ -272,8 +223,7 @@ export default function TempChart() {
                 top: `${(ap.y / VH) * 100}%`,
               }}
             >
-              {ap.label} · {ap.v}
-              {metric.unit}
+              {ap.label} · {ap.v}{metric.unit}
             </div>
           </>
         )}

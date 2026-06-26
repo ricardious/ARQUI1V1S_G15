@@ -1,5 +1,4 @@
 import csv
-import re
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -102,8 +101,6 @@ class Arm64Service:
                     ]
                 )
 
-            csv_file.write("$\n")
-
         return {
             "message": "lecturas.csv generado correctamente",
             "path": str(self.csv_path),
@@ -157,7 +154,8 @@ class Arm64Service:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"No existe el directorio ARM64: {self.arm64_dir}",
             )
-        if not (self.arm64_dir / "Makefile").exists():
+        makefile = self.arm64_dir / "Makefile"
+        if not makefile.exists():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="No existe Makefile en la carpeta arm64. Agrega los modulos ARM64 antes de ejecutar.",
@@ -214,12 +212,11 @@ class Arm64Service:
         stored = await self.results.insert_one(
             base_record(
                 tipo_dato="resultado_arm64",
-                valor=valor,
+                valor=parsed_results,
                 origen="arm64",
                 estado_relacionado="NORMAL",
             )
         )
-        label = "Modulo " + ran[0] if module is not None else "Modulos ARM64"
         return {
             "message": (
                 f"{label} ejecutado sobre columna {result_col_key}, "
@@ -249,36 +246,59 @@ class Arm64Service:
                 detail=f"Error ejecutando {' '.join(command)}: {detail}",
             ) from exc
 
-    def _read_all_results(self) -> dict[str, dict[str, Any]]:
-        """Lee y parsea los .txt existentes (los que no existan se omiten)."""
-        output: dict[str, dict[str, Any]] = {}
+    def _detect_run_target(self) -> str | None:
+        """Busca un target de ejecucion conocido dentro del Makefile."""
+        makefile_text = (self.arm64_dir / "Makefile").read_text(
+            encoding="utf-8", errors="ignore"
+        )
+        for target in ("run", "ejecutar", "all-run"):
+            if f"{target}:" in makefile_text:
+                return target
+        return None
+
+    def _run_detected_binaries(self) -> None:
+        """Ejecuta binarios esperados cuando el Makefile no tiene target run."""
+        binary_names = [
+            "modulo_1_media",
+            "modulo_2_varianza",
+            "modulo_3_anomalias",
+            "modulo_4_prediccion",
+            "modulo_5_tendencia",
+        ]
+        missing: list[str] = []
+        for name in binary_names:
+            binary_path = self.arm64_dir / name
+            if not binary_path.exists():
+                missing.append(name)
+                continue
+            self._run_command([f"./{name}"], self.arm64_dir)
+        if missing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Makefile no define target de ejecucion y faltan binarios: "
+                    + ", ".join(missing)
+                ),
+            )
+
+    def _read_results(self) -> dict[str, str]:
+        """Lee los archivos .txt que deben generar los modulos ARM64."""
+        output: dict[str, str] = {}
+        missing: list[str] = []
         for key, filename in EXPECTED_RESULT_FILES.items():
             path = self.results_dir / filename
             if not path.exists():
+                missing.append(str(path))
                 continue
-            text = path.read_text(encoding="utf-8", errors="replace").strip()
-            output[key] = self._parse_module(key, text)
+            output[key] = path.read_text(encoding="utf-8", errors="replace").strip()
+
+        if missing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se encontraron archivos de salida ARM64: "
+                + ", ".join(missing),
+            )
         return output
-
-    def _parse_module(self, key: str, text: str) -> dict[str, Any]:
-        """Convierte la salida cruda en {raw, fields} para el dashboard.
-
-        Los modulos 1/2/4/5 emiten lineas KEY=VALUE. Anomalias usa texto libre
-        multi-columna, del que se extrae el total como campo TOTAL.
-        """
-        fields: dict[str, str] = {}
-        for line in text.splitlines():
-            stripped = line.strip()
-            if "=" in stripped:
-                name, value = stripped.split("=", 1)
-                fields[name.strip()] = value.strip()
-
-        if key == "anomalias":
-            match = re.search(r"[Tt]otal de anomalias detectadas:\s*(\d+)", text)
-            if match:
-                fields["TOTAL"] = match.group(1)
-
-        return {"raw": text, "fields": fields}
 
     def _int_part(self, value: Any) -> int:
         """Toma solo la parte entera requerida por el CSV de ARM64."""

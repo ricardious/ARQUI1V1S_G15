@@ -13,11 +13,7 @@ export default function EstadoGlobal() {
   const orbRef = useRef<HTMLDivElement>(null);
   const matsRef = useRef<THREE.Material[]>([]);
 
-  const {
-    sensors,
-    globalState: mqttGlobalState,
-    connectionState,
-  } = useMqttGreenPi();
+  const { sensors, globalState: mqttGlobalState, connectionState } = useMqttGreenPi();
   const statusQ = useSystemStatus();
   const latestReadingQ = useLatestReading();
   const backendState = statusQ.data?.estado_relacionado
@@ -32,17 +28,16 @@ export default function EstadoGlobal() {
 
   const latestValues = latestReadingQ.data?.valor;
   const kpiVals: Record<string, number | null> = {
-    temp: sensors.temperatura ?? latestValues?.temperatura ?? null,
-    hum: sensors.humedad_ambiente ?? latestValues?.humedad_ambiente ?? null,
-    luz: sensors.luz ?? latestValues?.luz ?? null,
-    gas: sensors.gas ?? latestValues?.gas ?? null,
+    temp: sensors.temperatura ?? latestValues?.temp ?? null,
+    hum:  sensors.humedad_ambiente ?? latestValues?.hum_aire ?? null,
+    luz:  sensors.luz ?? latestValues?.luz ?? null,
+    gas:  sensors.gas ?? latestValues?.gas ?? null,
   };
 
   useEffect(() => {
     const el = orbRef.current;
     if (!el) return;
-    const w = el.clientWidth,
-      h = el.clientHeight;
+    const w = el.clientWidth, h = el.clientHeight;
 
     const scene = new THREE.Scene();
     const cam = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
@@ -58,29 +53,20 @@ export default function EstadoGlobal() {
 
     const wire = new THREE.LineSegments(
       new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(1.05, 1)),
-      new THREE.LineBasicMaterial({
-        color: 0xffffff,
-        transparent: true,
-        opacity: 0.6,
-      }),
+      new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 }),
     );
     const inner = new THREE.Mesh(
       new THREE.IcosahedronGeometry(0.8, 1),
-      new THREE.MeshBasicMaterial({
-        color: 0xffffff,
-        transparent: true,
-        opacity: 0.05,
-      }),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.05 }),
     );
     group.add(wire, inner);
 
-    const N = 150,
-      arr = new Float32Array(N * 3);
+    const N = 150, arr = new Float32Array(N * 3);
     for (let i = 0; i < N; i++) {
       const r = 1.45 + Math.random() * 0.55;
       const t = Math.random() * Math.PI * 2;
       const p = Math.acos(2 * Math.random() - 1);
-      arr[i * 3] = r * Math.sin(p) * Math.cos(t);
+      arr[i * 3]     = r * Math.sin(p) * Math.cos(t);
       arr[i * 3 + 1] = r * Math.sin(p) * Math.sin(t);
       arr[i * 3 + 2] = r * Math.cos(p);
     }
@@ -114,8 +100,7 @@ export default function EstadoGlobal() {
     loop();
 
     const onResize = () => {
-      const w2 = el.clientWidth,
-        h2 = el.clientHeight;
+      const w2 = el.clientWidth, h2 = el.clientHeight;
       cam.aspect = w2 / h2;
       cam.updateProjectionMatrix();
       ren.setSize(w2, h2);
@@ -124,7 +109,6 @@ export default function EstadoGlobal() {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
-      ren.forceContextLoss();
       ren.dispose();
       if (ren.domElement.parentNode === el) el.removeChild(ren.domElement);
     };
@@ -183,12 +167,7 @@ export default function EstadoGlobal() {
                       : "border-edge text-dim2"
                 }`}
               >
-                {sourceLabel} ·{" "}
-                {connectionState === "connected"
-                  ? "EN LÍNEA"
-                  : connectionState === "connecting"
-                    ? "CONECTANDO"
-                    : "DESCONECTADO"}
+                {sourceLabel} · {connectionState === "connected" ? "EN LÍNEA" : connectionState === "connecting" ? "CONECTANDO" : "DESCONECTADO"}
               </span>
             </div>
             <p className="text-[13px] text-dim2 mt-1">{e.sub}</p>
@@ -197,10 +176,7 @@ export default function EstadoGlobal() {
           {/* Mini KPIs */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {KPIS.map((k) => (
-              <div
-                key={k.key}
-                className="rounded-xl border border-edge bg-ink px-3 py-2.5"
-              >
+              <div key={k.key} className="rounded-xl border border-edge bg-ink px-3 py-2.5">
                 <p className="text-[10px] uppercase tracking-[.12em] text-dim2 truncate">
                   {k.label}
                 </p>
@@ -209,9 +185,7 @@ export default function EstadoGlobal() {
                   <span className="text-[11px] text-dim2 ml-0.5">{k.unit}</span>
                 </p>
                 <p className="text-[10px] mt-1 text-dim2">
-                  {kpiVals[k.key] == null
-                    ? "sin lectura"
-                    : sourceLabel.toLowerCase()}
+                  {kpiVals[k.key] == null ? "sin lectura" : sourceLabel.toLowerCase()}
                 </p>
               </div>
             ))}

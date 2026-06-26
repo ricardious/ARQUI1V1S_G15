@@ -1,20 +1,30 @@
 "use client";
 
-import { useState } from "react";
 import IconBox from "../atoms/IconBox";
 import Arm64Card from "../molecules/Arm64Card";
 import Dropdown from "../molecules/Dropdown";
 import NumberField from "../molecules/NumberField";
 import { useArm64Results } from "@/services/arm64/queries";
 import { useGenerateCsv, useRunArm64 } from "@/services/arm64/mutations";
-import { ARM64_COLUMNS, ARM64_MODULES, columnLabel } from "@/lib/arm64";
+import type { Shape } from "@/lib/types/types";
 
-const COLUMN_OPTIONS = ARM64_COLUMNS.map((c) => ({
-  value: c.key,
-  label: c.label,
-}));
+const SHAPE_MAP: Record<string, Shape> = {
+  media:     "ico",
+  varianza:  "octa",
+  anomalias: "tetra",
+  prediccion: "torus",
+  tendencia: "box",
+};
 
-/** Organism: sección ARM64 con selector de columna y ejecución por módulo. */
+const LABEL_MAP: Record<string, string> = {
+  media:     "Media ponderada",
+  varianza:  "Desv. estándar",
+  anomalias: "Anomalías",
+  prediccion: "Predicción",
+  tendencia: "Tendencia",
+};
+
+/** Organism: sección ARM64 con resultados reales + botones de ejecución. */
 export default function Arm64Section() {
   const [col, setCol] = useState<string>("temp");
   const [count, setCount] = useState<number>(150);
@@ -25,7 +35,7 @@ export default function Arm64Section() {
   const runMut = useRunArm64();
 
   const latest = resultsQ.data?.[0];
-  const valor = latest?.valor ?? {};
+  const valor  = latest?.valor ?? {};
 
   const runningModule = runMut.isPending ? runMut.variables?.module : undefined;
   const runningAll = runMut.isPending && !runMut.variables?.module;
@@ -143,11 +153,9 @@ export default function Arm64Section() {
             : String((runMut.error as Error).message)}
         </p>
       )}
-      {(csvMut.isSuccess || runMut.isSuccess) && !busy && (
+      {(csvMut.isSuccess || runMut.isSuccess) && (
         <p className="mb-3 rounded-xl border border-ok/30 bg-ok/5 px-4 py-2 text-[12px] text-ok">
-          {runMut.isSuccess
-            ? "ARM64 ejecutado — resultados actualizados."
-            : "CSV generado correctamente."}
+          {runMut.isSuccess ? "ARM64 ejecutado — resultados actualizados." : "CSV generado correctamente."}
         </p>
       )}
 
