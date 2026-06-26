@@ -15,8 +15,8 @@ from app.services.records import base_record
 COLUMN_NAMES = {
     "temp": "TEMP",
     "hum_aire": "HUM_AIRE",
-    "hum_suelo_1": "HUM_SUELO_1",
-    "hum_suelo_2": "HUM_SUELO_2",
+    "hum_suelo_1": "SOIL1",
+    "hum_suelo_2": "SOIL2",
     "luz": "LUZ",
     "gas": "GAS",
 }
@@ -31,15 +31,13 @@ MODULE_TARGETS = {
 }
 
 CSV_HEADER = [
-    "ID",
     "TEMP",
     "HUM_AIRE",
-    "HUM_SUELO_1",
-    "HUM_SUELO_2",
+    "SOIL1",
+    "SOIL2",
     "LUZ",
     "GAS",
-    "RIEGO_1",
-    "RIEGO_2",
+    "MODO",
 ]
 
 CSV_VALUE_KEYS = [
@@ -49,8 +47,7 @@ CSV_VALUE_KEYS = [
     "hum_suelo_2",
     "luz",
     "gas",
-    "riego_1",
-    "riego_2",
+    "modo",
 ]
 
 EXPECTED_RESULT_FILES = {
@@ -86,12 +83,11 @@ class Arm64Service:
         with self.csv_path.open("w", newline="", encoding="utf-8") as csv_file:
             writer = csv.writer(csv_file)
             writer.writerow(CSV_HEADER)
-            for index, reading in enumerate(rows, start=1):
+            for reading in rows:
                 valor = reading.get("valor") or {}
                 # Python solo adapta datos al formato CSV.
                 writer.writerow(
                     [
-                        index,
                         *[
                             self._int_part(self._value_for_key(valor, key))
                             for key in CSV_VALUE_KEYS
@@ -278,6 +274,12 @@ class Arm64Service:
 
     def _int_part(self, value: Any) -> int:
         """Toma solo la parte entera requerida por el CSV de ARM64."""
+        if isinstance(value, str):
+            mode = value.strip().upper()
+            if mode in {"MANUAL", "MODO_MANUAL"}:
+                return 1
+            if mode in {"AUTOMATICO", "AUTOMÁTICO", "AUTO", "NORMAL"}:
+                return 0
         try:
             return int(float(value))
         except (TypeError, ValueError):
@@ -292,8 +294,7 @@ class Arm64Service:
             "hum_suelo_2": ("hum_suelo_2", "humedad_suelo_area2"),
             "luz": ("luz",),
             "gas": ("gas",),
-            "riego_1": ("riego_1",),
-            "riego_2": ("riego_2",),
+            "modo": ("modo", "mode"),
         }
         for alias in aliases[key]:
             if alias in valor:
