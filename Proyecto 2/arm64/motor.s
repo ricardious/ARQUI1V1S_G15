@@ -26,9 +26,10 @@ soil2_count: .quad 0
 luz_count:   .quad 0
 gas_count:   .quad 0
 
-soil_ideal:     .quad 65 
+SOIL_IDEAL:     .quad 65 
 SOIL_BAJO:      .quad 40
-gas_ideal:      .quad 150
+
+GAS_IDEAL:      .quad 150
 GAS_ALTO:       .quad 400
 GAS_AMP_ALTA:   .quad 80
 
