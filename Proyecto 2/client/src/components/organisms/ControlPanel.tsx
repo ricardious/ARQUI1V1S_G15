@@ -21,22 +21,12 @@ export default function ControlPanel({
     setTimeout(() => setFeedback(null), 2000);
   };
 
-  const toggle = (
-    key: keyof typeof actuators,
-    label: string,
-    cmdOn: string,
-    cmdOff: string,
-  ) => {
+  const toggle = (key: keyof typeof actuators, label: string, cmdOn: string, cmdOff: string) => {
     const next = !actuators[key];
     const cmd = next ? cmdOn : cmdOff;
     sendCommand(cmd);
     showFeedback(`${cmd} enviado`);
-    onEvent(
-      "comando",
-      `${label} ${next ? "activado" : "apagado"}`,
-      next ? "ON" : "OFF",
-      next ? "white" : "dim",
-    );
+    onEvent("comando", `${label} ${next ? "activado" : "apagado"}`, next ? "ON" : "OFF", next ? "white" : "dim");
   };
 
   const connected = connectionState === "connected";
@@ -47,7 +37,9 @@ export default function ControlPanel({
         <h3 className="font-display text-lg font-bold">Control remoto</h3>
         <span
           className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
-            connected ? "border-ok/40 text-ok" : "border-edge text-dim2"
+            connected
+              ? "border-ok/40 text-ok"
+              : "border-edge text-dim2"
           }`}
         >
           {connected ? "MQTT ON" : connectionState.toUpperCase()}
@@ -88,17 +80,10 @@ export default function ControlPanel({
         onClick={() => {
           const m = !manual;
           setManual(m);
-          const cmd = m
-            ? COMMANDS.CAMBIAR_MODO_MANUAL
-            : COMMANDS.CAMBIAR_MODO_AUTOMATICO;
+          const cmd = m ? COMMANDS.CAMBIAR_MODO_MANUAL : COMMANDS.CAMBIAR_MODO_AUTOMATICO;
           sendCommand(cmd);
           showFeedback(`${cmd} enviado`);
-          onEvent(
-            "comando",
-            "Modo de operación",
-            m ? "MANUAL" : "AUTO",
-            m ? "info" : "white",
-          );
+          onEvent("comando", "Modo de operación", m ? "MANUAL" : "AUTO", m ? "info" : "white");
         }}
         className="mt-4 w-full rounded-xl bg-white text-ink font-semibold text-[13px] py-3 hover:bg-white/90 transition disabled:opacity-40"
         disabled={!connected}

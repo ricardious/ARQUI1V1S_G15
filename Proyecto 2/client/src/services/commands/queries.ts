@@ -5,7 +5,7 @@ import { commandKeys } from "./keys";
 export function useCommands(limit = 20) {
   return useQuery({
     queryKey: commandKeys.list(limit),
-    queryFn: () => commandsApi.list(limit),
+    queryFn:  () => commandsApi.list(limit),
     refetchInterval: 15_000,
     retry: 2,
   });

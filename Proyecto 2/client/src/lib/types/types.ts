@@ -33,21 +33,21 @@ export type MqttConnectionState =
   | "error";
 
 export interface SensorReadings {
-  temperatura: number | null;
-  humedad_ambiente: number | null;
+  temperatura:       number | null;
+  humedad_ambiente:  number | null;
   humedad_suelo_area1: number | null;
   humedad_suelo_area2: number | null;
-  luz: number | null;
-  gas: number | null;
+  luz:               number | null;
+  gas:               number | null;
 }
 
 export interface ActuatorStates {
-  riego: boolean;
+  riego:      boolean;
   riego_area1: boolean;
   riego_area2: boolean;
   ventilador: boolean;
-  luces: boolean;
-  alarma: boolean;
+  luces:      boolean;
+  alarma:     boolean;
 }
 
 // ── Backend API ────────────────────────────────────────────────────────────
@@ -56,14 +56,14 @@ export interface SensorRecord {
   timestamp: string;
   tipo_dato: string;
   valor: {
-    temperatura?: number;
-    humedad_ambiente?: number;
+    temperatura?:       number;
+    humedad_ambiente?:  number;
     humedad_suelo_area1?: number;
     humedad_suelo_area2?: number;
-    luz?: number;
-    gas?: number;
-    riego_1?: number;
-    riego_2?: number;
+    luz?:        number;
+    gas?:        number;
+    riego_1?:    number;
+    riego_2?:    number;
   };
   origen: string;
   estado_relacionado: string;
@@ -78,7 +78,7 @@ export interface EventRecord {
   estado_relacionado: string;
 }
 
-export type CommandRecord = EventRecord;
+export type CommandRecord     = EventRecord;
 export type ActuatorLogRecord = EventRecord;
 
 export interface SystemStatus {

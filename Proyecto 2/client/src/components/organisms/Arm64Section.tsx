@@ -14,7 +14,7 @@ const COLUMN_OPTIONS = ARM64_COLUMNS.map((c) => ({
   label: c.label,
 }));
 
-/** Organism: sección ARM64 con selector de columna y ejecución por módulo. */
+/** Organism: sección ARM64 con resultados reales + botones de ejecución. */
 export default function Arm64Section() {
   const [col, setCol] = useState<string>("temp");
   const [count, setCount] = useState<number>(150);
@@ -25,7 +25,7 @@ export default function Arm64Section() {
   const runMut = useRunArm64();
 
   const latest = resultsQ.data?.[0];
-  const valor = latest?.valor ?? {};
+  const valor  = latest?.valor ?? {};
 
   const runningModule = runMut.isPending ? runMut.variables?.module : undefined;
   const runningAll = runMut.isPending && !runMut.variables?.module;
@@ -143,11 +143,9 @@ export default function Arm64Section() {
             : String((runMut.error as Error).message)}
         </p>
       )}
-      {(csvMut.isSuccess || runMut.isSuccess) && !busy && (
+      {(csvMut.isSuccess || runMut.isSuccess) && (
         <p className="mb-3 rounded-xl border border-ok/30 bg-ok/5 px-4 py-2 text-[12px] text-ok">
-          {runMut.isSuccess
-            ? "ARM64 ejecutado — resultados actualizados."
-            : "CSV generado correctamente."}
+          {runMut.isSuccess ? "ARM64 ejecutado — resultados actualizados." : "CSV generado correctamente."}
         </p>
       )}
 
