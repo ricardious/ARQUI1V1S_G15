@@ -15,6 +15,21 @@ anomalias_path:
 prediccion_path:
     .asciz "../resultados_arm64/resultado_prediccion.txt"
 
+rmse_path:
+    .asciz "../resultados_arm64/resultado_rmse.txt"
+
+regresion_path:
+    .asciz "../resultados_arm64/resultado_regresion.txt"
+
+prediccion_futura_path:
+    .asciz "../resultados_arm64/resultado_prediccion_futura.txt"
+
+integral_error_path:
+    .asciz "../resultados_arm64/resultado_integral_error.txt"
+
+derivada_local_path:
+    .asciz "../resultados_arm64/resultado_derivada_local.txt"
+
 newline_text:
     .asciz "\n"
 

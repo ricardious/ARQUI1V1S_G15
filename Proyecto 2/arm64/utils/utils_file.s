@@ -53,6 +53,31 @@ open_prediccion_write:
     ldr x1, =prediccion_path
     b open_output_file
 
+// Crear/Abrir resultado_rmse.txt
+open_rmse_write:
+    ldr x1, =rmse_path
+    b open_output_file
+
+// Crear/Abrir resultado_regresion.txt
+open_regresion_write:
+    ldr x1, =regresion_path
+    b open_output_file
+
+// Crear/Abrir resultado_prediccion_futura.txt
+open_prediccion_futura_write:
+    ldr x1, =prediccion_futura_path
+    b open_output_file
+
+// Crear/Abrir resultado_integral_error.txt
+open_integral_error_write:
+    ldr x1, =integral_error_path
+    b open_output_file
+
+// Crear/Abrir resultado_derivada_local.txt
+open_derivada_local_write:
+    ldr x1, =derivada_local_path
+    b open_output_file
+
 // Cerrar archivo de salida
 // x0: descriptor del archivo a cerrar
 close_output_file:
