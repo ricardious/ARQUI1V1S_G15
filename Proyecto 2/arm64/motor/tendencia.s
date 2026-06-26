@@ -27,7 +27,7 @@ tendencia_loop:
     beq fin_tendencia
 
     //offset del dato actual
-    cmp x6, #8
+    mov x6, #8
     mul x7, x4, x6
 
     //cargo el dato actula

@@ -31,8 +31,9 @@ temp_ideal:     .quad 24
 TEMP_ALTA:      .quad 35
 
 LUZ_IDEAL:      .quad 200
+LUZ_BAJA:       .quad 250
 LUZ_ALTA:       .quad 500
- 
+
 SOIL_IDEAL:     .quad 65 
 SOIL_BAJO:      .quad 40
 
@@ -61,8 +62,8 @@ input_buffer:
 .include "motor/temperatura.s"
 .include "motor/luz.s"
 .include "motor/gas.s"
-.include "motor/soli1.s"
-.include "motor/soli2.s"
+.include "motor/soil1.s"
+.include "motor/soil2.s"
 .include "motor/prioridades.s"
 
 
@@ -85,7 +86,7 @@ main_loop:
     bl atoi_csv
 
     // si no hay numero al inicio
-    cbz x7, main_loop
+    //cbz x7, main_loop
 
     // guardar en array
     mov x0, x10
@@ -103,8 +104,6 @@ main_loop:
     ldr x1, =temp_count
     bl tendencia
     mov x20, x0
-
-    bl evaluar_temperatura
 
     //Humedad
     bl atoi_csv
@@ -199,6 +198,7 @@ main_loop:
     bl atoi_csv
     mov x13, x10        //modo(0= automatico, 1= manual)
 
+    bl evaluar_prioridades
     b main_loop
 
 promedio:
