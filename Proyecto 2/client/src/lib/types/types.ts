@@ -103,6 +103,10 @@ export interface Arm64Result {
   valor: {
     column?: string;
     ran?: string[];
+    count?: number;
+    line_start?: number;
+    line_end?: number;
+    csv_rows?: number;
     media?: Arm64ModuleResult;
     varianza?: Arm64ModuleResult;
     anomalias?: Arm64ModuleResult;
