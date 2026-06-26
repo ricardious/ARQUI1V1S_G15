@@ -60,6 +60,11 @@ input_buffer:
 .include "motor/amplitud.s"
 .include "motor/temperatura.s"
 .include "motor/luz.s"
+.include "motor/gas.s"
+.include "motor/soli1.s"
+.include "motor/soli2.s"
+.include "motor/prioridades.s"
+
 
 _start:
 
