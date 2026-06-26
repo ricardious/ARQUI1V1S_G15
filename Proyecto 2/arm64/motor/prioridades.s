@@ -7,6 +7,7 @@ len_p7_no_action = . - msg_p7_no_action
 .global evaluar_prioridades
 
 evaluar_prioridades:
+    str x30, [sp, #-16]!
     // niveles de prioridad
     // 1) gas: promedio(x11) y amplitud elevado (x12) / ALARM_ON 
     bl evaluar_gas
@@ -35,4 +36,5 @@ evaluar_prioridades:
     bl write_text
     
 salir_prioridad:
+    ldr x30, [sp], #16
     ret

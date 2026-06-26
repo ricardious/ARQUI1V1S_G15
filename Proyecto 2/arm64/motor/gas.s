@@ -27,6 +27,8 @@ activar_alarma:
     mov x0, #1
     ldr x1, =msg_alarm_on
     mov x2, len_alarm_on
+    str x30, [sp, #-16]!
     bl write_text
+    ldr x30, [sp], #16
     mov x0, #1
     ret

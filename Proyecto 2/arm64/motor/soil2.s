@@ -22,10 +22,12 @@ evaluar_soil2:
     mov x0, #1
     ldr x1, =msg_riego2_on
     mov x2, len_riego2_on
+    str x30, [sp, #-16]!
     bl write_text
+    ldr x30, [sp], #16
     mov x0, #1          // retorna 1 para indicar que se debe activar el riego 2
     ret
 
 soil2_normal:
     mov x0, #0          // retorna 0 de estado normal
-    ret  
+    ret

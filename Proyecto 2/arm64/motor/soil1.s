@@ -22,7 +22,9 @@ evaluar_soil1:
     mov x0, #1
     ldr x1, =msg_riego1_on
     mov x2, len_riego1_on
+    str x30, [sp, #-16]!
     bl write_text
+    ldr x30, [sp], #16
     mov x0, #1          // retorna 1 para indicar que se debe activar el riego 1
     ret
 
