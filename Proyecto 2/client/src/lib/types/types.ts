@@ -95,11 +95,17 @@ export interface Arm64Result {
   timestamp: string;
   tipo_dato: string;
   valor: {
-    media?:     string;
-    varianza?:  string;
-    anomalias?: string;
-    prediccion?: string;
-    tendencia?: string;
+    column?: string;
+    ran?: string[];
+    count?: number;
+    line_start?: number;
+    line_end?: number;
+    csv_rows?: number;
+    media?: Arm64ModuleResult;
+    varianza?: Arm64ModuleResult;
+    anomalias?: Arm64ModuleResult;
+    prediccion?: Arm64ModuleResult;
+    tendencia?: Arm64ModuleResult;
   };
   origen: string;
   estado_relacionado: string;

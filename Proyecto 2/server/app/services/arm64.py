@@ -10,16 +10,40 @@ from app.core.config import Settings
 from app.repositories.mongo_repository import MongoRepository
 from app.services.records import base_record
 
+# Columna analizable -> nombre exacto en el encabezado CSV.
+COLUMN_NAMES = {
+    "temp": "TEMP",
+    "hum_aire": "HUM_AIRE",
+    "soil1": "SOIL1",
+    "soil2": "SOIL2",
+    "hum_suelo_1": "SOIL1",
+    "hum_suelo_2": "SOIL2",
+    "luz": "LUZ",
+    "gas": "GAS",
+}
+
+COLUMN_ALIASES = {
+    "hum_suelo_1": "soil1",
+    "hum_suelo_2": "soil2",
+}
+
+# Modulo -> target del Makefile que lo compila y ejecuta.
+MODULE_TARGETS = {
+    "media": "run-media",
+    "varianza": "run-varianza",
+    "anomalias": "run-anomalias",
+    "prediccion": "run-prediccion",
+    "tendencia": "run-tendencia",
+}
+
 CSV_HEADER = [
-    "ID",
     "TEMP",
     "HUM_AIRE",
-    "HUM_SUELO_1",
-    "HUM_SUELO_2",
+    "SOIL1",
+    "SOIL2",
     "LUZ",
     "GAS",
-    "RIEGO_1",
-    "RIEGO_2",
+    "MODO",
 ]
 
 CSV_VALUE_KEYS = [
@@ -29,8 +53,7 @@ CSV_VALUE_KEYS = [
     "hum_suelo_2",
     "luz",
     "gas",
-    "riego_1",
-    "riego_2",
+    "modo",
 ]
 
 EXPECTED_RESULT_FILES = {
@@ -57,22 +80,24 @@ class Arm64Service:
     async def list_results(self, limit: int) -> list[dict[str, Any]]:
         return await self.results.list_recent(limit)
 
-    async def generate_csv(self) -> dict[str, Any]:
-        """Genera data/lecturas.csv con los ultimos 30 registros."""
-        readings = await self.readings.list_recent(30)
+    async def generate_csv(self, count: int = 30) -> dict[str, Any]:
+        """Genera data/lecturas.csv con los ultimos N registros."""
+        readings = await self.readings.list_recent(count)
         rows = list(reversed(readings))
 
         self.data_dir.mkdir(parents=True, exist_ok=True)
         with self.csv_path.open("w", newline="", encoding="utf-8") as csv_file:
             writer = csv.writer(csv_file)
             writer.writerow(CSV_HEADER)
-            for index, reading in enumerate(rows, start=1):
+            for reading in rows:
                 valor = reading.get("valor") or {}
                 # Python solo adapta datos al formato CSV.
                 writer.writerow(
                     [
-                        index,
-                        *[self._int_part(valor.get(key, 0)) for key in CSV_VALUE_KEYS],
+                        *[
+                            self._int_part(self._value_for_key(valor, key))
+                            for key in CSV_VALUE_KEYS
+                        ],
                     ]
                 )
 
@@ -80,15 +105,50 @@ class Arm64Service:
             "message": "lecturas.csv generado correctamente",
             "path": str(self.csv_path),
             "rows": len(rows),
+            "requested_rows": count,
         }
 
-    async def run_modules(self) -> dict[str, Any]:
-        """Ejecuta make, corre los modulos ARM64 y persiste sus salidas."""
-        if not self.csv_path.exists():
+    async def run(
+        self,
+        col: str,
+        module: str | None = None,
+        *,
+        count: int = 30,
+        line_start: int = 1,
+        line_end: int | None = None,
+    ) -> dict[str, Any]:
+        """Ejecuta uno o todos los modulos ARM64 sobre la columna elegida.
+
+        - col: nombre de columna (temp, hum_aire, luz, ...).
+        - module: clave de un modulo (media, varianza, ...) o None para todos.
+        - count: cantidad de lecturas recientes tomadas desde MongoDB para el CSV.
+        - line_start/line_end: rango 1-based dentro del CSV generado.
+        Cada modulo recibe archivo, rango y columna via Makefile.
+        """
+        col_key = col.lower()
+        if col_key not in COLUMN_NAMES:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No existe lecturas.csv. Ejecuta primero /api/arm64/generate-csv.",
+                detail=f"Columna invalida: {col}. Use una de {list(COLUMN_NAMES)}.",
             )
+        col_name = COLUMN_NAMES[col_key]
+        result_col_key = COLUMN_ALIASES.get(col_key, col_key)
+
+        if line_end is None:
+            line_end = count
+        if line_start < 1 or line_end < line_start:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Rango invalido: line_start debe ser >= 1 y line_end >= line_start.",
+            )
+
+        if module is not None and module.lower() not in MODULE_TARGETS:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Modulo invalido: {module}. Use uno de {list(MODULE_TARGETS)}.",
+            )
+
+        generated = await self.generate_csv(count)
         if not self.arm64_dir.exists():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -101,14 +161,54 @@ class Arm64Service:
                 detail="No existe Makefile en la carpeta arm64. Agrega los modulos ARM64 antes de ejecutar.",
             )
 
-        self._run_command(["make"], self.arm64_dir)
-        run_target = self._detect_run_target()
-        if run_target is not None:
-            self._run_command(["make", run_target], self.arm64_dir)
+        make_args = [
+            f"LEC={self.csv_path}",
+            f"INI={line_start}",
+            f"FIN={line_end}",
+            f"COL={col_name}",
+        ]
+        if module is None:
+            ran = list(MODULE_TARGETS)
+            self._run_command(["make", "run-all", *make_args], self.arm64_dir)
         else:
-            self._run_detected_binaries()
+            module_key = module.lower()
+            ran = [module_key]
+            self._run_command(
+                ["make", MODULE_TARGETS[module_key], *make_args], self.arm64_dir
+            )
 
-        parsed_results = self._read_results()
+        previous = await self.results.list_recent(1)
+        prev_valor = previous[0].get("valor") if previous else None
+        prev_valor = prev_valor if isinstance(prev_valor, dict) else {}
+
+        parsed = self._read_all_results()
+        missing = [key for key in ran if key not in parsed]
+        if missing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se genero salida ARM64 para: " + ", ".join(missing),
+            )
+
+        # Cada modulo recuerda con que columna se calculo: los recien ejecutados
+        # usan la columna actual; los demas conservan la de su corrida anterior.
+        for key, mod in parsed.items():
+            if key in ran:
+                mod["column"] = result_col_key
+            else:
+                prev_mod = prev_valor.get(key)
+                mod["column"] = (
+                    prev_mod.get("column") if isinstance(prev_mod, dict) else None
+                )
+
+        valor: dict[str, Any] = {
+            "column": result_col_key,
+            "ran": ran,
+            "count": count,
+            "line_start": line_start,
+            "line_end": line_end,
+            "csv_rows": generated["rows"],
+            **parsed,
+        }
         stored = await self.results.insert_one(
             base_record(
                 tipo_dato="resultado_arm64",
@@ -118,8 +218,11 @@ class Arm64Service:
             )
         )
         return {
-            "message": "Modulos ARM64 ejecutados",
-            "results": parsed_results,
+            "message": (
+                f"{label} ejecutado sobre columna {result_col_key}, "
+                f"lineas {line_start}-{line_end}, ultimos {count} datos"
+            ),
+            "results": valor,
             "stored": stored,
         }
 
@@ -199,7 +302,29 @@ class Arm64Service:
 
     def _int_part(self, value: Any) -> int:
         """Toma solo la parte entera requerida por el CSV de ARM64."""
+        if isinstance(value, str):
+            mode = value.strip().upper()
+            if mode in {"MANUAL", "MODO_MANUAL"}:
+                return 1
+            if mode in {"AUTOMATICO", "AUTOMÁTICO", "AUTO", "NORMAL"}:
+                return 0
         try:
             return int(float(value))
         except (TypeError, ValueError):
             return 0
+
+    def _value_for_key(self, valor: dict[str, Any], key: str) -> Any:
+        """Lee valores con las claves actuales y las aliases usadas por sensores."""
+        aliases = {
+            "temp": ("temp", "temperatura"),
+            "hum_aire": ("hum_aire", "humedad_ambiente"),
+            "hum_suelo_1": ("hum_suelo_1", "humedad_suelo_area1"),
+            "hum_suelo_2": ("hum_suelo_2", "humedad_suelo_area2"),
+            "luz": ("luz",),
+            "gas": ("gas",),
+            "modo": ("modo", "mode"),
+        }
+        for alias in aliases[key]:
+            if alias in valor:
+                return valor[alias]
+        return 0
