@@ -34,4 +34,3 @@ dividir_promedio:
 promedio_cero:
     mov x0, #0
     ret
-

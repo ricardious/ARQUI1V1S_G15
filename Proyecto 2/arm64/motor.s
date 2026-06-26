@@ -26,11 +26,15 @@ soil2_count: .quad 0
 luz_count:   .quad 0
 gas_count:   .quad 0
 
+
 temp_ideal:     .quad 24 
 TEMP_ALTA:      .quad 35
 
 LUZ_IDEAL:      .quad 200
 LUZ_ALTA:       .quad 500
+
+soil_ideal:     .quad 65 
+SOIL_BAJO:      .quad 40
 
 msg_no_action:
     .ascii "ACTION=NO_ACTION\n"
@@ -52,6 +56,7 @@ input_buffer:
 .include "motor/amplitud.s"
 .include "motor/temperatura.s"
 .include "motor/luz.s"
+
 _start:
 
 main_loop:
@@ -119,10 +124,12 @@ main_loop:
     ldr x0, =soil1_buffer
     ldr x1, =soil1_count
     bl promedio
+    mov x23, x0         // promedio de soil1
 
     ldr x0, =soil1_buffer
     ldr x1, =soil1_count
     bl tendencia
+    mov x24, x0         // tendencia de soil1
 
     //soli2
     bl atoi_csv
@@ -135,10 +142,12 @@ main_loop:
     ldr x0, =soil2_buffer
     ldr x1, =soil2_count
     bl promedio
+    mov x25, x0         // promedio de soil2
 
     ldr x0, =soil2_buffer
     ldr x1, =soil2_count
     bl tendencia
+    mov x26, x0         // tendencia de soil2
 
     //luz
     bl atoi_csv
@@ -151,14 +160,12 @@ main_loop:
     ldr x0, =luz_buffer
     ldr x1, =luz_count
     bl promedio
-    mov x25, x0
+    mov x27, x0
 
     ldr x0, =luz_buffer
     ldr x1, =luz_count
     bl tendencia
-    mov x26, x0
-
-    bl evaluar_luz
+    mov x28, x0
 
     //gas
     bl atoi_csv

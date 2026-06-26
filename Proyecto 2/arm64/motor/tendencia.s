@@ -54,6 +54,3 @@ fin_tendencia:
 tendencia_cero:
     mov x0, #0
     ret
-
-
-
