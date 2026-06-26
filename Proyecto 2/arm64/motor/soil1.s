@@ -1,6 +1,6 @@
 .data
 msg_riego1_on: 
-    .ascii "ACTION=RIEGO_1_ON\nTARGET=SOIL1\nRISK=HIGH\nREASON=SOIL1_BAJO_Y_DESCENDENTE\nSTATUS=OK\n\n"
+    .ascii "ACTION=RIEGO_1_ON\nTARGET=SOIL1\nRISK=HIGH\nREASON=SOIL1_LOW_AND_DESCENDING\nSTATUS=OK\n\n"
 len_riego1_on = . - msg_riego1_on
 
 .text
