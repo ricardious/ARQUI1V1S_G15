@@ -32,9 +32,13 @@ TEMP_ALTA:      .quad 35
 
 LUZ_IDEAL:      .quad 200
 LUZ_ALTA:       .quad 500
-
-soil_ideal:     .quad 65 
+ 
+SOIL_IDEAL:     .quad 65 
 SOIL_BAJO:      .quad 40
+
+GAS_IDEAL:      .quad 150
+GAS_ALTO:       .quad 400
+GAS_AMP_ALTA:   .quad 80
 
 msg_no_action:
     .ascii "ACTION=NO_ACTION\n"
