@@ -1,7 +1,7 @@
 "use client";
 
 import KpiCard from "../molecules/KpiCard";
-import { useMqttGreenPi } from "@/lib/hooks/useMqttGreenPi";
+import { useMqttDashboard } from "@/lib/hooks/useMqttDashboard";
 import { useLatestReading } from "@/services/readings/queries";
 
 const SENSOR_DEFS = [
@@ -15,7 +15,7 @@ const SENSOR_DEFS = [
 
 /** Organism: grilla de 6 sensores con valores MQTT en tiempo real. */
 export default function SensoresSection() {
-  const { sensors, connectionState } = useMqttGreenPi();
+  const { sensors, connectionState } = useMqttDashboard();
   const latestReadingQ = useLatestReading();
   const latestValues = latestReadingQ.data?.valor;
   const values = {

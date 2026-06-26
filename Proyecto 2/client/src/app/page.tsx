@@ -12,7 +12,7 @@ import ActuadoresViz3D from "@/components/organisms/ActuadoresViz3D";
 import ActivityTable from "@/components/organisms/ActivityTable";
 import Arm64Section from "@/components/organisms/Arm64Section";
 import Arm64Viz3D from "@/components/organisms/Arm64Viz3D";
-import { useMqttGreenPi } from "@/lib/hooks/useMqttGreenPi";
+import { useMqttDashboard } from "@/lib/hooks/useMqttDashboard";
 import { useLatestReading } from "@/services/readings/queries";
 import { RequireAuth } from "@/lib/hooks/useAuth";
 import type { StateColor } from "@/lib/types/types";
@@ -36,7 +36,7 @@ function zoneEstado(hum: number | null): { label: string; color: "white" | "warn
 }
 
 export default function Page() {
-  const { sensors, actuators } = useMqttGreenPi();
+  const { sensors, actuators } = useMqttDashboard();
   const latestReadingQ = useLatestReading();
   const latestValues = latestReadingQ.data?.valor;
 
