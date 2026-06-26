@@ -1,28 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import IconBox from "../atoms/IconBox";
 import Arm64Card from "../molecules/Arm64Card";
 import Dropdown from "../molecules/Dropdown";
 import NumberField from "../molecules/NumberField";
 import { useArm64Results } from "@/services/arm64/queries";
 import { useGenerateCsv, useRunArm64 } from "@/services/arm64/mutations";
-import type { Shape } from "@/lib/types/types";
+import { ARM64_COLUMNS, ARM64_MODULES, columnLabel } from "@/lib/arm64";
 
-const SHAPE_MAP: Record<string, Shape> = {
-  media:     "ico",
-  varianza:  "octa",
-  anomalias: "tetra",
-  prediccion: "torus",
-  tendencia: "box",
-};
-
-const LABEL_MAP: Record<string, string> = {
-  media:     "Media ponderada",
-  varianza:  "Desv. estándar",
-  anomalias: "Anomalías",
-  prediccion: "Predicción",
-  tendencia: "Tendencia",
-};
+const COLUMN_OPTIONS = ARM64_COLUMNS.map((c) => ({
+  value: c.key,
+  label: c.label,
+}));
 
 /** Organism: sección ARM64 con resultados reales + botones de ejecución. */
 export default function Arm64Section() {

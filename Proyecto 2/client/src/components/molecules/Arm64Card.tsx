@@ -5,19 +5,27 @@ import type { Shape } from "@/lib/types/types";
 export default function Arm64Card({
   file,
   label,
-  value,
+  headline,
+  stats,
   foot,
   shape,
   color,
   danger,
+  running,
+  disabled,
+  onRun,
 }: {
   file: string;
   label: string;
-  value: string;
+  headline: string;
+  stats: { k: string; v: string | undefined }[];
   foot: string;
   shape: Shape;
   color: string;
   danger: boolean;
+  running: boolean;
+  disabled: boolean;
+  onRun: () => void;
 }) {
   return (
     <div
@@ -33,12 +41,32 @@ export default function Arm64Card({
       />
       <p className="text-[11px] font-mono text-dim2 mb-3">{file}</p>
       <p className="text-[12px] text-dim">{label}</p>
-      <p className="font-mono text-3xl font-bold mt-1">{value}</p>
+      <p className="font-mono text-3xl font-bold mt-1">{headline}</p>
+      {stats.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {stats.map((stat) => (
+            <span
+              key={stat.k}
+              className="rounded-lg border border-edge bg-ink/20 px-2 py-1 text-[11px] font-mono text-dim2"
+            >
+              {stat.k}: <span className="text-white">{stat.v}</span>
+            </span>
+          ))}
+        </div>
+      )}
       <p
         className={`text-[11px] font-mono mt-3 ${danger ? "text-danger" : "text-dim2"}`}
       >
         {foot}
       </p>
+      <button
+        type="button"
+        onClick={onRun}
+        disabled={disabled}
+        className="mt-4 rounded-xl border border-edge px-3 py-2 text-[12px] font-medium transition hover:border-white hover:text-white disabled:opacity-40"
+      >
+        {running ? "Ejecutando..." : "Ejecutar"}
+      </button>
     </div>
   );
 }

@@ -59,8 +59,10 @@ export default function Page() {
     alarma: actuators.alarma,
   };
 
-  const humedadZona1 = sensors.humedad_suelo_area1 ?? latestValues?.hum_suelo_1 ?? null;
-  const humedadZona2 = sensors.humedad_suelo_area2 ?? latestValues?.hum_suelo_2 ?? null;
+  const humedadZona1 =
+    sensors.humedad_suelo_area1 ?? latestValues?.humedad_suelo_area1 ?? null;
+  const humedadZona2 =
+    sensors.humedad_suelo_area2 ?? latestValues?.humedad_suelo_area2 ?? null;
   const z1 = zoneEstado(humedadZona1);
   const z2 = zoneEstado(humedadZona2);
 
