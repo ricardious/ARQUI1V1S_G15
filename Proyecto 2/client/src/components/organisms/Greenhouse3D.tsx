@@ -196,6 +196,7 @@ export default function Greenhouse3D() {
       window.removeEventListener("pointermove", move);
       el.removeEventListener("wheel", wheel);
       window.removeEventListener("resize", onResize);
+      ren.forceContextLoss();
       ren.dispose();
       if (ren.domElement.parentNode === el) el.removeChild(ren.domElement);
     };
@@ -203,30 +204,28 @@ export default function Greenhouse3D() {
 
   return (
     <section className="rounded-2xl border border-edge bg-panel overflow-hidden relative">
-      <div className="relative z-10 flex flex-wrap items-start justify-between gap-x-4 gap-y-2 border-b border-edge p-5 sm:absolute sm:inset-x-0 sm:top-0 sm:border-b-0 sm:pointer-events-none">
-        <div>
-          <p className="text-[11px] uppercase tracking-[.2em] text-dim2">
-            Maqueta
-          </p>
-          <h2 className="font-display text-lg font-bold">
-            Estructura del invernadero
-          </h2>
-          <p className="text-[12px] text-dim2 mt-0.5">
-            2 áreas de cultivo · 1 centro de control
-          </p>
-        </div>
-        <div className="flex flex-col gap-1.5 text-[11px] font-mono">
-          <LegendItem color="#ffffff" label="Zona 1" />
-          <LegendItem color="#2D9BFF" label="Zona 2" />
-          <LegendItem color="#FFC400" label="Centro de control" />
-        </div>
+      <div className="absolute top-5 left-5 z-10">
+        <p className="text-[11px] uppercase tracking-[.2em] text-dim2">
+          Maqueta
+        </p>
+        <h2 className="font-display text-lg font-bold">
+          Estructura del invernadero
+        </h2>
+        <p className="text-[12px] text-dim2 mt-0.5">
+          2 áreas de cultivo · 1 centro de control
+        </p>
       </div>
-      <div className="absolute bottom-4 left-5 z-10 hidden text-[10px] text-dim2 font-mono sm:block">
+      <div className="absolute top-5 right-5 z-10 flex flex-col gap-1.5 text-[11px] font-mono">
+        <LegendItem color="#ffffff" label="Zona 1" />
+        <LegendItem color="#2D9BFF" label="Zona 2" />
+        <LegendItem color="#FFC400" label="Centro de control" />
+      </div>
+      <div className="absolute bottom-4 left-5 z-10 text-[10px] text-dim2 font-mono">
         arrastrá para rotar · scroll para zoom
       </div>
       <div
         ref={elRef}
-        className="h-72 sm:h-105 w-full cursor-grab active:cursor-grabbing"
+        className="h-90 sm:h-105 w-full cursor-grab active:cursor-grabbing"
       />
     </section>
   );

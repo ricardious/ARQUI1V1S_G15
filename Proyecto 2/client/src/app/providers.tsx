@@ -2,7 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
-import { MqttProvider } from "@/lib/hooks/useMqttGreenPi";
+import { MqttProvider } from "@/lib/hooks/useMqttDashboard";
 import { AuthProvider } from "@/lib/hooks/useAuth";
 
 export default function Providers({ children }: { children: React.ReactNode }) {

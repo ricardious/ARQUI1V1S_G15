@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { useMqttGreenPi } from "@/lib/hooks/useMqttGreenPi";
+import { useMqttDashboard } from "@/lib/hooks/useMqttDashboard";
 import { useLatestReading } from "@/services/readings/queries";
 
 const DEFS: {
@@ -39,7 +39,7 @@ const HC = { ok: "#5a5a62", warn: "#FFC400", danger: "#FF2D2D", dim: "#2a2a2e" }
 export default function SensoresViz3D() {
   const elRef = useRef<HTMLDivElement>(null);
   const matsRef = useRef<THREE.LineBasicMaterial[]>([]);
-  const { sensors } = useMqttGreenPi();
+  const { sensors } = useMqttDashboard();
   const latestReadingQ = useLatestReading();
   const latestValues = latestReadingQ.data?.valor;
   const vals = useMemo<Record<string, number | null>>(
@@ -146,6 +146,7 @@ export default function SensoresViz3D() {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
+      ren.forceContextLoss();
       ren.dispose();
       if (ren.domElement.parentNode === el) el.removeChild(ren.domElement);
     };

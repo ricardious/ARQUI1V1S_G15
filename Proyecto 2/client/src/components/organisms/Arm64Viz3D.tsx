@@ -26,13 +26,23 @@ function makeGeo(shape: Shape): THREE.BufferGeometry {
 const X_POS = [-3.5, -1.75, 0, 1.75, 3.5];
 const FLOAT_Y = [0, 0.45, -0.25, 0.7, 1.05];
 
+function moduleValue(key: (typeof MODULES)[number]["key"], fields: Record<string, string>): string {
+  if (key === "media") return fields.WEIGHTED_MEAN ?? "—";
+  if (key === "varianza") return fields.STD_DEV ?? "—";
+  if (key === "anomalias") return fields.TOTAL ?? "—";
+  if (key === "prediccion") return fields.NEXT_VALUE ?? "—";
+  if (key === "tendencia") return fields.TREND ?? "—";
+  return "—";
+}
+
 /** Organism: cristales 3D por módulo ARM64 — formas y colores por tarjeta. */
 export default function Arm64Viz3D() {
   const elRef = useRef<HTMLDivElement>(null);
   const resultsQ = useArm64Results(1);
   const valor = resultsQ.data?.[0]?.valor ?? {};
   const cards = MODULES.map((module) => {
-    const value = valor[module.key] ?? "—";
+    const mod = valor[module.key];
+    const value = mod ? moduleValue(module.key, mod.fields) : "—";
     const danger = module.key === "anomalias" && value !== "—" && Number(value) > 2;
     return {
       ...module,
@@ -111,6 +121,7 @@ export default function Arm64Viz3D() {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
+      ren.forceContextLoss();
       ren.dispose();
       if (ren.domElement.parentNode === el) el.removeChild(ren.domElement);
     };
