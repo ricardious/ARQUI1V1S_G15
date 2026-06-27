@@ -26,7 +26,11 @@ soil2_count: .quad 0
 luz_count:   .quad 0
 gas_count:   .quad 0
 
-
+.global SOIL_BAJO
+.global GAS_ALTO
+.global GAS_AMP_ALTA
+.global LUZ_BAJA
+.global TEMP_ALTA
 temp_ideal:     .quad 24 
 TEMP_ALTA:      .quad 35
 
