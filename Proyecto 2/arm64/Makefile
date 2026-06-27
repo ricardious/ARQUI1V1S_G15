@@ -6,7 +6,7 @@ BUILD_DIR := build
 LEC ?= ../data/lecturas.csv
 INI ?= 1
 FIN ?= 30
-COL ?= TEMP
+COL ?= GAS
 
 UTILS_OBJ := $(BUILD_DIR)/utils.o
 

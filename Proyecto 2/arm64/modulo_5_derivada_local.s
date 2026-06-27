@@ -52,9 +52,9 @@ msg_err_detail:
 _start:
     bl get_column_arg // obtener columna desde argumento
 
-    mov x15, x13 // WINDOW_START
-    mov x16, x14 // WINDOW_END
-    mov x17, x25 // puntero al nombre de la columna
+    mov x16, x13 // WINDOW_START
+    mov x17, x14 // WINDOW_END
+    mov x18, x25 // puntero al nombre de la columna
 
     bl read_column_to_stack // leer columna del CSV y guardarla en stack    
 
@@ -143,8 +143,9 @@ window_continue:
     b window_loop // repetir el bucle de la ventana
 
 window_done:
-    mov x21, x17 // guardar el puntero al nombre de la columna en x21
+    mov x21, x18 // guardar el puntero al nombre de la columna en x21
     mov x22, #0 // inicializar el contador de anomalías a 0
+
 
 strlen_col:
     ldrb w23, [x21], #1 // cargar un byte del nombre de la columna y avanzar el puntero
@@ -171,7 +172,7 @@ strlen_col_done:
 
     //nombre de la columna
     mov x0, x20 // fd de salida
-    mov x1, x17 // puntero al nombre de la columna
+    mov x1, x18 // puntero al nombre de la columna
     mov x2, x22 // longitud del nombre de la columna
     mov x8, #64 // syscall write
     svc #0 // llamar al sistema para escribir el nombre de la columna en archivo de salida 
@@ -184,7 +185,7 @@ strlen_col_done:
     ldr x1, =msg_window_start // mensaje de inicio de ventana
     mov x2, len_msg_window_start // longitud del mensaje de inicio de ventana
     bl write_text // escribir mensaje de inicio de ventana en archivo de salida
-    mov x0, x15 // WINDOW_START
+    mov x0, x16 // WINDOW_START
     mov x1, x20 // fd de salida
     bl write_uint // escribir WINDOW_START en archivo de salida
     mov x0, x20 // fd de salida
@@ -195,7 +196,7 @@ strlen_col_done:
     ldr x1, =msg_window_end // mensaje de final de ventana
     mov x2, len_msg_window_end // longitud del mensaje de final de ventana
     bl write_text // escribir mensaje de final de ventana en archivo de salida
-    mov x0, x16 // WINDOW_END
+    mov x0, x17 // WINDOW_END
     mov x1, x20 // fd de salida
     bl write_uint // escribir WINDOW_END en archivo de salida
     mov x0, x20 // fd de salida
