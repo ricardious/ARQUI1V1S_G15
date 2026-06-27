@@ -1,6 +1,11 @@
 "use client";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import {
+  disposeScene,
+  makeRenderer,
+  observeVisibility,
+} from "@/lib/helpers/three";
 import LegendItem from "../molecules/LegendItem";
 
 /** Organism: invernadero 3D wireframe interactivo. */
@@ -15,19 +20,27 @@ export default function Greenhouse3D() {
 
     const scene = new THREE.Scene();
     const cam = new THREE.PerspectiveCamera(40, w / h, 0.1, 200);
-    const ren = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    const ren = makeRenderer();
     ren.setSize(w, h);
-    ren.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     el.appendChild(ren.domElement);
     const root = new THREE.Group();
     scene.add(root);
 
-    const lineMat = (hex: string, op = 0.9) =>
-      new THREE.LineBasicMaterial({
-        color: new THREE.Color(hex),
-        transparent: true,
-        opacity: op,
-      });
+    // Reutiliza un material por combinación color+opacidad (todo es estático).
+    const matCache = new Map<string, THREE.LineBasicMaterial>();
+    const lineMat = (hex: string, op = 0.9) => {
+      const key = `${hex}|${op}`;
+      let mat = matCache.get(key);
+      if (!mat) {
+        mat = new THREE.LineBasicMaterial({
+          color: new THREE.Color(hex),
+          transparent: true,
+          opacity: op,
+        });
+        matCache.set(key, mat);
+      }
+      return mat;
+    };
     const boxEdges = (
       bw: number,
       bh: number,
@@ -148,9 +161,12 @@ export default function Greenhouse3D() {
       cam.position.set(0, 2.2, zoom);
       cam.lookAt(0, 0.4, 0);
     };
+    let visible = true;
+    const unobserve = observeVisibility(el, (v) => (visible = v));
     let raf = 0;
     const loop = () => {
       raf = requestAnimationFrame(loop);
+      if (!visible) return;
       if (!drag) rotY += 0.0024;
       apply();
       ren.render(scene, cam);
@@ -191,11 +207,13 @@ export default function Greenhouse3D() {
 
     return () => {
       cancelAnimationFrame(raf);
+      unobserve();
       el.removeEventListener("pointerdown", down);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointermove", move);
       el.removeEventListener("wheel", wheel);
       window.removeEventListener("resize", onResize);
+      disposeScene(scene);
       ren.forceContextLoss();
       ren.dispose();
       if (ren.domElement.parentNode === el) el.removeChild(ren.domElement);

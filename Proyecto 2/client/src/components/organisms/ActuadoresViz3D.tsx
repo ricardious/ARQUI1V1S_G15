@@ -2,6 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
+import {
+  disposeScene,
+  makeRenderer,
+  observeVisibility,
+} from "@/lib/helpers/three";
 import { COMMANDS } from "@/lib/constants/commands";
 import { useMqttDashboard } from "@/lib/hooks/useMqttDashboard";
 import type { StateColor } from "@/lib/types/types";
@@ -99,9 +104,8 @@ function initScene(stage: HTMLDivElement): SceneCtx {
   const cam = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
   cam.position.set(0, 0, 5);
 
-  const ren = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  const ren = makeRenderer();
   ren.setSize(w, h);
-  ren.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   ren.domElement.style.display = "block";
   ren.domElement.style.width = "100%";
   ren.domElement.style.height = "100%";
@@ -124,7 +128,7 @@ function buildFan(ctx: SceneCtx): SceneObject {
   mats.push(front.material, back.material);
 
   for (let i = 0; i < 4; i++) {
-    const a = i * Math.PI / 2;
+    const a = (i * Math.PI) / 2;
     group.add(
       new THREE.Line(
         new THREE.BufferGeometry().setFromPoints([
@@ -162,7 +166,7 @@ function buildFan(ctx: SceneCtx): SceneObject {
     );
     const pivot = new THREE.Group();
     blade.rotation.y = 0.5;
-    pivot.rotation.z = i * Math.PI * 2 / 5;
+    pivot.rotation.z = (i * Math.PI * 2) / 5;
     pivot.add(blade);
     blades.add(pivot);
     mats.push(blade.material);
@@ -201,7 +205,9 @@ function buildBulb(ctx: SceneCtx, color: string): SceneObject {
     update: (dt, active) => {
       group.rotation.y += 0.6 * dt;
       const mat = halo.material;
-      const target = active ? 0.35 + Math.sin(performance.now() / 200) * 0.1 : 0;
+      const target = active
+        ? 0.35 + Math.sin(performance.now() / 200) * 0.1
+        : 0;
       mat.opacity += (target - mat.opacity) * 0.1;
     },
   };
@@ -317,8 +323,12 @@ function buildHorn(ctx: SceneCtx, color: string): SceneObject {
   return {
     mats,
     update: (_dt, active) => {
-      bell.rotation.z = active ? Math.sin(performance.now() / 45) * 0.22 : bell.rotation.z * 0.85;
-      clapper.position.x = active ? Math.sin(performance.now() / 45) * 0.18 : clapper.position.x * 0.85;
+      bell.rotation.z = active
+        ? Math.sin(performance.now() / 45) * 0.22
+        : bell.rotation.z * 0.85;
+      clapper.position.x = active
+        ? Math.sin(performance.now() / 45) * 0.18
+        : clapper.position.x * 0.85;
       waves.forEach((wave, i) => {
         if (active) {
           const s = (performance.now() / 650 + i / 3) % 1;
@@ -381,6 +391,8 @@ function ActuatorCard({
     const object = buildObject(def.type, ctx, def.color);
     objectRef.current = object;
 
+    let visible = true;
+    const unobserve = observeVisibility(stage, (v) => (visible = v));
     let raf = 0;
     let last = performance.now();
     const loop = () => {
@@ -388,6 +400,7 @@ function ActuatorCard({
       const now = performance.now();
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
+      if (!visible) return;
       object.update(dt, activeRef.current);
       ctx.ren.render(ctx.scene, ctx.cam);
     };
@@ -406,8 +419,9 @@ function ActuatorCard({
 
     return () => {
       cancelAnimationFrame(raf);
+      unobserve();
       resizeObserver.disconnect();
-      object.mats.forEach((mat) => mat.dispose());
+      disposeScene(ctx.scene);
       ctx.ren.forceContextLoss();
       ctx.ren.dispose();
       if (ctx.ren.domElement.parentNode === stage) {
@@ -417,17 +431,18 @@ function ActuatorCard({
     };
   }, [def.color, def.type]);
 
-  const buttonText = def.id === "riego"
-    ? active
-      ? "Apagar riego"
-      : "Encender Riego"
-    : def.id === "alarma"
-    ? active
-      ? "Silenciar"
-      : "Silenciado"
-    : active
-      ? "Apagar"
-      : "Encender";
+  const buttonText =
+    def.id === "riego"
+      ? active
+        ? "Apagar riego"
+        : "Encender Riego"
+      : def.id === "alarma"
+        ? active
+          ? "Silenciar"
+          : "Silenciado"
+        : active
+          ? "Apagar"
+          : "Encender";
   const disablePrimary = def.id === "alarma" && !active;
 
   return (
@@ -456,7 +471,7 @@ function ActuatorCard({
       <button
         onClick={() => onToggle(def)}
         disabled={disablePrimary}
-        className="mt-4 w-full rounded-xl border border-edge bg-[#131316] px-3 py-2.5 text-[13px] font-semibold transition hover:border-[#34343a] disabled:cursor-not-allowed"
+        className="mt-4 w-full rounded-xl border border-edge bg-panel2 px-3 py-2.5 text-[13px] font-semibold transition hover:border-edge2 disabled:cursor-not-allowed"
         style={{ borderColor: active ? def.color : undefined }}
       >
         {buttonText}
@@ -475,8 +490,12 @@ export default function ActuadoresViz3D({
   const { actuators, connectionState, sendCommand } = useMqttDashboard();
   const [manual, setManual] = useState(false);
   const [log, setLog] = useState<LogItem[]>([]);
-  const [localStates, setLocalStates] = useState<Partial<Record<ActKey, boolean>>>({});
-  const [localRiegoStates, setLocalRiegoStates] = useState<Partial<Record<RiegoTarget, boolean>>>({});
+  const [localStates, setLocalStates] = useState<
+    Partial<Record<ActKey, boolean>>
+  >({});
+  const [localRiegoStates, setLocalRiegoStates] = useState<
+    Partial<Record<RiegoTarget, boolean>>
+  >({});
   const [riegoTarget, setRiegoTarget] = useState<RiegoTarget>("general");
 
   const liveRiegoStates = useMemo<Record<RiegoTarget, boolean>>(
@@ -485,20 +504,15 @@ export default function ActuadoresViz3D({
       area1: actuators.riego_area1,
       area2: actuators.riego_area2,
     }),
-    [
-      actuators.riego,
-      actuators.riego_area1,
-      actuators.riego_area2,
-      on.riego,
-    ],
+    [actuators.riego, actuators.riego_area1, actuators.riego_area2, on.riego],
   );
 
   const states = useMemo<Record<ActKey, boolean>>(
     () => ({
       riego: Boolean(
-        (localRiegoStates.general ?? liveRiegoStates.general)
-          || (localRiegoStates.area1 ?? liveRiegoStates.area1)
-          || (localRiegoStates.area2 ?? liveRiegoStates.area2)
+        (localRiegoStates.general ?? liveRiegoStates.general) ||
+        (localRiegoStates.area1 ?? liveRiegoStates.area1) ||
+        (localRiegoStates.area2 ?? liveRiegoStates.area2),
       ),
       vent: localStates.vent ?? on.vent ?? actuators.ventilador,
       luces: localStates.luces ?? on.luz ?? actuators.luces,
@@ -521,7 +535,10 @@ export default function ActuadoresViz3D({
 
   const addLog = (payload: string, color: string) => {
     setLog((prev) =>
-      [{ time: nowTime(), topic: CONTROL_TOPIC, payload, color }, ...prev].slice(0, 12),
+      [
+        { time: nowTime(), topic: CONTROL_TOPIC, payload, color },
+        ...prev,
+      ].slice(0, 12),
     );
   };
 
@@ -536,7 +553,12 @@ export default function ActuadoresViz3D({
       ? COMMANDS.CAMBIAR_MODO_MANUAL
       : COMMANDS.CAMBIAR_MODO_AUTOMATICO;
     publish(payload, nextManual ? "#2D9BFF" : "#ffffff");
-    onEvent("comando", "Modo de operación", nextManual ? "MANUAL" : "AUTO", nextManual ? "info" : "white");
+    onEvent(
+      "comando",
+      "Modo de operación",
+      nextManual ? "MANUAL" : "AUTO",
+      nextManual ? "info" : "white",
+    );
   };
 
   const resetLocalState = () => {
@@ -558,11 +580,12 @@ export default function ActuadoresViz3D({
     }
 
     const active = states[def.id];
-    const payload = def.id === "alarma"
-      ? def.offCommand
-      : active
+    const payload =
+      def.id === "alarma"
         ? def.offCommand
-        : def.onCommand ?? def.offCommand;
+        : active
+          ? def.offCommand
+          : (def.onCommand ?? def.offCommand);
     setLocalStates((prev) => ({
       ...prev,
       [def.id]: def.id === "alarma" ? false : !active,
@@ -582,7 +605,12 @@ export default function ActuadoresViz3D({
       area2: target === "general" || target === "area2",
     });
     publish(payload, def.color);
-    onEvent("comando", `Riego ${riegoTargetDef?.label ?? "General"}`, payload, "white");
+    onEvent(
+      "comando",
+      `Riego ${riegoTargetDef?.label ?? "General"}`,
+      payload,
+      "white",
+    );
   };
 
   const selectRiegoTarget = (target: RiegoTarget) => {
@@ -631,7 +659,9 @@ export default function ActuadoresViz3D({
             <button
               onClick={() => setMode(false)}
               className={`px-4 py-2 text-[13px] transition ${
-                !manual ? "bg-white font-semibold text-ink" : "text-dim hover:text-white"
+                !manual
+                  ? "bg-white font-semibold text-ink"
+                  : "text-dim hover:text-white"
               }`}
             >
               Automático
@@ -639,7 +669,9 @@ export default function ActuadoresViz3D({
             <button
               onClick={() => setMode(true)}
               className={`px-4 py-2 text-[13px] transition ${
-                manual ? "bg-white font-semibold text-ink" : "text-dim hover:text-white"
+                manual
+                  ? "bg-white font-semibold text-ink"
+                  : "text-dim hover:text-white"
               }`}
             >
               Manual
@@ -647,7 +679,7 @@ export default function ActuadoresViz3D({
           </div>
           <button
             onClick={resetLocalState}
-            className="rounded-xl border border-edge px-4 py-2 text-[13px] text-dim transition hover:border-[#34343a] hover:text-white"
+            className="rounded-xl border border-edge px-4 py-2 text-[13px] text-dim transition hover:border-edge2 hover:text-white"
           >
             Restablecer vista
           </button>
@@ -687,14 +719,18 @@ export default function ActuadoresViz3D({
 
       <div className="rounded-2xl border border-edge bg-panel overflow-hidden">
         <div className="flex items-center gap-3 border-b border-edge px-5 py-3">
-          <h3 className="font-display text-base font-bold">Comandos publicados</h3>
+          <h3 className="font-display text-base font-bold">
+            Comandos publicados
+          </h3>
           <span className="ml-auto font-mono text-[11px] text-dim2">
             topic · {CONTROL_TOPIC}
           </span>
         </div>
         <div className="max-h-56 overflow-auto py-1 font-mono text-[12px]">
           {log.length === 0 ? (
-            <p className="px-5 py-5 text-center text-dim2">Sin comandos publicados</p>
+            <p className="px-5 py-5 text-center text-dim2">
+              Sin comandos publicados
+            </p>
           ) : (
             log.map((item, index) => (
               <div
