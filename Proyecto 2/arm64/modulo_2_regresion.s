@@ -1,36 +1,24 @@
 .data
 
-msg_module:
-    .ascii "MODULE=LINEAR_REGRESSION\n"
-    len_msg_module = . - msg_module
+msg_calc:
+    .ascii "CALC=LINEAR_REGRESSION\n"
+    len_msg_calc = . - msg_calc
 
-msg_total:
-    .ascii "TOTAL_VALUES="
-    len_msg_total = . - msg_total
+msg_column:
+    .ascii "COLUMN="
+    len_msg_column = . - msg_column
 
-msg_sum_x:
-    .ascii "SUM_X="
-    len_msg_sum_x = . - msg_sum_x
+msg_window_start:
+    .ascii "WINDOW_START="
+    len_msg_window_start = . - msg_window_start
 
-msg_sum_y:
-    .ascii "SUM_Y="
-    len_msg_sum_y = . - msg_sum_y
+msg_window_end:
+    .ascii "WINDOW_END="
+    len_msg_window_end = . - msg_window_end
 
-msg_sum_xy:
-    .ascii "SUM_XY="
-    len_msg_sum_xy = . - msg_sum_xy
-
-msg_sum_x2:
-    .ascii "SUM_X2="
-    len_msg_sum_x2 = . - msg_sum_x2
-
-msg_numerator:
-    .ascii "NUMERATOR="
-    len_msg_numerator = . - msg_numerator
-
-msg_denominator:
-    .ascii "DENOMINATOR="
-    len_msg_denominator = . - msg_denominator
+msg_count:
+    .ascii "COUNT="
+    len_msg_count = . - msg_count
 
 msg_slope:
     .ascii "SLOPE_X100="
@@ -43,6 +31,10 @@ msg_trend:
 trend_stable:
     .ascii "STABLE\n"
     len_trend_stable = . - trend_stable
+
+msg_status:
+    .ascii "STATUS=OK\n"
+    len_msg_status = . - msg_status
 
 .text
 
@@ -59,119 +51,76 @@ _start:
     bl read_column_to_stack
 
     // guardar salidas de utils
-    mov x24, x0     // inicio de datos en stack
-    mov x25, x1     // limite final
-    mov x26, x2     // cantidad de datos
-    mov x27, x3     // posicion para restaurar stack
+    mov x24, x0 // inicio de datos en stack
+    mov x25, x1 // limite final
+    mov x26, x2 // cantidad de datos
+    mov x27, x3 // posicion para restaurar stack
 
     // regresion necesita al menos 2 valores
     cmp x26, #2
     blt range_error
 
-    // valores temporales para la base
-    mov x15, #0     // sum_x
-    mov x16, #0     // sum_y
-    mov x17, #0     // sum_xy
-    mov x18, #0     // sum_x2
-    mov x19, #0     // slope_x100
+    // valores temporales de base
+    mov x15, #0 // slope_x100 temporal
 
     // abrir archivo resultado_regresion.txt
     bl open_regresion_write
     mov x20, x0 // descriptor del archivo
 
-    // MODULE=LINEAR_REGRESSION
+    // CALC=LINEAR_REGRESSION
     mov x0, x20
-    ldr x1, =msg_module
-    mov x2, len_msg_module
+    ldr x1, =msg_calc
+    mov x2, len_msg_calc
     bl write_text
 
-    // TOTAL_VALUES=
+    // COLUMN=
     mov x0, x20
-    ldr x1, =msg_total
-    mov x2, len_msg_total
+    ldr x1, =msg_column
+    mov x2, len_msg_column
+    bl write_text
+
+    mov x0, x20
+    mov x1, x25         // x25 = nombre de columna recibido por argumento
+    bl write_cstring
+
+    mov x0, x20
+    bl write_newline
+
+    // WINDOW_START=
+    mov x0, x20
+    ldr x1, =msg_window_start
+    mov x2, len_msg_window_start
+    bl write_text
+
+    mov x0, x13
+    mov x1, x20
+    bl write_uint
+
+    mov x0, x20
+    bl write_newline
+
+    // WINDOW_END=
+    mov x0, x20
+    ldr x1, =msg_window_end
+    mov x2, len_msg_window_end
+    bl write_text
+
+    mov x0, x14
+    mov x1, x20
+    bl write_uint
+
+    mov x0, x20
+    bl write_newline
+
+    // COUNT=
+    mov x0, x20
+    ldr x1, =msg_count
+    mov x2, len_msg_count
     bl write_text
 
     mov x0, x26
     mov x1, x20
     bl write_uint
-
-    mov x0, x20
-    bl write_newline
-
-    // SUM_X=
-    mov x0, x20
-    ldr x1, =msg_sum_x
-    mov x2, len_msg_sum_x
-    bl write_text
-
-    mov x0, x15
-    mov x1, x20
-    bl write_uint
-
-    mov x0, x20
-    bl write_newline
-
-    // SUM_Y=
-    mov x0, x20
-    ldr x1, =msg_sum_y
-    mov x2, len_msg_sum_y
-    bl write_text
-
-    mov x0, x16
-    mov x1, x20
-    bl write_uint
-
-    mov x0, x20
-    bl write_newline
-
-    // SUM_XY=
-    mov x0, x20
-    ldr x1, =msg_sum_xy
-    mov x2, len_msg_sum_xy
-    bl write_text
-
-    mov x0, x17
-    mov x1, x20
-    bl write_uint
-
-    mov x0, x20
-    bl write_newline
-
-    // SUM_X2=
-    mov x0, x20
-    ldr x1, =msg_sum_x2
-    mov x2, len_msg_sum_x2
-    bl write_text
-
-    mov x0, x18
-    mov x1, x20
-    bl write_uint
-
-    mov x0, x20
-    bl write_newline
-
-    // NUMERATOR=
-    mov x0, x20
-    ldr x1, =msg_numerator
-    mov x2, len_msg_numerator
-    bl write_text
-
-    mov x0, #0
-    mov x1, x20
-    bl write_int
-
-    mov x0, x20
-    bl write_newline
-
-    // DENOMINATOR=
-    mov x0, x20
-    ldr x1, =msg_denominator
-    mov x2, len_msg_denominator
-    bl write_text
-
-    mov x0, #0
-    mov x1, x20
-    bl write_int
 
     mov x0, x20
     bl write_newline
@@ -182,7 +131,7 @@ _start:
     mov x2, len_msg_slope
     bl write_text
 
-    mov x0, x19
+    mov x0, x15
     mov x1, x20
     bl write_int
 
@@ -198,6 +147,12 @@ _start:
     mov x0, x20
     ldr x1, =trend_stable
     mov x2, len_trend_stable
+    bl write_text
+
+    // STATUS=OK
+    mov x0, x20
+    ldr x1, =msg_status
+    mov x2, len_msg_status
     bl write_text
 
     // cerrar archivo
