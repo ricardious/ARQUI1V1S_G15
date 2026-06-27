@@ -44,6 +44,10 @@ GAS_IDEAL:      .quad 150
 GAS_ALTO:       .quad 400
 GAS_AMP_ALTA:   .quad 80
 
+msg_error_fields:
+    .ascii "STATUS=ERROR\nERROR=INVALID_INPUT\nDETAIL=EXPECTED_7_FIELDS\n\n"
+len_error_fields = . - msg_error_fields
+
 
 .bss
 
@@ -82,7 +86,12 @@ main_loop:
 
     // convertir a entero
     ldr x21, =input_buffer
+    strb wzr, [x1, x0]
+    mov x21, x1
+
     bl atoi_csv
+
+    cbz x7, manejar_error_input
 
     // si no hay numero al inicio
     //cbz x7, main_loop
@@ -108,10 +117,11 @@ main_loop:
 
     //Humedad
     bl atoi_csv
+    cbz x7, manejar_error_input
 
-    mov x0,x10
-    ldr x1,=hum_count
-    ldr x3,=hum_buffer
+    mov x0, x10
+    ldr x1, =hum_count
+    ldr x3, =hum_buffer
     str x21, [sp, #-16]!
     bl guardar_dato
 
@@ -127,6 +137,7 @@ main_loop:
 
     // soil1
     bl atoi_csv
+    cbz x7, manejar_error_input
 
     mov x0,x10
     ldr x1,=soil1_count
@@ -147,6 +158,7 @@ main_loop:
     ldr x21, [sp], #16
     //soli2
     bl atoi_csv
+    cbz x7, manejar_error_input
 
     mov x0,x10
     ldr x1,=soil2_count
@@ -166,6 +178,7 @@ main_loop:
     ldr x21, [sp], #16
     //luz
     bl atoi_csv
+    cbz x7, manejar_error_input
 
     mov x0,x10
     ldr x1,=luz_count
@@ -186,6 +199,7 @@ main_loop:
     ldr x21, [sp], #16
     //gas
     bl atoi_csv
+    cbz x7, manejar_error_input
 
     mov x0,x10
     ldr x1,=gas_count
@@ -208,8 +222,17 @@ main_loop:
     //Modo
     bl atoi_csv
     mov x13, x10        //modo(0= automatico, 1= manual)
+    cbz x7, manejar_error_input
 
     bl evaluar_prioridades
+    b main_loop
+
+manejar_error_input:
+    mov x0, #1
+    ldr x1, =msg_error_fields
+    mov x2, len_error_fields
+    bl write_text
+    
     b main_loop
 
 promedio:
