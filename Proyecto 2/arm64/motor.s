@@ -32,7 +32,6 @@ TEMP_ALTA:      .quad 35
 
 LUZ_IDEAL:      .quad 200
 LUZ_BAJA:       .quad 250
-LUZ_ALTA:       .quad 500
 
 SOIL_IDEAL:     .quad 65 
 SOIL_BAJO:      .quad 40
