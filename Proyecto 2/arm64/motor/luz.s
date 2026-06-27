@@ -1,12 +1,8 @@
 .data  
 
 msg_luz_on: 
-    .ascii "ACTION=LIGHT_ON\nTARGET=LUZ\nRISK=HIGH\nREASON=LUZ_HIGH_AND_ASCENDING\nSTATUS=OK\n\n"
+    .ascii "ACTION=LIGHT_ON\nTARGET=LUZ\nRISK=HIGH\nREASON=LUZ_LOW_AND_DESCENDING\nSTATUS=OK\n\n"
 len_luz_on = . - msg_luz_on
-
-msg_luz_off: 
-    .ascii "ACTION=LIGHT_OFF\nTARGET=LUZ\nRISK=LOW\nREASON=LUZ_UNDER_CONTROL\nSTATUS=OK\n\n"
-len_luz_off = . - msg_luz_off
 
 .text 
 // determinar si el nivel de luz es bajo
@@ -22,14 +18,16 @@ evaluar_luz:
     cmp x28, #0         // comprao el umbral con el valor de la luz
     bge apagar_luces   // tend, estable o asc >= umbral se apagaran luces
     
-    // Si hay suficiente luz (>= 250), apagar luces
+    str x30, [sp, #-16]!
     mov x0, #1
     ldr x1, =msg_luz_on
     mov x2, len_luz_on
-    b write_text
+    bl write_text
+
+    ldr x30, [sp], #16
+    mov x0, #1
+    ret
 
 apagar_luces:
-    mov x0, #1
-    ldr x1, =msg_luz_off
-    mov x2, len_luz_off
-    b write_text
+    mov x0, #0
+    ret
