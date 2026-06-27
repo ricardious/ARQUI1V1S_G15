@@ -124,7 +124,7 @@ calc_var_done:
     udiv x21, x28, x26 //variable = suma de diferencias al cuadrado / número de valores
     
     mov x0, x21 // variable (varianza)
-    bl integer_sqrt 
+    bl sqrt_entera // calcular la raíz cuadrada de la varianza para obtener la desviación estándar desde el utils_math.s
     mov x22, x0 // desviación estándar
 
     mov x0, x20 // fd de salida
@@ -221,17 +221,4 @@ exit_ok:
     mov x0, #0 // código de salida 0 (éxito)
     mov x8, #93 // syscall exit
     svc #0
-
-integer_sqrt:
-    mov x1, #1 // inicializar el resultado con 1
-sqrt_loop:
-    mul x2, x1, x1 // calcular el cuadrado del resultado actual
-    cmp x2, x0 // comparar el cuadrado con el número original
-    bgt sqrt_done // si el cuadrado es mayor que el número original, salir del bucle
-    add x1, x1, #1 // incrementar el resultado
-    b sqrt_loop // repetir el bucle
-
-sqrt_done:
-    sub x0, x1, #1 // restar 1 al resultado final
-    ret
 
