@@ -40,10 +40,6 @@ GAS_IDEAL:      .quad 150
 GAS_ALTO:       .quad 400
 GAS_AMP_ALTA:   .quad 80
 
-msg_no_action:
-    .ascii "ACTION=NO_ACTION\n"
-    len_led_on = . - msg_no_action
-
 
 .bss
 
