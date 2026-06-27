@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/hooks/useAuth";
 
 const SEARCH_ITEMS = [
   { label: "Dashboard", detail: "Estado global, temperatura, invernadero 3D", target: "dashboard" },
@@ -34,7 +36,9 @@ function normalize(value: string): string {
 }
 
 /** Organism: cabecera superior. */
-export default function Header() {
+export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
+  const router = useRouter();
+  const { logout } = useAuth();
   const searchRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
@@ -66,6 +70,16 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-40 flex items-center gap-4 px-5 sm:px-8 py-4 border-b border-edge bg-ink/80 backdrop-blur-xl">
+      <button
+        type="button"
+        onClick={onMenuClick}
+        aria-label="Abrir menú de navegación"
+        className="-ml-1 grid size-9 shrink-0 place-items-center rounded-xl border border-edge bg-panel text-dim hover:text-white lg:hidden"
+      >
+        <svg viewBox="0 0 24 24" className="size-5" fill="none" aria-hidden="true">
+          <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </button>
       <div className="min-w-0">
         <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight">
           Invernadero Inteligente
@@ -131,6 +145,26 @@ export default function Header() {
           <p className="text-[10px] text-dim2">ARQUI1V1S</p>
         </div>
       </div>
+      <button
+        type="button"
+        onClick={() => {
+          logout();
+          router.replace("/login");
+        }}
+        aria-label="Cerrar sesión"
+        className="flex shrink-0 items-center gap-1.5 rounded-xl border border-edge bg-panel px-2.5 py-2 text-dim transition hover:text-white"
+      >
+        <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden="true">
+          <path
+            d="M15 12H3m0 0 4-4m-4 4 4 4M13 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        <span className="hidden text-[12px] sm:inline">Salir</span>
+      </button>
     </header>
   );
 }
