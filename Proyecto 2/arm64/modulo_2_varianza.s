@@ -76,23 +76,9 @@ calcular_varianza_final:
 
     // calcular desviacion estandar (raiz cuadrada de la varianza)
     mov x0, x17     // varianza
-    mov x1, #1      // iterador
 
-loop_sqrt:
-    mul x2, x1, x1  // x2 = x1 * x1
-    
-    // realizar comparacion para saber si ya nos pasamos
-    cmp x2, x0      // x2 > x0
-    bgt end_loop_sqrt
-
-    add x1, x1, #1
-
-    b loop_sqrt
-
-end_loop_sqrt:
-    // el add anterior deja una posicion arriba del resultado, entonces restar
-    sub x1, x1, #1  // restamos uno
-    mov x26, x1     // resultado
+    bl sqrt_entera
+    mov x26, x0     // resultado de la desviacion
 
     // limpiar los datos temporales del stack 
     mov sp, x21
