@@ -20,10 +20,12 @@ PREDICCION_BIN := $(BUILD_DIR)/modulo_4_prediccion
 
 TENDENCIA_OBJ := $(BUILD_DIR)/modulo_5_tendencia.o
 TENDENCIA_BIN := $(BUILD_DIR)/modulo_5_tendencia
+REGRESION_OBJ := $(BUILD_DIR)/modulo_2_regresion.o
+REGRESION_BIN := $(BUILD_DIR)/modulo_2_regresion
 
-.PHONY: all media varianza anomalias prediccion tendencia run-media run-varianza run-anomalias run-prediccion run-tendencia run-all clean
+.PHONY: all media varianza anomalias prediccion tendencia regresion run-media run-varianza run-anomalias run-prediccion run-tendencia run-regresion run-all clean
 
-all: media varianza anomalias prediccion tendencia
+all: media varianza anomalias prediccion tendencia regresion
 
 media: $(MEDIA_BIN)	
 
@@ -34,6 +36,8 @@ anomalias: $(ANOMALIAS_BIN)
 prediccion: $(PREDICCION_BIN)
 
 tendencia: $(TENDENCIA_BIN)
+
+regresion: $(REGRESION_BIN)
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
@@ -59,6 +63,9 @@ $(PREDICCION_BIN): $(PREDICCION_OBJ) $(UTILS_OBJ)
 $(TENDENCIA_BIN): $(TENDENCIA_OBJ) $(UTILS_OBJ)
 	$(LD) -o $@ $^
 
+$(REGRESION_BIN): $(REGRESION_OBJ) $(UTILS_OBJ)
+	$(LD) -o $@ $^
+
 run-media: $(MEDIA_BIN)
 	$(MEDIA_BIN) $(LEC) $(INI) $(FIN) $(COL)
 
@@ -74,7 +81,10 @@ run-prediccion: $(PREDICCION_BIN)
 run-tendencia: $(TENDENCIA_BIN)
 	$(TENDENCIA_BIN) $(LEC) $(INI) $(FIN) $(COL)
 
-run-all: run-media run-varianza run-anomalias run-prediccion run-tendencia
+run-regresion: regresion
+	$(REGRESION_BIN) $(LEC) $(INI) $(FIN) $(COL)
+
+run-all: run-media run-varianza run-anomalias run-prediccion run-tendencia run-regresion
 
 clean:
 	rm -rf $(BUILD_DIR)
