@@ -21,7 +21,7 @@ interface AuthContextValue {
   logout: () => void;
 }
 
-const STORAGE_KEY = "greenpi.auth";
+const STORAGE_KEY = "arqui1.g15.auth";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
