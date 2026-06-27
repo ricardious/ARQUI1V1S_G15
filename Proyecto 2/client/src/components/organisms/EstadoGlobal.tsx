@@ -1,6 +1,11 @@
 "use client";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import {
+  disposeScene,
+  makeRenderer,
+  observeVisibility,
+} from "@/lib/helpers/three";
 import { ESTADOS, KPIS } from "@/lib/constants/dashboard-data";
 import { useMqttDashboard } from "@/lib/hooks/useMqttDashboard";
 import { estadoToEstadoKey } from "@/lib/helpers/formatters";
@@ -48,22 +53,23 @@ export default function EstadoGlobal() {
     const cam = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
     cam.position.z = 3.4;
 
-    const ren = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    const ren = makeRenderer();
     ren.setSize(w, h);
-    ren.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     el.appendChild(ren.domElement);
 
     const group = new THREE.Group();
     scene.add(group);
 
+    const wireBase = new THREE.IcosahedronGeometry(1.05, 1);
     const wire = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(1.05, 1)),
+      new THREE.EdgesGeometry(wireBase),
       new THREE.LineBasicMaterial({
         color: 0xffffff,
         transparent: true,
         opacity: 0.6,
       }),
     );
+    wireBase.dispose(); // EdgesGeometry copia los datos; la base ya no se usa
     const inner = new THREE.Mesh(
       new THREE.IcosahedronGeometry(0.8, 1),
       new THREE.MeshBasicMaterial({
@@ -103,9 +109,12 @@ export default function EstadoGlobal() {
       pts.material as THREE.Material,
     ];
 
+    let visible = true;
+    const unobserve = observeVisibility(el, (v) => (visible = v));
     let raf = 0;
     const loop = () => {
       raf = requestAnimationFrame(loop);
+      if (!visible) return;
       group.rotation.y += 0.004;
       group.rotation.x += 0.0016;
       pts.rotation.y -= 0.0022;
@@ -123,7 +132,9 @@ export default function EstadoGlobal() {
     window.addEventListener("resize", onResize);
     return () => {
       cancelAnimationFrame(raf);
+      unobserve();
       window.removeEventListener("resize", onResize);
+      disposeScene(scene);
       ren.forceContextLoss();
       ren.dispose();
       if (ren.domElement.parentNode === el) el.removeChild(ren.domElement);

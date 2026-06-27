@@ -1,6 +1,11 @@
 "use client";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import {
+  disposeScene,
+  makeRenderer,
+  observeVisibility,
+} from "@/lib/helpers/three";
 
 /** Organism: fondo 3D protagonista de la pantalla de acceso.
  *  Invernadero wireframe (mismo modelo que el dashboard) + rejilla de suelo +
@@ -21,20 +26,28 @@ export default function LoginScene3D() {
     cam.position.set(0, 1.5, 8.2);
     cam.lookAt(0, 0.7, 0);
 
-    const ren = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    const ren = makeRenderer();
     ren.setSize(w, h);
-    ren.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     el.appendChild(ren.domElement);
 
     // ── Helpers (portados de Greenhouse3D) ──────────────────────────────
-    const lineMat = (hex: string, op = 0.9) =>
-      new THREE.LineBasicMaterial({
-        color: new THREE.Color(hex),
-        transparent: true,
-        opacity: op,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      });
+    // Reutiliza un material por combinación color+opacidad (todo es estático).
+    const matCache = new Map<string, THREE.LineBasicMaterial>();
+    const lineMat = (hex: string, op = 0.9) => {
+      const key = `${hex}|${op}`;
+      let mat = matCache.get(key);
+      if (!mat) {
+        mat = new THREE.LineBasicMaterial({
+          color: new THREE.Color(hex),
+          transparent: true,
+          opacity: op,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        });
+        matCache.set(key, mat);
+      }
+      return mat;
+    };
     const boxEdges = (
       bw: number,
       bh: number,
@@ -175,10 +188,13 @@ export default function LoginScene3D() {
     );
     scene.add(pts);
 
+    let visible = true;
+    const unobserve = observeVisibility(el, (v) => (visible = v));
     let raf = 0,
       t = 0;
     const loop = () => {
       raf = requestAnimationFrame(loop);
+      if (!visible) return;
       t += 0.005;
       spin.rotation.y += 0.0016;
       gh.position.y = -0.3 + Math.sin(t) * 0.06;
@@ -199,7 +215,9 @@ export default function LoginScene3D() {
 
     return () => {
       cancelAnimationFrame(raf);
+      unobserve();
       window.removeEventListener("resize", onResize);
+      disposeScene(scene);
       ren.forceContextLoss();
       ren.dispose();
       if (ren.domElement.parentNode === el) el.removeChild(ren.domElement);
