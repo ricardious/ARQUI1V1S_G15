@@ -50,6 +50,8 @@ _start:
     // leer columna del CSV y guardarla en stack
     bl read_column_to_stack
 
+    mov x21, x25 // guardar puntero a nombre de columna
+
     // guardar salidas de utils
     mov x24, x0 // inicio de datos en stack
     mov x25, x1 // limite final
@@ -80,7 +82,7 @@ _start:
     bl write_text
 
     mov x0, x20
-    mov x1, x25         // x25 = nombre de columna recibido por argumento
+    mov x1, x21 // nombre de columna
     bl write_cstring
 
     mov x0, x20
