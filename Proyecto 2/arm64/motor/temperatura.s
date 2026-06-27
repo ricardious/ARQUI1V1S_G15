@@ -4,10 +4,6 @@ msg_fan_on:
     .ascii "ACTION=FAN_ON\nTARGET=TEMP\nRISK=HIGH\nREASON=TEMP_HIGH_AND_ASCENDING\nSTATUS=OK\n\n"
 len_fan_on = . - msg_fan_on
 
-msg_fan_off: 
-    .ascii "ACTION=NO_ACTION\nTARGET=TEMP\nRISK=LOW\nREASON=TEMP_UNDER_CONTROL\nSTATUS=OK\n\n"
-len_fan_off = . - msg_fan_off
-
 .text
 
 .global evaluar_temperatura
@@ -25,14 +21,16 @@ evaluar_temperatura:
     cmp x20, #0
     ble mantener_apagado    // tendencia <= (es estable o descendente)
     
+    str x30, [sp, #-16]!
     // se cumplen ambas condiciones, activar ventilacion
     mov x0, #1
     ldr x1, =msg_fan_on 
     mov x2, len_fan_on
-    b write_text //se retorna al motor principal
+    bl write_text //se retorna al motor principal
+    ldr x30, [sp], #16
 
-mantener_apagado:
     mov x0, #1
-    ldr x1, =msg_fan_off
-    mov x2, len_fan_off
-    b write_text
+    ret
+mantener_apagado:
+    mov x0, #0
+    ret
