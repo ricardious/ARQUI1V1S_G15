@@ -1,8 +1,11 @@
 .data
 msg_p7_no_action:
-    .ascii "ACTION=NO_ACTION\nTARGET=SYSTEM\nRISK=LOW\nREASON=ALL_VARIABLES_UNDER_CONTROL\nSTATUS=OK\n\n"
+    .ascii "\nACTION=NO_ACTION\nTARGET=SYSTEM\nRISK=LOW\nREASON=ALL_VARIABLES_UNDER_CONTROL\nSTATUS=OK\n\n"
 len_p7_no_action = . - msg_p7_no_action
 
+msg_p6_led_green:
+    .ascii "\nACTION=LED_GREEN\nTARGET=SYSTEM\nRISK=LOW\nREASON=ALL_VARIABLES_UNDER_CONTROL\nSTATUS=OK\n\n"
+len_p6_led_green = . - msg_p6_led_green
 .text
 .global evaluar_prioridades
 
@@ -29,7 +32,19 @@ evaluar_prioridades:
     bl evaluar_temperatura
     cbnz x0, salir_prioridad
     
-    // 6 y 7, no se activo nada
+    cmp x13, #0             //  modo es automático?
+    bne prioridad_7         // != cero (Manual), salta a NO_ACTION
+
+prioridad_6:
+    // 6 , led green 
+    mov x0, #1
+    ldr x1, =msg_p6_led_green
+    mov x2, len_p6_led_green
+    bl write_text
+    b salir_prioridad       // Termina y sale 
+
+prioridad_7:
+    // 7, no action (sin acción física)
     mov x0, #1
     ldr x1, =msg_p7_no_action
     mov x2, len_p7_no_action
