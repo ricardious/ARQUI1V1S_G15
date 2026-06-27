@@ -89,12 +89,18 @@ close_output_file:
 read_file:
     mov x0, x19
     ldr x1, =buffer
-    mov x2, #131072
+    mov x2, #131071
     mov x8, #63 // syscall read
     svc #0
 
     cmp x0, #0
     blt read_error
+
+    // Agregar '$' al final del buffer
+    ldr x1, =buffer
+    add x1, x1, x0
+    mov w2, '$'
+    strb w2, [x1]
 
     mov x20, x0 // guardar bytes leidos
     ret

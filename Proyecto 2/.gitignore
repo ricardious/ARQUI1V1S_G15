@@ -34,6 +34,10 @@ ENV/
 *.elf
 *.bin
 a.out
+# Dumps generados por QEMU/core dumps
+*.core
+core.*
+qemu_*.core
 # Salidas generadas en ejecución (regenerables)
 # Descomentar si NO quieren versionar los resultados:
 # resultado_*.txt

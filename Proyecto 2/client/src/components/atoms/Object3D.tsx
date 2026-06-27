@@ -1,6 +1,11 @@
 "use client";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import {
+  disposeScene,
+  makeRenderer,
+  observeVisibility,
+} from "@/lib/helpers/three";
 import type { Shape } from "@/lib/types/types";
 
 /** Atom: figura 3D wireframe reutilizable (logo, tarjetas ARM64). */
@@ -24,9 +29,8 @@ export default function Object3D({
     const scene = new THREE.Scene();
     const cam = new THREE.PerspectiveCamera(50, w / h, 0.1, 100);
     cam.position.z = 2.7;
-    const ren = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    const ren = makeRenderer();
     ren.setSize(w, h);
-    ren.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     el.appendChild(ren.domElement);
 
     let geo: THREE.BufferGeometry;
@@ -49,9 +53,12 @@ export default function Object3D({
 
     const sx = 0.008 + Math.random() * 0.006,
       sy = 0.011 + Math.random() * 0.006;
+    let visible = true;
+    const unobserve = observeVisibility(el, (v) => (visible = v));
     let raf = 0;
     const loop = () => {
       raf = requestAnimationFrame(loop);
+      if (!visible) return;
       mesh.rotation.x += sx;
       mesh.rotation.y += sy;
       ren.render(scene, cam);
@@ -60,8 +67,11 @@ export default function Object3D({
 
     return () => {
       cancelAnimationFrame(raf);
-      ren.dispose();
+      unobserve();
+      disposeScene(scene);
       geo.dispose();
+      ren.forceContextLoss();
+      ren.dispose();
       if (ren.domElement.parentNode === el) el.removeChild(ren.domElement);
     };
   }, [shape, color]);
