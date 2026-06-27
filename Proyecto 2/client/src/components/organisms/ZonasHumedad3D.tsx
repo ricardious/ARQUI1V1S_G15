@@ -4,12 +4,22 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
 const BW = 1.8, BH = 1.8, BD = 1.2;
+const FILL_EASE = 4.5;
+
+function clampHumidity(humidity: number | null) {
+  return Math.max(0, Math.min(100, humidity ?? 0));
+}
+
+function setFillLevel(fill: THREE.Mesh | undefined, ratio: number) {
+  if (!fill) return;
+  fill.scale.y = ratio;
+  fill.position.y = -(BH / 2) + (BH * ratio) / 2;
+}
 
 function buildZone(
   x: number,
-  humidity: number,
   color: string,
-  scene: THREE.Scene,
+  root: THREE.Group,
 ) {
   const col = new THREE.Color(color);
 
@@ -23,11 +33,10 @@ function buildZone(
     wireMat,
   );
   box.position.set(x, 0, 0);
-  scene.add(box);
+  root.add(box);
 
-  const fillH = BH * (humidity / 100);
   const fill = new THREE.Mesh(
-    new THREE.BoxGeometry(BW - 0.14, fillH, BD - 0.14),
+    new THREE.BoxGeometry(BW - 0.14, BH, BD - 0.14),
     new THREE.MeshBasicMaterial({
       color: col,
       transparent: true,
@@ -36,8 +45,9 @@ function buildZone(
       depthWrite: false,
     }),
   );
-  fill.position.set(x, -(BH / 2) + fillH / 2, 0);
-  scene.add(fill);
+  fill.position.set(x, -(BH / 2), 0);
+  fill.scale.y = 0;
+  root.add(fill);
 
   const stemMat = new THREE.LineBasicMaterial({
     color: col,
@@ -46,7 +56,7 @@ function buildZone(
   });
   const stemY0 = BH / 2;
   const stemTop = stemY0 + 0.75;
-  scene.add(
+  root.add(
     new THREE.Line(
       new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(x, stemY0, 0),
@@ -61,7 +71,9 @@ function buildZone(
     new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.8 }),
   );
   leaf.position.set(x, stemTop + 0.28, 0);
-  scene.add(leaf);
+  root.add(leaf);
+
+  return fill;
 }
 
 /** Organism: dos zonas de cultivo en 3D con nivel de humedad visible. */
@@ -73,6 +85,9 @@ export default function ZonasHumedad3D({
   humedad2: number | null;
 }) {
   const elRef = useRef<HTMLDivElement>(null);
+  const fillsRef = useRef<THREE.Mesh[]>([]);
+  const fillLevelsRef = useRef([0, 0]);
+  const fillTargetsRef = useRef([0, 0]);
 
   useEffect(() => {
     const el = elRef.current;
@@ -89,34 +104,115 @@ export default function ZonasHumedad3D({
     ren.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     el.appendChild(ren.domElement);
 
+    const root = new THREE.Group();
+    scene.add(root);
+
     const grid = new THREE.GridHelper(8, 8, 0x1a1a1e, 0x1a1a1e);
     grid.position.y = -(BH / 2) - 0.04;
-    scene.add(grid);
+    root.add(grid);
 
-    buildZone(-1.8, humedad1 ?? 0, "#ffffff", scene);
-    buildZone(1.8, humedad2 ?? 0, "#ffc400", scene);
+    fillsRef.current = [
+      buildZone(-1.8, "#ffffff", root),
+      buildZone(1.8, "#ffc400", root),
+    ];
+
+    let rotY = -0.25,
+      rotX = -0.12,
+      zoom = 7,
+      drag = false,
+      px = 0,
+      py = 0;
+    const apply = () => {
+      root.rotation.y = rotY;
+      root.rotation.x = rotX;
+      cam.position.set(0, 1.2, zoom);
+      cam.lookAt(0, 0.4, 0);
+    };
 
     let raf = 0;
+    let lastTime = performance.now();
     const loop = () => {
       raf = requestAnimationFrame(loop);
-      scene.rotation.y += 0.004;
+      const now = performance.now();
+      const delta = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+
+      const fillStep = 1 - Math.exp(-FILL_EASE * delta);
+      fillsRef.current.forEach((fill, index) => {
+        const levels = fillLevelsRef.current;
+        levels[index] += (fillTargetsRef.current[index] - levels[index]) * fillStep;
+        setFillLevel(fill, levels[index]);
+      });
+
+      if (!drag) rotY += 0.0025;
+      apply();
       ren.render(scene, cam);
     };
     loop();
 
+    const down = (e: PointerEvent) => {
+      drag = true;
+      px = e.clientX;
+      py = e.clientY;
+      el.setPointerCapture(e.pointerId);
+    };
+    const up = (e: PointerEvent) => {
+      drag = false;
+      if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
+    };
+    const move = (e: PointerEvent) => {
+      if (!drag) return;
+      rotY += (e.clientX - px) * 0.01;
+      rotX = Math.max(-0.9, Math.min(0.35, rotX + (e.clientY - py) * 0.01));
+      px = e.clientX;
+      py = e.clientY;
+    };
+    const wheel = (e: WheelEvent) => {
+      e.preventDefault();
+      zoom = Math.max(4.8, Math.min(11, zoom + e.deltaY * 0.008));
+    };
     const onResize = () => {
       const w2 = el.clientWidth, h2 = el.clientHeight;
       cam.aspect = w2 / h2;
       cam.updateProjectionMatrix();
       ren.setSize(w2, h2);
     };
+    el.addEventListener("pointerdown", down);
+    el.addEventListener("pointerup", up);
+    el.addEventListener("pointerleave", up);
+    el.addEventListener("pointermove", move);
+    el.addEventListener("wheel", wheel, { passive: false });
     window.addEventListener("resize", onResize);
     return () => {
       cancelAnimationFrame(raf);
+      el.removeEventListener("pointerdown", down);
+      el.removeEventListener("pointerup", up);
+      el.removeEventListener("pointerleave", up);
+      el.removeEventListener("pointermove", move);
+      el.removeEventListener("wheel", wheel);
       window.removeEventListener("resize", onResize);
+      fillsRef.current = [];
+      scene.traverse((obj) => {
+        const mesh = obj as THREE.Mesh | THREE.LineSegments | THREE.Line;
+        mesh.geometry?.dispose();
+        const material = mesh.material;
+        if (Array.isArray(material)) {
+          material.forEach((mat) => mat.dispose());
+        } else {
+          material?.dispose();
+        }
+      });
+      ren.forceContextLoss();
       ren.dispose();
       if (ren.domElement.parentNode === el) el.removeChild(ren.domElement);
     };
+  }, []);
+
+  useEffect(() => {
+    fillTargetsRef.current = [
+      clampHumidity(humedad1) / 100,
+      clampHumidity(humedad2) / 100,
+    ];
   }, [humedad1, humedad2]);
 
   return (
@@ -128,7 +224,10 @@ export default function ZonasHumedad3D({
           Nivel de agua en suelo · relleno = humedad actual
         </p>
       </div>
-      <div ref={elRef} className="h-52 sm:h-64 w-full" />
+      <div
+        ref={elRef}
+        className="h-52 sm:h-64 w-full cursor-grab touch-none active:cursor-grabbing"
+      />
       <div className="grid grid-cols-2 border-t border-edge">
         <div className="flex flex-col items-center gap-1 py-3 border-r border-edge">
           <span className="h-2 w-2 rounded-full bg-white" />

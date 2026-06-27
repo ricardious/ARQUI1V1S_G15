@@ -408,6 +408,7 @@ function ActuatorCard({
       cancelAnimationFrame(raf);
       resizeObserver.disconnect();
       object.mats.forEach((mat) => mat.dispose());
+      ctx.ren.forceContextLoss();
       ctx.ren.dispose();
       if (ctx.ren.domElement.parentNode === stage) {
         stage.removeChild(ctx.ren.domElement);
