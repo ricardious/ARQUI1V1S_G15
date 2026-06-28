@@ -145,6 +145,17 @@ calc_sums_done:
     sdiv x29, x10, x21  // x29 = Intercepto (B_X100)
 
 
+    // 6. MATEMATICA: Y_PRED (Prediccion futura)
+    // X_FUTURE = N + K (usaremos K = 5 por defecto)
+    mov x19, #5         // x19 = K
+    add x10, x21, x19   // x10 = X_FUTURE (N + K)
+
+    // Y_PRED = ((M_X100 * X_FUTURE) + B_X100) / 100
+    mul x11, x28, x10   // x11 = M_X100 * X_FUTURE
+    add x11, x11, x29   // x11 = (M_X100 * X_FUTURE) + B_X100
+    mov x12, #100
+    sdiv x22, x11, x12  // x22 = Y_PRED (Prediccion final)
+
 
     // Abrimos el archivo de salida
     bl open_prediccion_futura_write 
