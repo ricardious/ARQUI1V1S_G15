@@ -65,18 +65,17 @@ str_minus:
 _start:
     // 1. Obtener argumentos
     bl get_column_arg
-    mov x17, x25       // Guardar el puntero del nombre a salvo
+    
 
     // Guardamos los limites de la ventana
-    mov x16, x13       // WINDOW_START
-    mov x17_end, x14   
-    mov x19, x14       // WINDOW_END 
+    mov x19, x13       // WINDOW_START 
+    mov x20, x14       // WINDOW_END 
    
     // 2. Leer datos al stack
     bl read_column_to_stack 
 
     mov x24, x0        // Top del stack (ultimo dato)
-    mov x25, x1        // Fondo del stack (primer dato)
+    mov x8, x1        // Fondo del stack (primer dato)
     mov x21, x2        // N (cantidad de datos)
     mov x18, x3        // Direccion original del stack
 
@@ -91,14 +90,14 @@ _start:
     sub x5, x21, #1     // x5 = Indice X_i 
     
     
-Inicializamos sumX en 0 para limpiar la memoria residual
+//Inicializamos sumX en 0 para limpiar la memoria residual
     mov x22, #0         // sumX
     mov x23, #0         // sumY
     mov x26, #0         // sumX2
     mov x27, #0         // sumXY
 
 calc_sums_loop:
-    cmp x9, x25         
+    cmp x9, x8         
     bge calc_sums_done
 
     ldr x10, [x9]       // Y_i = Valor actual del CSV
@@ -175,8 +174,8 @@ int_sign_done:
     
     // Calcular proximo valor Prediccion
     // x_future = n + 5
-    mov x19, #5         // k = 5
-    add x10, x21, x19   // x10 = x_future
+    mov x14, #5         // k = 5
+    add x10, x21, x14   // x10 = x_future
 
     // y_pred = ((m_x100 * x_future) + b_x100) / 100
     mul x11, x28, x10   // pendiente * x_futura
@@ -200,63 +199,63 @@ pred_sign_done:
 
     //  escritura de archivo (inicio)
     bl open_prediccion_futura_write
-    mov x20, x0         // guardar fd en x20
+    mov x23, x0         // guardar fd en x20
 
     // calc=prediction
-    mov x0, x20
+    mov x0, x23
     ldr x1, =msg_calc
     mov x2, len_msg_calc
     bl write_text
 
     // column=
-    mov x0, x20
+    mov x0, x23
     ldr x1, =msg_column
     mov x2, len_msg_column
     bl write_text
 
     // contar letras de la columna
-    mov x23, x17
+    mov x9, x25
     mov x24, #0
 strlen_loop:
-    ldrb w25, [x23], #1 // leer byte
-    cbz w25, strlen_done // si es nulo, terminar
+    ldrb w10, [x9], #1 // leer byte
+    cbz w10, strlen_done // si es nulo, terminar
     add x24, x24, #1    // incrementar contador
     b strlen_loop
 strlen_done:
   
     // imprimir nombre de columna
-    mov x0, x20
-    mov x1, x17
+    mov x0, x23
+    mov x1, x25
     mov x2, x24
     mov x8, #64
     svc #0
 
     // agregar el salto 
-    mov x0, x20
+    mov x0, x23
     bl write_newline
 
     // window_start=
-    mov x0, x20
+    mov x0, x23
     ldr x1, =msg_window_start
     mov x2, len_msg_window_start
     bl write_text
     
-    mov x0, x16         // inicio de ventana
-    mov x1, x20
+    mov x0, x19         // inicio de ventana
+    mov x1, x23
     bl write_uint
-    mov x0, x20
+    mov x0, x23
     bl write_newline
 
     // window_end=
-    mov x0, x20
+    mov x0, x23
     ldr x1, =msg_window_end
     mov x2, len_msg_window_end
     bl write_text
     
-    mov x0, x19         // fin de ventana
-    mov x1, x20
+    mov x0, x20        // fin de ventana
+    mov x1, x23
     bl write_uint
-    mov x0, x20
+    mov x0, x23
     bl write_newline
 
     // count=
@@ -266,19 +265,19 @@ strlen_done:
     bl write_text
     
     mov x0, x21         // n cantidad de datos
-    mov x1, x20
+    mov x1, x23
     bl write_uint
-    mov x0, x20
+    mov x0, x23
     bl write_newline
 
     // k=5
-    mov x0, x20
+    mov x0, x23
     ldr x1, =msg_k
     mov x2, len_msg_k
     bl write_text
 
     // imprimir pendiente (con manejo de signo)
-    mov x0, x20
+    mov x0, x23
     ldr x1, =msg_slope
     mov x2, len_msg_slope
     bl write_text
@@ -288,19 +287,19 @@ strlen_done:
     bge print_slope_pos
     // si es negativo, imprimir guion
     mov x26, x0         
-    mov x0, x20
+    mov x0, x23
     ldr x1, =str_minus  
     mov x2, #1
     bl write_text
     sub x0, xzr, x26    // volver positivo para write_uint
 print_slope_pos:
-    mov x1, x20
+    mov x1, x23
     bl write_uint
-    mov x0, x20
+    mov x0, x23
     bl write_newline
 
     // imprimir intercepto (con manejo de signo)
-    mov x0, x20
+    mov x0, x23
     ldr x1, =msg_intercept
     mov x2, len_msg_intercept
     bl write_text
@@ -309,19 +308,19 @@ print_slope_pos:
     cmp x0, #0
     bge print_int_pos
     mov x26, x0
-    mov x0, x20
+    mov x0, x23
     ldr x1, =str_minus
     mov x2, #1
     bl write_text
     sub x0, xzr, x26    
 print_int_pos:
-    mov x1, x20
+    mov x1, x23
     bl write_uint
-    mov x0, x20
+    mov x0, x23
     bl write_newline
 
     // imprimir prediccion (con manejo de signo)
-    mov x0, x20
+    mov x0, x23
     ldr x1, =msg_predicted
     mov x2, len_msg_predicted
     bl write_text
@@ -331,53 +330,53 @@ print_int_pos:
     bge print_pred_pos
     // si es negativo, imprimir guion
     mov x26, x0
-    mov x0, x20
+    mov x0, x23
     ldr x1, =str_minus
     mov x2, #1
     bl write_text
     sub x0, xzr, x26    
 print_pred_pos:
-    mov x1, x20
+    mov x1, x23
     bl write_uint
-    mov x0, x20
+    mov x0, x23
     bl write_newline
 
    // imprimir estado ok
-    mov x0, x20
+    mov x0, x23
     ldr x1, =msg_status_ok
     mov x2, len_msg_status_ok
     bl write_text
 
     // cerrar archivo para no perder buffer
-    mov x0, x20
+    mov x0, x23
     bl close_output_file
     b exit_ok
 
 error_rango_insuficiente:
     // abrir archivo para escribir el error
     bl open_prediccion_futura_write 
-    mov x20, x0 
+    mov x23, x0 
 
     // imprimir estado de error
-    mov x0, x20
+    mov x0, x23
     ldr x1, =msg_err_status
     mov x2, len_msg_err_status
     bl write_text
 
     // imprimir insuficiencia de datos
-    mov x0, x20
+    mov x0, x23
     ldr x1, =msg_err_insuf
     mov x2, len_msg_err_insuf
     bl write_text
 
     // imprimir detalle exacto del error
-    mov x0, x20
+    mov x0, x23
     ldr x1, =msg_err_detail
     mov x2, len_msg_err_detail
     bl write_text
 
     // cerrar archivo
-    mov x0, x20
+    mov x0, x23
     bl close_output_file
 
     // salir con codigo de error
