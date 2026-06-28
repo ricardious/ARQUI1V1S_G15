@@ -9,6 +9,7 @@
 //  x1 = limite sfinal de datos
 //  x2 = cantidad de datos leidos
 //  x3 = posicion para restaurar el stack
+// x11 = # de la columna encontrada
 read_column_to_stack:
     // guardar direccion de retorno
     stp x29, x30, [sp, #-16]!
