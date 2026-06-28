@@ -85,7 +85,7 @@ _start:
     blt error_rango_insuficiente
 
 
-    // 3. CALCULO DE SUMATORIAS PARA REGRESION
+    //  CALCULO DE SUMATORIAS PARA REGRESION
    
     mov x9, x24         // x9 = Puntero actual 
     sub x5, x21, #1     // x5 = Indice X_i 
@@ -118,7 +118,7 @@ calc_sums_loop:
 
 calc_sums_done:
 
-    // 4. Calcular pendiente  e intercepto 
+    //  Calcular pendiente  e intercepto 
     // NUMERADOR = (N * sumXY) - (sumX * sumY)
     mul x10, x21, x27   // x10 = N * sumXY
     mul x11, x22, x23   // x11 = sumX * sumY
@@ -170,6 +170,33 @@ num_pos_int:
     bne int_sign_done
     sub x29, xzr, x29   // Restaurar negativo
 int_sign_done:
+
+
+    
+    // Calcular proximo valor Prediccion
+    // x_future = n + 5
+    mov x19, #5         // k = 5
+    add x10, x21, x19   // x10 = x_future
+
+    // y_pred = ((m_x100 * x_future) + b_x100) / 100
+    mul x11, x28, x10   // pendiente * x_futura
+    add x11, x11, x29   // + intercepto
+
+    // valor absoluto para division
+    mov x15, #0         // bandera de signo a 0
+    cmp x11, #0
+    bge num_pos_pred
+    sub x11, xzr, x11   // volver positivo
+    mov x15, #1         // marcar bandera
+num_pos_pred:
+    mov x12, #100
+    udiv x22, x11, x12  // magnitud y_pred
+
+    // restaurar signo
+    cmp x15, #1
+    bne pred_sign_done
+    sub x22, xzr, x22
+pred_sign_done:
 
 
 exit_ok:
