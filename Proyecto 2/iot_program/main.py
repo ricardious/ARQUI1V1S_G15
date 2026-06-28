@@ -3,14 +3,14 @@ import time
 from threading import Event
 from typing import Any
 
-from automation import AutomationController
+from arm64_bridge import Arm64Bridge
 from actuators.manager import ActuatorManager
 from actuators.raspberry_actuators import RaspberryActuators
 from config import Settings, load_settings
 from global_state import GlobalState
 from mongo_repository import MongoRepository
 from mqtt_client import MQTTClient
-from rules import evaluate_readings, event_description_for_command, estado_for_command
+from rules import event_description_for_command, estado_for_command
 from local_panel.buttons import Buttons
 from local_panel.lcd_display import LCDDisplay
 from sensors.manager import SensorManager
@@ -36,7 +36,7 @@ VALID_COMMANDS = {
 
 
 class IoTProgram:
-    """Base de integracion IoT: MQTT, sensores, actuadores y MongoDB."""
+    """Programa principal del IoT."""
 
     def __init__(self) -> None:
         self.settings: Settings = load_settings()
@@ -55,7 +55,8 @@ class IoTProgram:
             self.settings.mongodb_uri, self.settings.mongodb_db
         )
         self.mqtt = MQTTClient(self.settings, self._handle_mqtt_command)
-        self.automation = AutomationController(self.state, self.actuators, self.mongo)
+        # ARM64 decide
+        self.arm64 = Arm64Bridge()
         self.stop_event = Event()
         self.last_publish_at = 0.0
         self.last_mongo_at = 0.0
@@ -68,7 +69,7 @@ class IoTProgram:
         self.run_main_task()
 
     def run_main_task(self) -> None:
-        """Loop principal: lee sensores, guarda historico y publica MQTT."""
+        """Loop principal."""
         print("[IoT] Iniciando loop principal")
         while not self.stop_event.is_set():
             try:
@@ -77,12 +78,10 @@ class IoTProgram:
 
                 readings = self.read_sensors()
                 self.state.update(**readings)
-                self.automation.apply(readings)
+                estado = self.run_arm64_decision(readings)
                 readings["riego_1"] = self.state.get("riego_1", 0)
                 readings["riego_2"] = self.state.get("riego_2", 0)
-                estado = self.update_status(readings)
                 readings["estado_global"] = estado
-                self.state.update(estado_global=estado)
                 if hasattr(self.actuators, "leds_estado"):
                     self.actuators.leds_estado.set_estado(estado)
                 self.lcd.update(self.state.as_dict())
@@ -115,11 +114,11 @@ class IoTProgram:
         self.handle_shutdown()
 
     def run_mqtt_task(self) -> None:
-        """Conecta al broker MQTT y deja paho trabajando en segundo plano."""
+        """Arranca MQTT."""
         self.mqtt.connect()
 
     def read_sensors(self) -> dict[str, Any]:
-        """Lee sensores simulados o sensores reales segun SIMULATION_MODE."""
+        """Lee los sensores activos."""
         return self.sensors.read_all()
 
     def publish_sensor_values(self, readings: dict[str, Any]) -> None:
@@ -128,18 +127,78 @@ class IoTProgram:
     def publish_actuator_values(self, state: dict[str, Any]) -> None:
         self.mqtt.publish_actuator_states(state)
 
-    def update_status(self, readings: dict[str, Any]) -> str:
-        """Aplica reglas basicas."""
-        estado, events = evaluate_readings(readings, self.state.as_dict())
-        if estado == "EMERGENCIA":
-            self.state.update(alarma="ON")
+    def run_arm64_decision(self, readings: dict[str, Any]) -> str:
+        """Pasa la lectura por ARM64 y aplica la acción si toca."""
+        previous = self.state.get("estado_global", "NORMAL")
+        modo = 1 if self.state.get("modo") == "MANUAL" else 0
+        outcome = self.arm64.decide(readings, modo)
+        if outcome is None:
+            self.state.update(last_error="motor ARM64 no respondió")
+            self.mongo.insert_event("motor ARM64 sin respuesta", "ADVERTENCIA")
+            return previous
 
-        for description, event_state in events:
-            self.mongo.insert_event(description, event_state, {"lectura": readings})
+        line, fields = outcome
+        action = fields.get("ACTION")
+        status = fields.get("STATUS", "OK")
+
+        # El RISK de ARM64 define el estado y el LED.
+        risk = fields.get("RISK", "LOW").upper()
+        if risk == "CRITICAL":
+            estado = "EMERGENCIA"
+        elif modo == 1:
+            estado = "MODO_MANUAL"
+        elif risk in ("MEDIUM", "HIGH"):
+            estado = "ADVERTENCIA"
+        else:
+            estado = "NORMAL"
+
+        self.mongo.insert_arm64_result(
+            source="live_engine",
+            module="motor",
+            input_data=line,
+            result=fields,
+            decision=action,
+            risk=fields.get("RISK"),
+            status=status,
+            error_detail=fields.get("DETAIL") if status == "ERROR" else None,
+        )
+
+        self.state.update(estado_global=estado)
+        if estado != previous:
+            self.mongo.insert_event(
+                f"estado {previous} -> {estado} (ARM64)", estado, {"arm64": fields}
+            )
+
+        if status == "ERROR":
+            self.state.update(
+                last_error=f"ARM64 {fields.get('ERROR', '')}: {fields.get('DETAIL', '')}"
+            )
+            return estado
+
+        # En manual solo se deja pasar la alarma.
+        if modo == 1 and action != "ALARM_ON":
+            return estado
+
+        command = self.arm64.command_for(fields)
+        if command is None:
+            return estado  # nada físico que hacer
+
+        if command not in VALID_COMMANDS:
+            self.state.update(last_error=f"acción ARM64 no permitida: {action}")
+            return estado
+
+        changes = self.actuators.apply_command(command)
+        self.state.update(**changes)
+        self.mongo.insert_actuator_log(command, changes, estado)
+        self.mongo.insert_event(
+            f"acción ARM64 ejecutada: {action}",
+            estado,
+            {"arm64": fields, "comando": command, "cambios": changes},
+        )
         return estado
 
     def _handle_mqtt_command(self, topic: str, payload: str) -> None:
-        """Recibe comandos MQTT en texto plano."""
+        """Recibe comandos MQTT."""
         action = payload.strip().upper()
         print(f"[MQTT] Comando recibido topic={topic} payload={payload}")
 
@@ -163,7 +222,8 @@ class IoTProgram:
             ),
             "TOGGLE_WATER": (
                 "DESACTIVAR_RIEGO"
-                if int(self.state.get("riego_1", 0)) == 1 or int(self.state.get("riego_2", 0)) == 1
+                if int(self.state.get("riego_1", 0)) == 1
+                or int(self.state.get("riego_2", 0)) == 1
                 else "ACTIVAR_RIEGO_MANUAL"
             ),
             "TOGGLE_LIGHTS": (
@@ -214,6 +274,7 @@ class IoTProgram:
             self.actuators.riego_area1.desactivar()
             self.actuators.ventilador.limpiar()
             self.actuators.riego_area1.limpiar()
+        self.arm64.close()
         self.mqtt.disconnect()
         self.mongo.close()
 
