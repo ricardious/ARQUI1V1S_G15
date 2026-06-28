@@ -3,11 +3,11 @@
 .data
 
 msg_calc:
-    .ascii "CALC=PREDICTION\n"
+    .ascii "CALC=PREDICTION\n"  // etiqueta de modulo
     len_msg_calc = . - msg_calc
 
 msg_column:
-    .ascii "COLUMN="
+    .ascii "COLUMN="  // etiqueta de columna
     len_msg_column = . - msg_column
 
 msg_window_start:
@@ -118,7 +118,7 @@ calc_sums_loop:
 
 calc_sums_done:
 
-    // 4. Calcular pendiente (slope) e intercepto (intercept)
+    // 4. Calcular pendiente  e intercepto 
     // NUMERADOR = (N * sumXY) - (sumX * sumY)
     mul x10, x21, x27   // x10 = N * sumXY
     mul x11, x22, x23   // x11 = sumX * sumY
@@ -129,60 +129,48 @@ calc_sums_done:
     mul x13, x22, x22   // x13 = sumX * sumX
     sub x12, x12, x13   // x12 = DENOMINADOR
 
-    // M_X100 = (NUMERADOR * 100) / DENOMINADOR
+   // Valor absoluto del numerador (Evitar SDIV)
+    mov x15, #0         // x15 = bandera de signo 
+    cmp x10, #0
+    bge num_pos_slope
+    sub x10, xzr, x10   // Volver positivo: 0 - NUM
+    mov x15, #1         // Marcar como negativo
+num_pos_slope:
+    
+    // M_X100 = (NUM * 100) / DEN 
     mov x11, #100
-    mul x10, x10, x11   // Multiplicamos el numerador por 100
-    sdiv x28, x10, x12  // x28 = Pendiente (M_X100)
+    mul x10, x10, x11   
+    udiv x28, x10, x12  // x28 = Magnitud M_X100
+    
+    // Restaurar el signo real para calculos futuros
+    cmp x15, #1
+    bne slope_sign_done
+    sub x28, xzr, x28   // Volver a negativo: 0 - M_X100
+slope_sign_done:
 
    
     // 5. MATEMATICA: B_X100 (Intercepto)
-   
+  
     // B_X100 = ((sumY * 100) - (M_X100 * sumX)) / N
     mov x11, #100
-    mul x10, x23, x11   // x10 = sumY * 100
-    mul x12, x28, x22   // x12 = M_X100 * sumX
-    sub x10, x10, x12   // x10 = (sumY * 100) - (M_X100 * sumX)
-    sdiv x29, x10, x21  // x29 = Intercepto (B_X100)
+    mul x10, x23, x11   // sumY * 100
+    mul x12, x28, x22   // M_X100 * sumX
+    sub x10, x10, x12   // NUMERADOR INTERCEPTO
 
+    // Valor absoluto del intercepto
+    mov x15, #0
+    cmp x10, #0
+    bge num_pos_int
+    sub x10, xzr, x10
+    mov x15, #1
+num_pos_int:
+    udiv x29, x10, x21  // x29 = Magnitud B_X100
 
-    // 6. MATEMATICA: Y_PRED (Prediccion futura)
-    // X_FUTURE = N + K (usaremos K = 5 por defecto)
-    mov x19, #5         // x19 = K
-    add x10, x21, x19   // x10 = X_FUTURE (N + K)
+    cmp x15, #1
+    bne int_sign_done
+    sub x29, xzr, x29   // Restaurar negativo
+int_sign_done:
 
-    // Y_PRED = ((M_X100 * X_FUTURE) + B_X100) / 100
-    mul x11, x28, x10   // x11 = M_X100 * X_FUTURE
-    add x11, x11, x29   // x11 = (M_X100 * X_FUTURE) + B_X100
-    mov x12, #100
-    sdiv x22, x11, x12  // x22 = Y_PRED (Prediccion final)
-
-
-    // Abrimos el archivo de salida
-    bl open_prediccion_futura_write 
-    mov x20, x0 
-
-    // Escribimos CALC=PREDICTION
-    mov x0, x20
-    ldr x1, =msg_calc
-    mov x2, len_msg_calc
-    bl write_text
-
-    mov x0, x20
-    ldr x1, =msg_status_ok
-    mov x2, len_msg_status_ok
-    bl write_text
-
-    // Cerrar archivo y salir
-    mov x0, x20
-    bl close_output_file
-    mov sp, x18 
-    b exit_ok
-
-error_rango_insuficiente:
-    // (En commits posteriores pondremos la impresion del error detallado aqui)
-    mov x0, #1      
-    mov x8, #93     
-    svc #0          
 
 exit_ok:
     mov x0, #0      
