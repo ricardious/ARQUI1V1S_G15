@@ -223,7 +223,7 @@ strlen_loop:
     add x24, x24, #1    // incrementar contador
     b strlen_loop
 strlen_done:
-   strlen_done:
+  
     // imprimir nombre de columna
     mov x0, x20
     mov x1, x17
@@ -277,17 +277,58 @@ strlen_done:
     mov x2, len_msg_k
     bl write_text
 
+    // imprimir pendiente (con manejo de signo)
+    mov x0, x20
+    ldr x1, =msg_slope
+    mov x2, len_msg_slope
+    bl write_text
+    
+    mov x0, x28         // x28 tiene la pendiente
+    cmp x0, #0
+    bge print_slope_pos
+    // si es negativo, imprimir guion
+    mov x26, x0         
+    mov x0, x20
+    ldr x1, =str_minus  
+    mov x2, #1
+    bl write_text
+    sub x0, xzr, x26    // volver positivo para write_uint
+print_slope_pos:
+    mov x1, x20
+    bl write_uint
+    mov x0, x20
+    bl write_newline
+
+    // imprimir intercepto (con manejo de signo)
+    mov x0, x20
+    ldr x1, =msg_intercept
+    mov x2, len_msg_intercept
+    bl write_text
+    
+    mov x0, x29         // x29 tiene el intercepto
+    cmp x0, #0
+    bge print_int_pos
+    mov x26, x0
+    mov x0, x20
+    ldr x1, =str_minus
+    mov x2, #1
+    bl write_text
+    sub x0, xzr, x26    
+print_int_pos:
+    mov x1, x20
+    bl write_uint
+    mov x0, x20
+    bl write_newline
+
     // cerrar archivo para no perder buffer
     mov x0, x20
     bl close_output_file
-
     b exit_ok
 
 error_rango_insuficiente:
     mov x0, #1      
     mov x8, #93     
     svc #0
-
 
 exit_ok:
     mov x0, #0      
