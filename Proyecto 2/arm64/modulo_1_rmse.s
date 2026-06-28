@@ -33,3 +33,33 @@ msg_ok:
     len_ok = . - msg_ok
 
 .section .text
+
+.global _start
+_start:
+
+    // se obtiene la columna
+    bl get_column_arg
+
+	mov x16, x13 // inicio 
+    mov x17, x14 // linea final 
+
+    //se lee la columna y se guarda 
+    bl read_column_to_stack
+	mov x24, x0	// inicio de datos
+	mov x25, x1	// limite superior
+	mov x26, x2	// cantidad de datos
+	mov x27, x3	//direccion para restaurar stack
+
+    //se abre el archivo resultado_media.txt
+    bl open_rmse_write
+    mov x20, x0         //x20 = x0 porque con x0 decolvio el descriptor
+    
+
+//CALC=RMSE 
+//COLUMN=SOIL1 
+//WINDOW_START=1000 
+//WINDOW_END=1050 
+//COUNT=51 
+//IDEAL=55 
+//RMSE=18 
+//STATUS=OK 
