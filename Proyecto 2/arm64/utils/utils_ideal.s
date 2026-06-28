@@ -9,23 +9,22 @@
 .global obtener_valor_ideal
 
 obtener_valor_ideal:
-
-    cmp x11, #1
+    cmp x11, #2
     beq temp
 
-    cmp x11, #2
-    beq hum
-
     cmp x11, #3
-    beq soil
+    beq hum
 
     cmp x11, #4
     beq soil
 
     cmp x11, #5
-    beq luz
+    beq soil
 
     cmp x11, #6
+    beq luz
+
+    cmp x11, #7
     beq gas
 
     mov x0, #0
@@ -33,7 +32,7 @@ obtener_valor_ideal:
 
 
 temp:
-    ldr x0, =TEM_IDEAL
+    ldr x0, =TEMP_IDEAL
     ldr x0, [x0]
     ret
 

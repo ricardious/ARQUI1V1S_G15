@@ -30,15 +30,18 @@ TENDENCIA_BIN := $(BUILD_DIR)/modulo_5_tendencia
 REGRESION_OBJ := $(BUILD_DIR)/modulo_2_regresion.o
 REGRESION_BIN := $(BUILD_DIR)/modulo_2_regresion
 
+INTEGRAL_OBJ := $(BUILD_DIR)/modulo_4_integral_error.o
+INTEGRAL_BIN := $(BUILD_DIR)/modulo_4_integral_error
+
 DERIVADA_OBJ := $(BUILD_DIR)/modulo_5_derivada_local.o
 DERIVADA_BIN := $(BUILD_DIR)/modulo_5_derivada_local
 
 MOTOR_OBJ := $(BUILD_DIR)/motor.o
 MOTOR_BIN := $(BUILD_DIR)/motor
 
-.PHONY: all media varianza anomalias prediccion tendencia motor regresion run-media run-varianza run-anomalias run-prediccion run-tendencia run-motor run-regresion run-derivada run-all clean
+.PHONY: all media varianza anomalias prediccion tendencia motor regresion integral run-media run-varianza run-anomalias run-prediccion run-tendencia run-motor run-regresion run-derivada run-integral run-all clean
 
-all: media varianza anomalias prediccion tendencia motor regresion derivada
+all: media varianza anomalias prediccion tendencia motor regresion derivada integral
 
 media: $(MEDIA_BIN)
 
@@ -57,6 +60,8 @@ derivada: $(DERIVADA_BIN)
 motor: $(MOTOR_BIN)
 
 regresion: $(REGRESION_BIN)
+
+integral: $(INTEGRAL_BIN)
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
@@ -93,6 +98,9 @@ $(PREDICCION_FUTURA_BIN): $(PREDICCION_FUTURA_OBJ) $(UTILS_OBJ)
 $(REGRESION_BIN): $(REGRESION_OBJ) $(UTILS_OBJ)
 	$(LD) -o $@ $^
 
+$(INTEGRAL_BIN): $(INTEGRAL_OBJ) $(UTILS_OBJ)
+	$(LD) -o $@ $^
+
 run-media: $(MEDIA_BIN)
 	$(MEDIA_BIN) $(LEC) $(INI) $(FIN) $(COL)
 
@@ -116,11 +124,14 @@ run-regresion: regresion
   
 run-derivada: $(DERIVADA_BIN)
 	$(DERIVADA_BIN) $(LEC) $(INI) $(FIN) $(COL)
+
+run-integral: $(INTEGRAL_BIN)
+	$(INTEGRAL_BIN) $(LEC) $(INI) $(FIN) $(COL)
  
 run-motor: $(MOTOR_BIN)
 	$(MOTOR_BIN)
 
-run-all: run-media run-varianza run-anomalias run-prediccion run-tendencia run-regresion run-derivada run-prediccion-futura
+run-all: run-media run-varianza run-anomalias run-prediccion run-tendencia run-regresion run-derivada run-prediccion-futura run-integral
 
 clean:
 	rm -rf $(BUILD_DIR)
