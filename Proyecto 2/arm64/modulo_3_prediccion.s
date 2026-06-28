@@ -149,7 +149,7 @@ num_pos_slope:
 slope_sign_done:
 
    
-    // 5. MATEMATICA: B_X100 (Intercepto)
+    //  MATEMATICA: B_X100 (Intercepto)
   
     // B_X100 = ((sumY * 100) - (M_X100 * sumX)) / N
     mov x11, #100
@@ -180,7 +180,7 @@ int_sign_done:
 
     // y_pred = ((m_x100 * x_future) + b_x100) / 100
     mul x11, x28, x10   // pendiente * x_futura
-    add x11, x11, x29   // + intercepto
+    add x11, x11, x29   //  intercepto
 
     // valor absoluto para division
     mov x15, #0         // bandera de signo a 0
@@ -197,6 +197,44 @@ num_pos_pred:
     bne pred_sign_done
     sub x22, xzr, x22
 pred_sign_done:
+
+    //  escritura de archivo (inicio)
+    bl open_prediccion_futura_write
+    mov x20, x0         // guardar fd en x20
+
+    // calc=prediction
+    mov x0, x20
+    ldr x1, =msg_calc
+    mov x2, len_msg_calc
+    bl write_text
+
+    // column=
+    mov x0, x20
+    ldr x1, =msg_column
+    mov x2, len_msg_column
+    bl write_text
+
+    // contar letras de la columna
+    mov x23, x17
+    mov x24, #0
+strlen_loop:
+    ldrb w25, [x23], #1 // leer byte
+    cbz w25, strlen_done // si es nulo, terminar
+    add x24, x24, #1    // incrementar contador
+    b strlen_loop
+strlen_done:
+    // imprimir nombre de columna
+    mov x0, x20
+    mov x1, x17
+    mov x2, x24
+    mov x8, #64
+    svc #0
+    b exit_ok
+
+error_rango_insuficiente:
+    mov x0, #1      
+    mov x8, #93     
+    svc #0
 
 
 exit_ok:
