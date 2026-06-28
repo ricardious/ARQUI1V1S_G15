@@ -91,7 +91,8 @@ _start:
     sub x5, x21, #1     // x5 = Indice X_i 
     
     
-        
+Inicializamos sumX en 0 para limpiar la memoria residual
+    mov x22, #0         // sumX
     mov x23, #0         // sumY
     mov x26, #0         // sumX2
     mov x27, #0         // sumXY
