@@ -64,8 +64,8 @@ str_zero:
 _start:
   
     bl get_column_arg  // llama a utils.s lee el argumento y lo prepara internamente.
+    mov x17, x25 //nombre de la columna
 
-   
     bl read_column_to_stack //  busca los numeros, los convierte y los apila.
 
     //  Guardar los resultados que nos devolvio utils.s 
@@ -119,7 +119,7 @@ _start:
     bl write_text
 
     // Calcular longitud de la cadena en x25 
-    mov x1, x25         // x1 = puntero al nombre de la columna
+    mov x1, x17         // x1 = puntero al nombre de la columna
     mov x2, #0          // x2 = contador de longitud
 
 contar_letras:
@@ -132,7 +132,7 @@ contar_letras:
 imprimir_col:
     // Imprimir el nombre de la columna 
     mov x0, x20         // Descriptor del archivo
-    mov x1, x25         // Puntero al texto
+    mov x1, x17         // Puntero al nombre de la columna
     bl write_text
 
     mov x0, x20
