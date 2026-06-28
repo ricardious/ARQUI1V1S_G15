@@ -27,12 +27,15 @@ TENDENCIA_BIN := $(BUILD_DIR)/modulo_5_tendencia
 REGRESION_OBJ := $(BUILD_DIR)/modulo_2_regresion.o
 REGRESION_BIN := $(BUILD_DIR)/modulo_2_regresion
 
+DERIVADA_OBJ := $(BUILD_DIR)/modulo_5_derivada_local.o
+DERIVADA_BIN := $(BUILD_DIR)/modulo_5_derivada_local
+
 MOTOR_OBJ := $(BUILD_DIR)/motor.o
 MOTOR_BIN := $(BUILD_DIR)/motor
 
-.PHONY: all media varianza anomalias prediccion tendencia motor regresion run-media run-varianza run-anomalias run-prediccion run-tendencia run-motor run-regresion run-all clean
+.PHONY: all media varianza anomalias prediccion tendencia motor regresion run-media run-varianza run-anomalias run-prediccion run-tendencia run-motor run-regresion run-derivada run-all clean
 
-all: media varianza anomalias prediccion tendencia motor regresion
+all: media varianza anomalias prediccion tendencia motor regresion derivada
 
 media: $(MEDIA_BIN)
 
@@ -43,6 +46,8 @@ anomalias: $(ANOMALIAS_BIN)
 prediccion: $(PREDICCION_BIN)
 
 tendencia: $(TENDENCIA_BIN)
+
+derivada: $(DERIVADA_BIN)
 
 motor: $(MOTOR_BIN)
 
@@ -72,6 +77,9 @@ $(PREDICCION_BIN): $(PREDICCION_OBJ) $(UTILS_OBJ)
 $(TENDENCIA_BIN): $(TENDENCIA_OBJ) $(UTILS_OBJ)
 	$(LD) -o $@ $^
 
+$(DERIVADA_BIN): $(DERIVADA_OBJ) $(UTILS_OBJ)
+	$(LD) -o $@ $^
+
 $(MOTOR_BIN): $(MOTOR_OBJ) $(UTILS_OBJ)
 	$(LD) -o $@ $^
 
@@ -93,13 +101,16 @@ run-prediccion: $(PREDICCION_BIN)
 run-tendencia: $(TENDENCIA_BIN)
 	$(TENDENCIA_BIN) $(LEC) $(INI) $(FIN) $(COL)
 
+run-regresion: regresion
+	$(REGRESION_BIN) $(LEC) $(INI) $(FIN) $(COL)
+  
+run-derivada: $(DERIVADA_BIN)
+	$(DERIVADA_BIN) $(LEC) $(INI) $(FIN) $(COL)
+ 
 run-motor: $(MOTOR_BIN)
 	$(MOTOR_BIN)
 
-run-regresion: regresion
-	$(REGRESION_BIN) $(LEC) $(INI) $(FIN) $(COL)
-
-run-all: run-media run-varianza run-anomalias run-prediccion run-tendencia run-regresion
+run-all: run-media run-varianza run-anomalias run-prediccion run-tendencia run-regresion run-derivada
 
 clean:
 	rm -rf $(BUILD_DIR)
