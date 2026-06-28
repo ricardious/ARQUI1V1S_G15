@@ -9,6 +9,25 @@ msg_module:
     .ascii "MODULE=PREDICTION\n"
     len_msg_module = . - msg_module
 
+    msg_rango:
+    .ascii "RANGE="
+    len_msg_rango = . - msg_rango
+
+msg_n_data:
+    .ascii "N_DATA="
+    len_msg_n_data = . - msg_n_data
+
+msg_status_ok:
+    .ascii "STATUS=OK\n"
+    len_msg_status_ok = . - msg_status_ok
+
+str_guion:
+    .ascii "-"
+
+    msg_column:
+    .ascii "COLUMN="
+    len_msg_column = . - msg_column
+
 msg_initial:
     .ascii "INITIAL_VALUE="
     len_msg_initial = . - msg_initial
@@ -45,14 +64,19 @@ str_zero:
 _start:
   
     bl get_column_arg  // llama a utils.s lee el argumento y lo prepara internamente.
+    mov x17, x25 //nombre de la columna
 
-   
     bl read_column_to_stack //  busca los numeros, los convierte y los apila.
 
     //  Guardar los resultados que nos devolvio utils.s 
     mov x24, x0 // x0 trae el puntero a la cima de la pila ultimodato
     mov x25, x1 // x1 trae el puntero al fondo de la pila primerdato
+    mov x21, x2 // cantidad de datos leidos (N) 
     mov x18, x3 // x3 trae la direccion original del stack, restaurar la memoria al terminar el programa 
+
+    //validar N>1
+    cmp x21, #1
+    ble error_rango_insuficiente // si N<=1 no hay prediccion
 
     sub x12, x25, #16  // Calculamos la direccion del primer dato
     ldr x22, [x12]     // Cargamos en x22 el valor inicial
@@ -69,8 +93,8 @@ _start:
 
     //calculo promedio de cambio
     mov x9, #100           // Cargamos la constante 100 
-    mul x10, x26, x9       // x10 = TOTAL_DIFF * 100
-    mov x11, #29           // x11 = N - 1
+    mul x10, x26, x9       // x10 = total * 100
+    sub x11, x21, #1          // x11 = N - 1
     sdiv x27, x10, x11     // x27 = cambio escalado x100
     
     // calculo proximo valor
@@ -85,6 +109,77 @@ _start:
     ldr x1, =msg_module
     mov x2, len_msg_module
     bl write_text
+
+  
+    // Escribir column=nombre_columna
+  
+    mov x0, x20
+    ldr x1, =msg_column
+    mov x2, len_msg_column
+    bl write_text
+
+    // Calcular longitud de la cadena en x25 
+    mov x1, x17         // x1 = puntero al nombre de la columna
+    mov x2, #0          // x2 = contador de longitud
+
+contar_letras:
+    ldrb w3, [x1, x2]   // Cargar un byte 
+    cmp w3, #0          // Comparar con el caracter nulo 
+    beq imprimir_col    // Si es nulo, terminamos de contar
+    add x2, x2, #1      // Si no es nulo, sumamos 1 a la longitud
+    b contar_letras
+
+imprimir_col:
+    // Imprimir el nombre de la columna 
+    mov x0, x20         // Descriptor del archivo
+    mov x1, x17         // Puntero al nombre de la columna
+    bl write_text
+
+    mov x0, x20
+    bl write_newline
+
+    // Escribir: rango=inicio-fin
+    mov x0, x20
+    ldr x1, =msg_rango
+    mov x2, len_msg_rango
+    bl write_text
+
+    mov x0, x13      // Linea inicial 
+    mov x1, x20
+    bl write_uint
+
+    mov x0, x20
+    ldr x1, =str_guion
+    mov x2, #1
+    bl write_text
+
+    mov x0, x14      // Linea final 
+    mov x1, x20
+    bl write_uint
+
+    mov x0, x20
+    bl write_newline
+
+    // Escribir: N_DATA=...
+    mov x0, x20
+    ldr x1, =msg_n_data
+    mov x2, len_msg_n_data
+    bl write_text
+
+    mov x0, x21      // Cantidad de datos reales procesados
+    mov x1, x20
+    bl write_uint
+
+    mov x0, x20
+    bl write_newline
+
+    // Escribir: STATUS=OK
+    mov x0, x20
+    ldr x1, =msg_status_ok
+    mov x2, len_msg_status_ok
+    bl write_text
+
+
 
     //escribimos el valor incial
     mov x0, x20
@@ -235,7 +330,13 @@ next_print_frac:
     bl close_output_file
 
     //restaurar el stack
-    mov sp, x18 
+    mov sp, x18
+    b exit_ok
+
+    error_rango_insuficiente:
+    mov x0, #1      // Codigo de salida 1
+    mov x8, #93     // Numero de syscall 
+    svc #0          // Ejecuta la llamada al sistema operativo
 
 
 exit_ok:
