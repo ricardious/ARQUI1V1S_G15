@@ -350,11 +350,40 @@ print_pred_pos:
     b exit_ok
 
 error_rango_insuficiente:
-    mov x0, #1      
-    mov x8, #93     
+    // abrir archivo para escribir el error
+    bl open_prediccion_futura_write 
+    mov x20, x0 
+
+    // imprimir estado de error
+    mov x0, x20
+    ldr x1, =msg_err_status
+    mov x2, len_msg_err_status
+    bl write_text
+
+    // imprimir insuficiencia de datos
+    mov x0, x20
+    ldr x1, =msg_err_insuf
+    mov x2, len_msg_err_insuf
+    bl write_text
+
+    // imprimir detalle exacto del error
+    mov x0, x20
+    ldr x1, =msg_err_detail
+    mov x2, len_msg_err_detail
+    bl write_text
+
+    // cerrar archivo
+    mov x0, x20
+    bl close_output_file
+
+    // salir con codigo de error
+    mov sp, x18     // restaurar stack original
+    mov x0, #1      // codigo de salida 1 (error)
+    mov x8, #93     // syscall exit
     svc #0
 
 exit_ok:
-    mov x0, #0      
-    mov x8, #93     
+    mov sp, x18     // restaurar stack original
+    mov x0, #0      // codigo de salida 0 (exito)
+    mov x8, #93     // syscall exit
     svc #0
