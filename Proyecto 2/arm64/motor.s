@@ -31,16 +31,12 @@ gas_count:   .quad 0
 .global GAS_AMP_ALTA
 .global LUZ_BAJA
 .global TEMP_ALTA
-temp_ideal:     .quad 24 
 TEMP_ALTA:      .quad 35
 
-LUZ_IDEAL:      .quad 200
 LUZ_BAJA:       .quad 250
 
-SOIL_IDEAL:     .quad 65 
 SOIL_BAJO:      .quad 40
 
-GAS_IDEAL:      .quad 150
 GAS_ALTO:       .quad 400
 GAS_AMP_ALTA:   .quad 80
 
