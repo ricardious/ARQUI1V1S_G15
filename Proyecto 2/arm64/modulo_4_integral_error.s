@@ -109,6 +109,90 @@ error_next_positivo:
     sub x5, x5, #1          // decrementar el contador de parejas restantes
     b loop_integral
 
+    fin_calculo:
+    mov x24, x6             // resultado final acumulado 
+
+    bl open_integral_error_write 
+    mov x15, x0             // guardar el fd en x15
+
+    // CALC=ERROR_INTEGRAL
+    mov x0, x15             // fd de salida
+    ldr x1, =msg_module
+    mov x2, len_msg_module
+    bl write_text
+
+    // COLUMN=
+    mov x0, x15
+    ldr x1, =msg_column
+    mov x2, len_msg_column
+    bl write_text
+
+    // imprimir nombre de la columna
+    mov x0, x15
+    mov x1, x25
+    bl write_cstring
+
+    // WINDOW_START=
+    mov x0, x15
+    ldr x1, =msg_start
+    mov x2, len_msg_start
+    bl write_text
+
+    // imprimir numero de inicio
+    mov x0, x27
+    mov x1, x15
+    bl write_int
+
+    // WINDOW_END=
+    mov x0, x15
+    ldr x1, =msg_end
+    mov x2, len_msg_end
+    bl write_text
+
+    // imprimir numero de fin
+    mov x0, x28
+    mov x1, x15
+    bl write_int
+
+    // COUNT=
+    mov x0, x15
+    ldr x1, =msg_count
+    mov x2, len_msg_count
+    bl write_text
+
+    // cantidad N de datos procesados
+    mov x0, x20
+    mov x1, x15
+    bl write_int
+
+    // IDEAL=
+    mov x0, x15
+    ldr x1, =msg_ideal
+    mov x2, len_msg_ideal
+    bl write_text
+
+    // valor ideal que se utilizo
+    mov x0, x22
+    mov x1, x15
+    bl write_int
+
+    // ERROR_INTEGRAL=
+    mov x0, x15
+    ldr x1, =msg_error_integral
+    mov x2, len_msg_error_integral
+    bl write_text
+
+    // resultado final del area (error integral)
+    mov x0, x24
+    mov x1, x15
+    bl write_int
+
+    // STATUS=OK
+    mov x0, x15
+    ldr x1, =msg_status
+    mov x2, len_msg_status
+    bl write_text
+
     b salir_programa
 
 manejar_error_datos:
