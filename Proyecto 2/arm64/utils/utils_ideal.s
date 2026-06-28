@@ -6,8 +6,6 @@
 // salida:
 // x0 = valor ideal 
 
-.global obtener_valor_ideal
-
 obtener_valor_ideal:
     cmp x11, #2
     beq temp
