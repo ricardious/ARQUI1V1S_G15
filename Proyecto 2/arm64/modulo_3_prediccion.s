@@ -118,6 +118,32 @@ calc_sums_loop:
 
 calc_sums_done:
 
+    // 4. Calcular pendiente (slope) e intercepto (intercept)
+    // NUMERADOR = (N * sumXY) - (sumX * sumY)
+    mul x10, x21, x27   // x10 = N * sumXY
+    mul x11, x22, x23   // x11 = sumX * sumY
+    sub x10, x10, x11   // x10 = NUMERADOR
+
+    // DENOMINADOR = (N * sumX2) - (sumX * sumX)
+    mul x12, x21, x26   // x12 = N * sumX2
+    mul x13, x22, x22   // x13 = sumX * sumX
+    sub x12, x12, x13   // x12 = DENOMINADOR
+
+    // M_X100 = (NUMERADOR * 100) / DENOMINADOR
+    mov x11, #100
+    mul x10, x10, x11   // Multiplicamos el numerador por 100
+    sdiv x28, x10, x12  // x28 = Pendiente (M_X100)
+
+   
+    // 5. MATEMATICA: B_X100 (Intercepto)
+   
+    // B_X100 = ((sumY * 100) - (M_X100 * sumX)) / N
+    mov x11, #100
+    mul x10, x23, x11   // x10 = sumY * 100
+    mul x12, x28, x22   // x12 = M_X100 * sumX
+    sub x10, x10, x12   // x10 = (sumY * 100) - (M_X100 * sumX)
+    sdiv x29, x10, x21  // x29 = Intercepto (B_X100)
+
 
 
     // Abrimos el archivo de salida
