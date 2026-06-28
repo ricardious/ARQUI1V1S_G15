@@ -17,6 +17,7 @@ Sistema IoT sobre **Raspberry Pi** que monitorea y controla un invernadero divid
 - [Sensores y actuadores](#-sensores)
 - [Tecnologías](#-tecnologías)
 - [Módulos ARM64](#-módulos-arm64)
+- [Depuración de Módulos ARM64](#-depuración-de-módulos-arm64)
 - [Distribución del trabajo](#-distribución-del-trabajo)
 - [Estructura del proyecto](#-estructura-del-proyecto)
 - [Estado del proyecto](#-estado-del-proyecto)
@@ -203,6 +204,92 @@ Cada integrante desarrolla una rutina individual en ensamblador ARM64. Todos los
 | `modulo_3_anomalias.s`  | Detección de anomalías         | `resultado_anomalias.txt`  |
 | `modulo_4_prediccion.s` | Predicción lineal simple       | `resultado_prediccion.txt` |
 | `modulo_5_tendencia.s`  | Tendencia acumulada avanzada   | `resultado_tendencia.txt`  |
+
+---
+
+# Guía de Debuggeo Paso a Paso
+
+Esta guía detalla el proceso para depurar los módulos utilizando terminales en paralelo: una para levantar el emulador (QEMU) y otra para controlar el depurador (GDB).
+
+---
+
+## Fase 1: Rutina 1
+
+### Terminal 1: Preparación y Emulación
+En esta terminal prepararemos el entorno y dejaremos el emulador a la espera de la conexión.
+
+1. **Ejecutar la regla del Makefile:**
+   ```bash
+   make run-RutinaFase1
+   ```
+2. **Levantar QEMU:** Inicia el emulador en el puerto `1234`, pasándole el ejecutable y sus argumentos (archivo de datos, inicio, fin y columna).
+   ```bash
+   qemu-aarch64 -g 1234 ./build/modulo_#_RutinaFase1 ../data/lecturas.csv 1 30 GAS
+   ```
+   *(La terminal quedará en espera).*
+
+### Terminal 2: Depuración (GDB)
+Abre una nueva terminal en la misma ubicación para conectarte al proceso anterior y controlar la ejecución.
+
+1. **Iniciar el depurador:**
+   ```bash
+   gdb-multiarch ./build/modulo_#_RutinaFase1
+   ```
+2. **Conectar al emulador remoto:** Dentro de la consola de GDB, conéctate al puerto de QEMU.
+   ```gdb
+   target remote localhost:1234
+   ```
+3. **Configurar descargas (debuginfod):** Si GDB pregunta si deseas habilitar la descarga automática de información de depuración:
+   * Selecciona `n` y presiona **Enter**.
+4. **Establecer el punto de interrupción:** Pausa la ejecución justo en el punto de entrada del programa.
+   ```gdb
+   break _start
+   ```
+5. **Avanzar paso a paso:**
+   * Escribe `s` y presiona **Enter** con cada paso que desees avanzar.
+6. **Finalizar el debuggeo:**
+   * Escribe `q` y presiona **Enter**.
+   * Selecciona `y` y presiona **Enter** para confirmar y detener el proceso.
+
+---
+
+## Fase 2: Rutina 2
+
+### Terminal 3: Preparación y Emulación
+Repetimos el proceso para el segundo módulo en una nueva terminal.
+
+1. **Ejecutar la regla del Makefile:**
+   ```bash
+   make run-RutinaFase2
+   ```
+2. **Levantar QEMU:**
+   ```bash
+   qemu-aarch64 -g 1234 ./build/modulo_#_RutinaFase2 ../data/lecturas.csv 1 30 GAS
+   ```
+   *(La terminal quedará en espera).*
+
+### Terminal 4: Depuración (GDB)
+Abre una última terminal para depurar el segundo módulo.
+
+1. **Iniciar el depurador:**
+   ```bash
+   gdb-multiarch ./build/modulo_#_RutinaFase2
+   ```
+2. **Conectar al emulador remoto:**
+   ```gdb
+   target remote localhost:1234
+   ```
+3. **Configurar descargas (debuginfod):**
+   * Selecciona `n` y presiona **Enter**.
+4. **Establecer el punto de interrupción:**
+   ```gdb
+   break _start
+   ```
+5. **Avanzar paso a paso:**
+   * Escribe `s` y presiona **Enter** con cada paso que desees avanzar.
+6. **Finalizar el debuggeo:**
+   * Escribe `q` y presiona **Enter**.
+   * Selecciona `y` y presiona **Enter** para confirmar.
 
 ---
 
