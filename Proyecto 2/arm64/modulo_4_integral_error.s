@@ -193,6 +193,8 @@ error_next_positivo:
     mov x2, len_msg_status
     bl write_text
 
+    bl close_output_file
+
     b salir_programa
 
 manejar_error_datos:
@@ -203,6 +205,8 @@ manejar_error_datos:
     b salir_programa
 
 salir_programa:
+    mov sp, x26     // restaurar el stack con el putnero original
+
     mov x0, #0
     mov x8, #93
     svc #0
