@@ -13,12 +13,37 @@ export const ARM64_COLUMNS = [
 export type Arm64ColumnKey = (typeof ARM64_COLUMNS)[number]["key"];
 export type Arm64ModuleKey =
   | "media"
+  | "rmse"
   | "varianza"
+  | "regresion"
   | "anomalias"
+  | "prediccion_reg"
   | "prediccion"
+  | "integral"
+  | "derivada"
   | "tendencia";
 
 type Fields = Record<string, string>;
+
+/** Las pendientes vienen como entero x100 (ARM64 no usa flotantes). */
+function slopeX100(v: string | undefined): string | undefined {
+  if (v == null || v === "") return undefined;
+  const n = Number(v);
+  return Number.isNaN(n) ? v : (n / 100).toFixed(2);
+}
+
+/** La predicción reporta PREDICTED_<K> (el nombre varía con K). */
+function predicted(f: Fields): string | undefined {
+  return Object.entries(f).find(([k]) => k.startsWith("PREDICTED_"))?.[1];
+}
+
+const TREND_ARROW: Record<string, string> = {
+  ASCENDING: "↑",
+  DESCENDING: "↓",
+  STABLE: "→",
+  UP: "↑",
+  DOWN: "↓",
+};
 
 export interface Arm64ModuleMeta {
   key: Arm64ModuleKey;
@@ -46,6 +71,17 @@ export const ARM64_MODULES: Arm64ModuleMeta[] = [
     ],
   },
   {
+    key: "rmse",
+    label: "RMSE vs ideal",
+    file: "modulo_1_rmse.s",
+    shape: "octa",
+    headline: (f) => f.RMSE,
+    stats: (f) => [
+      { k: "ideal", v: f.IDEAL },
+      { k: "n", v: f.COUNT },
+    ],
+  },
+  {
     key: "varianza",
     label: "Desv. estándar",
     file: "modulo_2_varianza.s",
@@ -54,6 +90,21 @@ export const ARM64_MODULES: Arm64ModuleMeta[] = [
     stats: (f) => [
       { k: "var", v: f.VARIANCE },
       { k: "media", v: f.MEAN },
+    ],
+  },
+  {
+    key: "regresion",
+    label: "Regresión lineal",
+    file: "modulo_2_regresion.s",
+    shape: "torus",
+    headline: (f) =>
+      f.TREND
+        ? `${slopeX100(f.SLOPE_X100) ?? "—"} ${TREND_ARROW[f.TREND] ?? ""}`
+        : slopeX100(f.SLOPE_X100),
+    stats: (f) => [
+      { k: "pend", v: slopeX100(f.SLOPE_X100) },
+      { k: "tend", v: f.TREND },
+      { k: "n", v: f.COUNT },
     ],
   },
   {
@@ -66,8 +117,20 @@ export const ARM64_MODULES: Arm64ModuleMeta[] = [
     danger: (f) => Number(f.TOTAL) > 2,
   },
   {
+    key: "prediccion_reg",
+    label: "Predicción (regresión)",
+    file: "modulo_3_prediccion.s",
+    shape: "torus",
+    headline: (f) => predicted(f),
+    stats: (f) => [
+      { k: "K", v: f.K },
+      { k: "pend", v: slopeX100(f.SLOPE_X100) },
+      { k: "b", v: slopeX100(f.INTERCEPT_X100) },
+    ],
+  },
+  {
     key: "prediccion",
-    label: "Predicción",
+    label: "Predicción simple",
     file: "modulo_4_prediccion.s",
     shape: "torus",
     headline: (f) => f.NEXT_VALUE,
@@ -77,14 +140,34 @@ export const ARM64_MODULES: Arm64ModuleMeta[] = [
     ],
   },
   {
+    key: "integral",
+    label: "Integral del error",
+    file: "modulo_4_integral_error.s",
+    shape: "tetra",
+    headline: (f) => f.ERROR_INTEGRAL,
+    stats: (f) => [
+      { k: "ideal", v: f.IDEAL },
+      { k: "n", v: f.COUNT },
+    ],
+  },
+  {
+    key: "derivada",
+    label: "Derivada local",
+    file: "modulo_5_derivada_local.s",
+    shape: "octa",
+    headline: (f) => slopeX100(f.MAX_LOCAL_SLOPE_X100),
+    stats: (f) => [
+      { k: "ventana", v: f.WINDOW_SIZE },
+      { k: "n", v: f.COUNT },
+    ],
+  },
+  {
     key: "tendencia",
     label: "Tendencia",
     file: "modulo_5_tendencia.s",
     shape: "box",
     headline: (f) =>
-      f.TREND
-        ? `${f.TREND} ${f.TREND === "UP" ? "↑" : f.TREND === "DOWN" ? "↓" : "→"}`
-        : undefined,
+      f.TREND ? `${f.TREND} ${TREND_ARROW[f.TREND] ?? "→"}` : undefined,
     stats: (f) => [
       { k: "+", v: f.INCREMENTS },
       { k: "−", v: f.DECREMENTS },

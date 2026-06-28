@@ -8,19 +8,8 @@ import {
   observeVisibility,
 } from "@/lib/helpers/three";
 import { useArm64Results } from "@/services/arm64/queries";
+import { ARM64_MODULES } from "@/lib/arm64";
 import type { Arm64Result, Shape } from "@/lib/types/types";
-
-const MODULES: {
-  key: "media" | "varianza" | "anomalias" | "prediccion" | "tendencia";
-  label: string;
-  shape: Shape;
-}[] = [
-  { key: "media", label: "Media ponderada", shape: "ico" },
-  { key: "varianza", label: "Desv. estándar", shape: "octa" },
-  { key: "anomalias", label: "Anomalías", shape: "tetra" },
-  { key: "prediccion", label: "Predicción", shape: "torus" },
-  { key: "tendencia", label: "Tendencia", shape: "box" },
-];
 
 function makeGeo(shape: Shape): THREE.BufferGeometry {
   switch (shape) {
@@ -37,39 +26,35 @@ function makeGeo(shape: Shape): THREE.BufferGeometry {
   }
 }
 
-const X_POS = [-3.5, -1.75, 0, 1.75, 3.5];
-const FLOAT_Y = [0, 0.45, -0.25, 0.7, 1.05];
-
-function moduleValue(
-  key: (typeof MODULES)[number]["key"],
-  fields: Record<string, string>,
-): string {
-  if (key === "media") return fields.WEIGHTED_MEAN ?? "—";
-  if (key === "varianza") return fields.STD_DEV ?? "—";
-  if (key === "anomalias") return fields.TOTAL ?? "—";
-  if (key === "prediccion") return fields.NEXT_VALUE ?? "—";
-  if (key === "tendencia") return fields.TREND ?? "—";
-  return "—";
-}
+// Posiciones derivadas del nº de módulos: se reparten a lo ancho y flotan a
+// distintas alturas. Así al agregar módulos no hay que tocar coordenadas; el
+// espaciado es fijo y la cámara se aleja según cuántos haya.
+const N = ARM64_MODULES.length;
+const SPACING = 1.2;
+const X_POS = ARM64_MODULES.map((_, i) => (i - (N - 1) / 2) * SPACING);
+const FLOAT_BASE = [0, 0.5, -0.3, 0.7, -0.15, 0.4, 1.0];
+const FLOAT_Y = ARM64_MODULES.map((_, i) => FLOAT_BASE[i % FLOAT_BASE.length]);
+const CAM_Z = Math.max(10, (N - 1) * SPACING * 0.62 + 4.5);
 
 /** Organism: cristales 3D por módulo ARM64 — formas y colores por tarjeta. */
 export default function Arm64Viz3D() {
   const elRef = useRef<HTMLDivElement>(null);
   const resultsQ = useArm64Results(30);
-  const latestByModule = (resultsQ.data ?? []).reduce<
-    Record<string, Arm64Result>
-  >((acc, r) => {
-    if (r.module && !(r.module in acc)) acc[r.module] = r;
-    return acc;
-  }, {});
-  const cards = MODULES.map((module) => {
+  const latestByModule = (resultsQ.data ?? []).reduce<Record<string, Arm64Result>>(
+    (acc, r) => {
+      if (r.module && !(r.module in acc)) acc[r.module] = r;
+      return acc;
+    },
+    {},
+  );
+  const cards = ARM64_MODULES.map((module) => {
     const doc = latestByModule[module.key];
-    const value = doc ? moduleValue(module.key, doc.result.fields) : "—";
-    const danger =
-      module.key === "anomalias" && value !== "—" && Number(value) > 2;
+    const fields = doc?.result?.fields ?? {};
+    const value = (doc ? module.headline(fields) : undefined) ?? "—";
+    const danger = doc ? (module.danger?.(fields) ?? false) : false;
     return {
-      ...module,
-      file: `modulo_${module.key}.s`,
+      key: module.key,
+      label: module.label,
       value,
       color: danger ? "#FF2D2D" : value === "—" ? "#5a5a62" : "#ffffff",
       danger,
@@ -83,8 +68,8 @@ export default function Arm64Viz3D() {
       h = el.clientHeight;
 
     const scene = new THREE.Scene();
-    const cam = new THREE.PerspectiveCamera(42, w / h, 0.1, 100);
-    cam.position.set(0, 1.6, 9);
+    const cam = new THREE.PerspectiveCamera(44, w / h, 0.1, 100);
+    cam.position.set(0, 1.6, CAM_Z);
     cam.lookAt(0, 0.5, 0);
 
     const ren = makeRenderer();
@@ -100,7 +85,7 @@ export default function Arm64Viz3D() {
 
     const groups: THREE.Group[] = [];
 
-    MODULES.forEach((card, i) => {
+    ARM64_MODULES.forEach((card, i) => {
       const geo = makeGeo(card.shape);
       const edges = new THREE.EdgesGeometry(geo);
       geo.dispose(); // EdgesGeometry copia los datos; la base ya no se usa
@@ -169,14 +154,17 @@ export default function Arm64Viz3D() {
           Cristales de análisis
         </h2>
         <p className="text-[12px] text-dim2">
-          Cada forma corresponde al módulo ARM64
+          Cada forma corresponde a un módulo ARM64
         </p>
       </div>
       <div ref={elRef} className="h-52 sm:h-64 w-full" />
-      <div className="grid grid-cols-5 border-t border-edge">
+      <div
+        className="grid border-t border-edge"
+        style={{ gridTemplateColumns: `repeat(${N}, minmax(0, 1fr))` }}
+      >
         {cards.map((c) => (
           <div
-            key={c.file}
+            key={c.key}
             className="flex flex-col items-center gap-1 py-3 border-r border-edge last:border-r-0"
           >
             <span
