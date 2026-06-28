@@ -32,17 +32,12 @@ derivada_local_path:
 
 .data
 
-.global TEMP_IDEAL
-.global HUM_IDEAL
-.global SOIL_IDEAL
-.global LUZ_IDEAL
-.global GAS_IDEAL
-
 TEMP_IDEAL: .quad 24
 HUM_IDEAL:  .quad 70
 SOIL_IDEAL: .quad 65
 LUZ_IDEAL:  .quad 200
 GAS_IDEAL:  .quad 150
+
 newline_text:
     .asciz "\n"
 
