@@ -54,7 +54,8 @@ _start:
     bl open_rmse_write
     mov x20, x0         //x20 = x0 porque con x0 decolvio el descriptor
     
-
+    bl obtener_valor_ideal
+    mov x19, x0      // ideal
 //CALC=RMSE 
 //COLUMN=SOIL1 
 //WINDOW_START=1000 
@@ -63,3 +64,8 @@ _start:
 //IDEAL=55 
 //RMSE=18 
 //STATUS=OK 
+
+//ERROR_i = Y_i - IDEAL
+//ERROR2_i = ERROR_i * ERROR_i 
+// MSE = suma(ERROR2_i) / N 
+//RMSE = sqrt_entera(MSE) 
