@@ -29,9 +29,14 @@ COLUMN_ALIASES = {
 # Modulo -> target del Makefile que lo compila y ejecuta.
 MODULE_TARGETS = {
     "media": "run-media",
+    "rmse": "run-rmse",
     "varianza": "run-varianza",
+    "regresion": "run-regresion",
     "anomalias": "run-anomalias",
+    "prediccion_reg": "run-prediccion-futura",
     "prediccion": "run-prediccion",
+    "integral": "run-integral",
+    "derivada": "run-derivada",
     "tendencia": "run-tendencia",
 }
 
@@ -57,9 +62,14 @@ CSV_VALUE_KEYS = [
 
 EXPECTED_RESULT_FILES = {
     "media": "resultado_media.txt",
+    "rmse": "resultado_rmse.txt",
     "varianza": "resultado_varianza.txt",
+    "regresion": "resultado_regresion.txt",
     "anomalias": "resultado_anomalias.txt",
+    "prediccion_reg": "resultado_prediccion_futura.txt",
     "prediccion": "resultado_prediccion.txt",
+    "integral": "resultado_integral_error.txt",
+    "derivada": "resultado_derivada_local.txt",
     "tendencia": "resultado_tendencia.txt",
 }
 
