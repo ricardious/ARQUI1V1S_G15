@@ -223,12 +223,64 @@ strlen_loop:
     add x24, x24, #1    // incrementar contador
     b strlen_loop
 strlen_done:
+   strlen_done:
     // imprimir nombre de columna
     mov x0, x20
     mov x1, x17
     mov x2, x24
     mov x8, #64
     svc #0
+
+    // agregar el salto 
+    mov x0, x20
+    bl write_newline
+
+    // window_start=
+    mov x0, x20
+    ldr x1, =msg_window_start
+    mov x2, len_msg_window_start
+    bl write_text
+    
+    mov x0, x16         // inicio de ventana
+    mov x1, x20
+    bl write_uint
+    mov x0, x20
+    bl write_newline
+
+    // window_end=
+    mov x0, x20
+    ldr x1, =msg_window_end
+    mov x2, len_msg_window_end
+    bl write_text
+    
+    mov x0, x19         // fin de ventana
+    mov x1, x20
+    bl write_uint
+    mov x0, x20
+    bl write_newline
+
+    // count=
+    mov x0, x20
+    ldr x1, =msg_count
+    mov x2, len_msg_count
+    bl write_text
+    
+    mov x0, x21         // n cantidad de datos
+    mov x1, x20
+    bl write_uint
+    mov x0, x20
+    bl write_newline
+
+    // k=5
+    mov x0, x20
+    ldr x1, =msg_k
+    mov x2, len_msg_k
+    bl write_text
+
+    // cerrar archivo para no perder buffer
+    mov x0, x20
+    bl close_output_file
+
     b exit_ok
 
 error_rango_insuficiente:
