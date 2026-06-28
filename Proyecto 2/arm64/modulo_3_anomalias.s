@@ -54,11 +54,11 @@ msg_window_end:
     len_msg_window_end = . - msg_window_end
 
 msg_count:
-    .ascii "COUNT="                //Etiqueta para identificar la cantidad de valores
+    .ascii "TOTAL_VALUES="                //Etiqueta para identificar la cantidad de valores
     len_msg_count = . - msg_count
 
 msg_risk_label:
-    .ascii "RISK="           //Etiqueta para identificar la etiqueta de riesgo
+    .ascii "SYSTEM_RISK="           //Etiqueta para identificar la etiqueta de riesgo
     len_msg_risk_label = . - msg_risk_label
 
 msg_status_ok:
