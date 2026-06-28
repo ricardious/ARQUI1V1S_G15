@@ -32,6 +32,14 @@ trend_stable:
     .ascii "STABLE\n"
     len_trend_stable = . - trend_stable
 
+trend_ascending:
+    .ascii "ASCENDING\n"
+    len_trend_ascending = . - trend_ascending
+
+trend_descending:
+    .ascii "DESCENDING\n"
+    len_trend_descending = . - trend_descending
+
 msg_status:
     .ascii "STATUS=OK\n"
     len_msg_status = . - msg_status
@@ -217,11 +225,36 @@ regresion_sum_done:
     mov x2, len_msg_trend
     bl write_text
 
+    // x19 = SLOPE_X100
+    // x19 > 0  => ASCENDING
+    // x19 < 0  => DESCENDING
+    // x19 == 0 => STABLE
+    cmp x19, #0
+    bgt regresion_write_ascending
+    blt regresion_write_descending
+    b regresion_write_stable
+
+regresion_write_ascending:
+    mov x0, x20
+    ldr x1, =trend_ascending
+    mov x2, len_trend_ascending
+    bl write_text
+    b regresion_write_status
+
+regresion_write_descending:
+    mov x0, x20
+    ldr x1, =trend_descending
+    mov x2, len_trend_descending
+    bl write_text
+    b regresion_write_status
+
+regresion_write_stable:
     mov x0, x20
     ldr x1, =trend_stable
     mov x2, len_trend_stable
     bl write_text
 
+regresion_write_status:
     // STATUS=OK
     mov x0, x20
     ldr x1, =msg_status
