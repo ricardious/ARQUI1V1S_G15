@@ -342,7 +342,11 @@ print_pred_pos:
     mov x0, x20
     bl write_newline
 
-   
+   // imprimir estado ok
+    mov x0, x20
+    ldr x1, =msg_status_ok
+    mov x2, len_msg_status_ok
+    bl write_text
 
     // cerrar archivo para no perder buffer
     mov x0, x20
