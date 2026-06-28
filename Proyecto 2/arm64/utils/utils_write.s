@@ -23,6 +23,35 @@ write_newline:
 
     ret
 
+// Escribir string terminado en cero
+// x0 = descriptor del archivo
+// x1 = direccion del string terminado en '\0'
+write_cstring:
+    mov x9, x0          // guardar descriptor
+    mov x10, x1         // inicio del string
+    mov x11, x1         // puntero para contar
+
+write_cstring_count:
+    ldrb w12, [x11], #1
+    cmp w12, #0
+    beq write_cstring_do_write
+
+    b write_cstring_count
+
+write_cstring_do_write:
+    sub x2, x11, x10
+    sub x2, x2, #1      // longitud sin incluir '\0'
+
+    mov x0, x9
+    mov x1, x10
+    mov x8, #64         // syscall write
+    svc #0
+
+    cmp x0, #0
+    blt write_error
+
+    ret
+
 // Escribir uint como string
 // x0: numero a escribir
 // x1: descriptor del archivo
