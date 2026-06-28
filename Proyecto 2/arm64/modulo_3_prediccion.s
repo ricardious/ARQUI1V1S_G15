@@ -84,6 +84,41 @@ _start:
     cmp x21, #2
     blt error_rango_insuficiente
 
+
+    // 3. CALCULO DE SUMATORIAS PARA REGRESION
+   
+    mov x9, x24         // x9 = Puntero actual 
+    sub x5, x21, #1     // x5 = Indice X_i 
+    
+    
+        
+    mov x23, #0         // sumY
+    mov x26, #0         // sumX2
+    mov x27, #0         // sumXY
+
+calc_sums_loop:
+    cmp x9, x25         
+    bge calc_sums_done
+
+    ldr x10, [x9]       // Y_i = Valor actual del CSV
+
+    add x23, x23, x10   // sumY += Y_i
+    add x22, x22, x5    // sumX += X_i
+
+    mul x11, x5, x5     
+    add x26, x26, x11   // sumX2 += X_i * X_i
+
+    mul x11, x5, x10
+    add x27, x27, x11   // sumXY += X_i * Y_i
+
+    sub x5, x5, #1      // X_i--
+    add x9, x9, #16     // Avanzar al dato mas viejo 
+    b calc_sums_loop
+
+calc_sums_done:
+
+
+
     // Abrimos el archivo de salida
     bl open_prediccion_futura_write 
     mov x20, x0 
