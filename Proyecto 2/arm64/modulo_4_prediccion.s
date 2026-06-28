@@ -52,7 +52,12 @@ _start:
     //  Guardar los resultados que nos devolvio utils.s 
     mov x24, x0 // x0 trae el puntero a la cima de la pila ultimodato
     mov x25, x1 // x1 trae el puntero al fondo de la pila primerdato
+    mov x21, x2 // cantidad de datos leidos (N) 
     mov x18, x3 // x3 trae la direccion original del stack, restaurar la memoria al terminar el programa 
+
+    //validar N>1
+    cmp x21, #1
+    ble error_rango_insuficiente // si N<=1 no hay prediccion
 
     sub x12, x25, #16  // Calculamos la direccion del primer dato
     ldr x22, [x12]     // Cargamos en x22 el valor inicial
@@ -68,9 +73,7 @@ _start:
     
 
     //calculo promedio de cambio
-    mov x9, #100           // Cargamos la constante 100 
-    mul x10, x26, x9       // x10 = TOTAL_DIFF * 100
-    mov x11, #29           // x11 = N - 1
+    sub x11, x21, #1          // x11 = N - 1
     sdiv x27, x10, x11     // x27 = cambio escalado x100
     
     // calculo proximo valor
@@ -236,6 +239,11 @@ next_print_frac:
 
     //restaurar el stack
     mov sp, x18 
+
+    error_rango_insuficiente:
+    mov x0, #1      // Codigo de salida 1
+    mov x8, #93     // Numero de syscall 
+    svc #0          // Ejecuta la llamada al sistema operativo
 
 
 exit_ok:
