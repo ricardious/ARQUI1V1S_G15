@@ -8,7 +8,7 @@ import {
   observeVisibility,
 } from "@/lib/helpers/three";
 import { useArm64Results } from "@/services/arm64/queries";
-import type { Shape } from "@/lib/types/types";
+import type { Arm64Result, Shape } from "@/lib/types/types";
 
 const MODULES: {
   key: "media" | "varianza" | "anomalias" | "prediccion" | "tendencia";
@@ -55,11 +55,16 @@ function moduleValue(
 /** Organism: cristales 3D por módulo ARM64 — formas y colores por tarjeta. */
 export default function Arm64Viz3D() {
   const elRef = useRef<HTMLDivElement>(null);
-  const resultsQ = useArm64Results(1);
-  const valor = resultsQ.data?.[0]?.valor ?? {};
+  const resultsQ = useArm64Results(30);
+  const latestByModule = (resultsQ.data ?? []).reduce<
+    Record<string, Arm64Result>
+  >((acc, r) => {
+    if (r.module && !(r.module in acc)) acc[r.module] = r;
+    return acc;
+  }, {});
   const cards = MODULES.map((module) => {
-    const mod = valor[module.key];
-    const value = mod ? moduleValue(module.key, mod.fields) : "—";
+    const doc = latestByModule[module.key];
+    const value = doc ? moduleValue(module.key, doc.result.fields) : "—";
     const danger =
       module.key === "anomalias" && value !== "—" && Number(value) > 2;
     return {
