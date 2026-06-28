@@ -24,6 +24,10 @@ msg_status_ok:
 str_guion:
     .ascii "-"
 
+    msg_column:
+    .ascii "COLUMN="
+    len_msg_column = . - msg_column
+
 msg_initial:
     .ascii "INITIAL_VALUE="
     len_msg_initial = . - msg_initial
@@ -88,6 +92,8 @@ _start:
     
 
     //calculo promedio de cambio
+    mov x9, #100           // Cargamos la constante 100 
+    mul x10, x26, x9       // x10 = total * 100
     sub x11, x21, #1          // x11 = N - 1
     sdiv x27, x10, x11     // x27 = cambio escalado x100
     
@@ -104,7 +110,35 @@ _start:
     mov x2, len_msg_module
     bl write_text
 
-    // Escribir: RANGE=inicio-fin
+  
+    // Escribir column=nombre_columna
+  
+    mov x0, x20
+    ldr x1, =msg_column
+    mov x2, len_msg_column
+    bl write_text
+
+    // Calcular longitud de la cadena en x25 
+    mov x1, x25         // x1 = puntero al nombre de la columna
+    mov x2, #0          // x2 = contador de longitud
+
+contar_letras:
+    ldrb w3, [x1, x2]   // Cargar un byte 
+    cmp w3, #0          // Comparar con el caracter nulo 
+    beq imprimir_col    // Si es nulo, terminamos de contar
+    add x2, x2, #1      // Si no es nulo, sumamos 1 a la longitud
+    b contar_letras
+
+imprimir_col:
+    // Imprimir el nombre de la columna 
+    mov x0, x20         // Descriptor del archivo
+    mov x1, x25         // Puntero al texto
+    bl write_text
+
+    mov x0, x20
+    bl write_newline
+
+    // Escribir: rango=inicio-fin
     mov x0, x20
     ldr x1, =msg_rango
     mov x2, len_msg_rango
@@ -296,7 +330,8 @@ next_print_frac:
     bl close_output_file
 
     //restaurar el stack
-    mov sp, x18 
+    mov sp, x18
+    b exit_ok
 
     error_rango_insuficiente:
     mov x0, #1      // Codigo de salida 1
