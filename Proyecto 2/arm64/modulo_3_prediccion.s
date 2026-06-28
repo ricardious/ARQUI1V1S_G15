@@ -199,7 +199,7 @@ pred_sign_done:
 
     //  escritura de archivo (inicio)
     bl open_prediccion_futura_write
-    mov x23, x0         // guardar fd en x20
+    mov x23, x0         // guardar fd en x23
 
     // calc=prediction
     mov x0, x23
@@ -259,7 +259,7 @@ strlen_done:
     bl write_newline
 
     // count=
-    mov x0, x20
+    mov x0, x23
     ldr x1, =msg_count
     mov x2, len_msg_count
     bl write_text
