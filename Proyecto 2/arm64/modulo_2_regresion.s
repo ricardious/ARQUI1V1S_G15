@@ -111,6 +111,31 @@ regresion_sum_loop:
     b regresion_sum_loop
 
 regresion_sum_done:
+    // NUM = N * SUM_XY - SUM_X * SUM_Y
+    // DEN = N * SUM_X2 - SUM_X * SUM_X
+    // SLOPE_X100 = (NUM * 100) / DEN
+
+    // NUM = N * SUM_XY - SUM_X * SUM_Y
+    mul x9, x26, x17        // x9 = N * SUM_XY
+    mul x10, x15, x16       // x10 = SUM_X * SUM_Y
+    sub x11, x9, x10        // x11 = NUM
+
+    // DEN = N * SUM_X2 - SUM_X * SUM_X
+    mul x9, x26, x18        // x9 = N * SUM_X2
+    mul x10, x15, x15       // x10 = SUM_X * SUM_X
+    sub x12, x9, x10        // x12 = DEN
+
+    // Validar division entre cero
+    cmp x12, #0
+    beq range_error
+
+    // NUM * 100
+    mov x13, #100
+    mul x11, x11, x13
+
+    // Pendiente con signo
+    sdiv x19, x11, x12      // x19 = SLOPE_X100
+
     // abrir archivo resultado_regresion.txt
     bl open_regresion_write
     mov x20, x0 // descriptor del archivo
@@ -179,7 +204,7 @@ regresion_sum_done:
     mov x2, len_msg_slope
     bl write_text
 
-    mov x0, #0
+    mov x0, x19
     mov x1, x20
     bl write_int
 
