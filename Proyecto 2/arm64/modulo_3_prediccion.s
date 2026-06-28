@@ -320,6 +320,30 @@ print_int_pos:
     mov x0, x20
     bl write_newline
 
+    // imprimir prediccion (con manejo de signo)
+    mov x0, x20
+    ldr x1, =msg_predicted
+    mov x2, len_msg_predicted
+    bl write_text
+    
+    mov x0, x22         // x22 tiene la prediccion
+    cmp x0, #0
+    bge print_pred_pos
+    // si es negativo, imprimir guion
+    mov x26, x0
+    mov x0, x20
+    ldr x1, =str_minus
+    mov x2, #1
+    bl write_text
+    sub x0, xzr, x26    
+print_pred_pos:
+    mov x1, x20
+    bl write_uint
+    mov x0, x20
+    bl write_newline
+
+   
+
     // cerrar archivo para no perder buffer
     mov x0, x20
     bl close_output_file
