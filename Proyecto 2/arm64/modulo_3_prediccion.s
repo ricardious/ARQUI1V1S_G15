@@ -1,35 +1,61 @@
 // Modulo 3: Prediccion futura por regresion
 
-
 .data
 
 msg_calc:
     .ascii "CALC=PREDICTION\n"
     len_msg_calc = . - msg_calc
 
+msg_column:
+    .ascii "COLUMN="
+    len_msg_column = . - msg_column
 
-msg_rango:
-    .ascii "RANGE="
-    len_msg_rango = . - msg_rango
+msg_window_start:
+    .ascii "WINDOW_START="
+    len_msg_window_start = . - msg_window_start
 
-msg_n_data:
-    .ascii "N_DATA="
-    len_msg_n_data = . - msg_n_data
+msg_window_end:
+    .ascii "WINDOW_END="
+    len_msg_window_end = . - msg_window_end
 
-msg_initial:
-    .ascii "INITIAL_VALUE="
-    len_msg_initial = . - msg_initial
+msg_count:
+    .ascii "COUNT="
+    len_msg_count = . - msg_count
 
-msg_avg:
-    .ascii "AVG_CHANGE="
-    len_msg_avg = . - msg_avg
+msg_k:
+    .ascii "K=5\n"
+    len_msg_k = . - msg_k
 
+msg_slope:
+    .ascii "SLOPE_X100="
+    len_msg_slope = . - msg_slope
+
+msg_intercept:
+    .ascii "INTERCEPT_X100="
+    len_msg_intercept = . - msg_intercept
+
+msg_predicted:
+    .ascii "PREDICTED_5="
+    len_msg_predicted = . - msg_predicted
 
 msg_status_ok:
     .ascii "STATUS=OK\n"
     len_msg_status_ok = . - msg_status_ok
 
-str_guion:
+
+msg_err_status:
+    .ascii "STATUS=ERROR\n"
+    len_msg_err_status = . - msg_err_status
+
+msg_err_insuf:
+    .ascii "ERROR=INSUFFICIENT_DATA\n"
+    len_msg_err_insuf = . - msg_err_insuf
+
+msg_err_detail:
+    .ascii "DETAIL=REGRESSION_REQUIRES_AT_LEAST_2_VALUES\n"
+    len_msg_err_detail = . - msg_err_detail
+
+str_minus:
     .ascii "-"
 
 .text
@@ -39,71 +65,48 @@ str_guion:
 _start:
     // 1. Obtener argumentos
     bl get_column_arg
-    mov x17, x25       // FIX: Guardar el puntero del nombre a salvo en x17
+    mov x17, x25       // Guardar el puntero del nombre a salvo
 
     // Guardamos los limites de la ventana
     mov x16, x13       // WINDOW_START
+    mov x17_end, x14   
     mov x19, x14       // WINDOW_END 
    
-    // 2. Leer datos
+    // 2. Leer datos al stack
     bl read_column_to_stack 
 
-    mov x24, x0        // x0 trae el puntero a la cima de la pila ultimodato
-    mov x25, x1        // x1 trae el puntero al fondo de la pila primerdato
-    mov x21, x2        // cantidad de datos leidos (N) 
-    mov x18, x3        // x3 trae la direccion original del stack
+    mov x24, x0        // Top del stack (ultimo dato)
+    mov x25, x1        // Fondo del stack (primer dato)
+    mov x21, x2        // N (cantidad de datos)
+    mov x18, x3        // Direccion original del stack
 
-    
-    cmp x21, #1
-    ble error_rango_insuficiente
+    // 3. Validacion: Regresion necesita MINIMO 2 puntos
+    cmp x21, #2
+    blt error_rango_insuficiente
 
-   
-    sub x12, x25, #16  // Calculamos la direccion del primer dato
-    ldr x22, [x12]     // Cargamos en x22 el valor inicial
-    ldr x23, [x24]     // Cargamos en x23 el valor final 
-    
-    // TOTAL_DIFF = valor final - valor inicial
-    sub x26, x23, x22
-
-
-    // Abrimos el NUEVO archivo de salida
+    // Abrimos el archivo de salida
     bl open_prediccion_futura_write 
     mov x20, x0 
 
-    // Escribimos el header nuevo
+    // Escribimos CALC=PREDICTION
     mov x0, x20
     ldr x1, =msg_calc
     mov x2, len_msg_calc
     bl write_text
 
-   
-    mov x0, x20
-    ldr x1, =msg_rango
-    mov x2, len_msg_rango
-    bl write_text
-
-    mov x0, x16   
-    mov x1, x20
-    bl write_uint
-
-    mov x0, x20
-    bl write_newline
-
-  
     mov x0, x20
     ldr x1, =msg_status_ok
     mov x2, len_msg_status_ok
     bl write_text
 
-    // Cerrar archivo
+    // Cerrar archivo y salir
     mov x0, x20
     bl close_output_file
-
-    // Restaurar el stack
     mov sp, x18 
     b exit_ok
 
 error_rango_insuficiente:
+    // (En commits posteriores pondremos la impresion del error detallado aqui)
     mov x0, #1      
     mov x8, #93     
     svc #0          
