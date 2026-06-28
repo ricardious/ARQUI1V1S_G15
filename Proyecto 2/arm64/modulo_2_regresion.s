@@ -50,7 +50,9 @@ _start:
     // leer columna del CSV y guardarla en stack
     bl read_column_to_stack
 
-    mov x21, x25 // guardar puntero a nombre de columna
+    mov x21, x25 // nombre de columna
+    mov x22, x13 // linea inicial
+    mov x23, x14 // linea final
 
     // guardar salidas de utils
     mov x24, x0 // inicio de datos en stack
@@ -62,9 +64,53 @@ _start:
     cmp x26, #2
     blt range_error
 
-    // valores temporales de base
-    mov x15, #0 // slope_x100 temporal
+    // X = indice temporal: 0, 1, 2, ..., N-1
+    // Y = valor leido desde el stack
+    // x15 = SUM_X
+    // x16 = SUM_Y
+    // x17 = SUM_XY
+    // x18 = SUM_X2
+    // x19 = indice X
+    mov x15, #0 // SUM_X
+    mov x16, #0 // SUM_Y
+    mov x17, #0 // SUM_XY
+    mov x18, #0 // SUM_X2
+    mov x19, #0 // X = 0
 
+    // recorrer en orden temporal
+    // primer dato temporal = x25 - 16
+    mov x28, x25
+    sub x28, x28, #16
+
+regresion_sum_loop:
+    cmp x19, x26
+    beq regresion_sum_done
+
+    ldr x10, [x28] // Y actual
+
+    // SUM_X += X
+    add x15, x15, x19
+
+    // SUM_Y += Y
+    add x16, x16, x10
+
+    // SUM_XY += X * Y
+    mul x11, x19, x10
+    add x17, x17, x11
+
+    // SUM_X2 += X * X
+    mul x11, x19, x19
+    add x18, x18, x11
+
+    // siguiente valor temporal
+    sub x28, x28, #16
+
+    // X++
+    add x19, x19, #1
+
+    b regresion_sum_loop
+
+regresion_sum_done:
     // abrir archivo resultado_regresion.txt
     bl open_regresion_write
     mov x20, x0 // descriptor del archivo
@@ -94,7 +140,7 @@ _start:
     mov x2, len_msg_window_start
     bl write_text
 
-    mov x0, x13
+    mov x0, x22
     mov x1, x20
     bl write_uint
 
@@ -107,7 +153,7 @@ _start:
     mov x2, len_msg_window_end
     bl write_text
 
-    mov x0, x14
+    mov x0, x23
     mov x1, x20
     bl write_uint
 
@@ -133,7 +179,7 @@ _start:
     mov x2, len_msg_slope
     bl write_text
 
-    mov x0, x15
+    mov x0, #0
     mov x1, x20
     bl write_int
 
