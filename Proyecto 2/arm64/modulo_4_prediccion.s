@@ -9,6 +9,21 @@ msg_module:
     .ascii "MODULE=PREDICTION\n"
     len_msg_module = . - msg_module
 
+    msg_rango:
+    .ascii "RANGE="
+    len_msg_rango = . - msg_rango
+
+msg_n_data:
+    .ascii "N_DATA="
+    len_msg_n_data = . - msg_n_data
+
+msg_status_ok:
+    .ascii "STATUS=OK\n"
+    len_msg_status_ok = . - msg_status_ok
+
+str_guion:
+    .ascii "-"
+
 msg_initial:
     .ascii "INITIAL_VALUE="
     len_msg_initial = . - msg_initial
@@ -88,6 +103,49 @@ _start:
     ldr x1, =msg_module
     mov x2, len_msg_module
     bl write_text
+
+    // Escribir: RANGE=inicio-fin
+    mov x0, x20
+    ldr x1, =msg_rango
+    mov x2, len_msg_rango
+    bl write_text
+
+    mov x0, x13      // Linea inicial 
+    mov x1, x20
+    bl write_uint
+
+    mov x0, x20
+    ldr x1, =str_guion
+    mov x2, #1
+    bl write_text
+
+    mov x0, x14      // Linea final 
+    mov x1, x20
+    bl write_uint
+
+    mov x0, x20
+    bl write_newline
+
+    // Escribir: N_DATA=...
+    mov x0, x20
+    ldr x1, =msg_n_data
+    mov x2, len_msg_n_data
+    bl write_text
+
+    mov x0, x21      // Cantidad de datos reales procesados
+    mov x1, x20
+    bl write_uint
+
+    mov x0, x20
+    bl write_newline
+
+    // Escribir: STATUS=OK
+    mov x0, x20
+    ldr x1, =msg_status_ok
+    mov x2, len_msg_status_ok
+    bl write_text
+
+
 
     //escribimos el valor incial
     mov x0, x20
