@@ -13,6 +13,7 @@ Capturas, salidas y video que respaldan el funcionamiento del sistema, organizad
 | `actuadores/` | Bomba, ventilador, luces, buzzer y LEDs respondiendo. |
 | `arm64/` | Archivos `resultado_*.txt` y la ejecución de los módulos. |
 | `gdb/` | Sesiones de depuración por integrante. |
+| `grafana/` | Paneles de Grafana leyendo el histórico de MongoDB. |
 
 ## Nombres sugeridos
 
@@ -27,6 +28,8 @@ sensores/dht11.png
 actuadores/bomba_riego.png
 arm64/resultado_tendencia.png
 gdb/ricardo_tendencia.png
+grafana/panel_lecturas.png
+grafana/panel_arm64_riesgo.png
 ```
 
 ## Capturas mínimas
@@ -38,3 +41,4 @@ gdb/ricardo_tendencia.png
 - Actuadores: bomba, ventilador, luces, buzzer y LEDs.
 - ARM64: cada `resultado_*.txt` disponible.
 - GDB: una sesión por integrante.
+- Grafana: paneles del histórico (lecturas, riesgo y resultados ARM64).
