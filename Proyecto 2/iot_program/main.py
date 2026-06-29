@@ -152,6 +152,12 @@ class IoTProgram:
         else:
             estado = "NORMAL"
 
+        print(
+            f"[ARM64] {line} -> {action or '?'} "
+            f"(risk={fields.get('RISK', '?')}, status={status}, estado={estado})",
+            flush=True,
+        )
+
         self.mongo.insert_arm64_result(
             source="live_engine",
             module="motor",
