@@ -30,6 +30,14 @@ integral_error_path:
 derivada_local_path:
     .asciz "../resultados_arm64/resultado_derivada_local.txt"
 
+.data
+
+TEMP_IDEAL: .quad 24
+HUM_IDEAL:  .quad 70
+SOIL_IDEAL: .quad 65
+LUZ_IDEAL:  .quad 200
+GAS_IDEAL:  .quad 150
+
 newline_text:
     .asciz "\n"
 
