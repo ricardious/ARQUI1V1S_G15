@@ -6,7 +6,7 @@ BUILD_DIR := build
 LEC ?= ../data/lecturas.csv
 INI ?= 1
 FIN ?= 30
-COL ?= TEMP
+COL ?= GAS
 
 UTILS_OBJ := $(BUILD_DIR)/utils.o
 
@@ -89,6 +89,7 @@ $(MOTOR_BIN): $(MOTOR_OBJ) $(UTILS_OBJ)
 	$(LD) -o $@ $^
 
 $(PREDICCION_FUTURA_BIN): $(PREDICCION_FUTURA_OBJ) $(UTILS_OBJ)
+	$(LD) -o $@ $^
 
 $(REGRESION_BIN): $(REGRESION_OBJ) $(UTILS_OBJ)
 	$(LD) -o $@ $^
