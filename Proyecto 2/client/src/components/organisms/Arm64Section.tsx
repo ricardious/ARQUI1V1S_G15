@@ -8,6 +8,7 @@ import NumberField from "../molecules/NumberField";
 import { useArm64Results } from "@/services/arm64/queries";
 import { useGenerateCsv, useRunArm64 } from "@/services/arm64/mutations";
 import { ARM64_COLUMNS, ARM64_MODULES, columnLabel } from "@/lib/arm64";
+import type { Arm64Result } from "@/lib/types/types";
 
 const COLUMN_OPTIONS = ARM64_COLUMNS.map((c) => ({
   value: c.key,
@@ -20,12 +21,17 @@ export default function Arm64Section() {
   const [count, setCount] = useState<number>(150);
   const [lineStart, setLineStart] = useState<number>(1);
   const [lineEnd, setLineEnd] = useState<number>(150);
-  const resultsQ = useArm64Results(1);
+  const resultsQ = useArm64Results(30);
   const csvMut = useGenerateCsv();
   const runMut = useRunArm64();
 
-  const latest = resultsQ.data?.[0];
-  const valor  = latest?.valor ?? {};
+  // Agarra el último resultado de cada módulo.
+  const latestByModule = (resultsQ.data ?? []).reduce<
+    Record<string, Arm64Result>
+  >((acc, r) => {
+    if (r.module && !(r.module in acc)) acc[r.module] = r;
+    return acc;
+  }, {});
 
   const runningModule = runMut.isPending ? runMut.variables?.module : undefined;
   const runningAll = runMut.isPending && !runMut.variables?.module;
@@ -145,7 +151,9 @@ export default function Arm64Section() {
       )}
       {(csvMut.isSuccess || runMut.isSuccess) && (
         <p className="mb-3 rounded-xl border border-ok/30 bg-ok/5 px-4 py-2 text-[12px] text-ok">
-          {runMut.isSuccess ? "ARM64 ejecutado — resultados actualizados." : "CSV generado correctamente."}
+          {runMut.isSuccess
+            ? "ARM64 ejecutado — resultados actualizados."
+            : "CSV generado correctamente."}
         </p>
       )}
 
@@ -157,16 +165,16 @@ export default function Arm64Section() {
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,210px),1fr))] gap-4">
         {ARM64_MODULES.map((m) => {
-          const mod = valor[m.key];
-          const fields = mod?.fields ?? {};
-          const headline = (mod ? m.headline(fields) : undefined) ?? "—";
-          const danger = mod ? (m.danger?.(fields) ?? false) : false;
-          const stats = mod ? m.stats(fields).filter((s) => s.v != null) : [];
-          const time = latest
-            ? new Date(latest.timestamp).toLocaleTimeString("es")
+          const doc = latestByModule[m.key];
+          const fields = doc?.result?.fields ?? {};
+          const headline = (doc ? m.headline(fields) : undefined) ?? "—";
+          const danger = doc ? (m.danger?.(fields) ?? false) : false;
+          const stats = doc ? m.stats(fields).filter((s) => s.v != null) : [];
+          const time = doc
+            ? new Date(doc.timestamp).toLocaleTimeString("es")
             : "";
-          const foot = mod
-            ? `${columnLabel(mod.column)}${time ? ` · ${time}` : ""}`
+          const foot = doc
+            ? `${columnLabel(doc.column)}${time ? ` · ${time}` : ""}`
             : "sin datos";
           const color = danger
             ? "#FF2D2D"

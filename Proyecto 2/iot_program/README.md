@@ -1,18 +1,20 @@
-# 🌿 iot_program — GreenPi Grupo 15
+# ❀ iot_program — GreenPi Grupo 15
 
-Programa base de integración IoT del proyecto **GreenPi**. Se enfoca en **sensores, actuadores, MQTT y persistencia de lecturas**.
+Programa de integración IoT del proyecto **GreenPi**. Coordina **sensores, actuadores, MQTT, persistencia** y el **motor ARM64 de decisión en vivo**.
 
-> El **backend FastAPI** es un componente separado: consulta históricos, genera `lecturas.csv`, ejecuta ARM64, lee resultados `.txt` y guarda resultados ARM64 en MongoDB. Este `iot_program` **no ejecuta ARM64** y **no genera** `lecturas.csv`.
+> En cada ciclo, este `iot_program` envía las lecturas al **motor ARM64** (`arm64_bridge.py` → `arm64/build/motor`), que decide la acción y la etiqueta de riesgo. Según el PDF, Python **no clasifica** las variables: solo **envía** las lecturas al motor y **ejecuta** la acción que indica. El **analizador histórico** ARM64 (procesamiento por lotes de `lecturas.csv`) corre en el **backend FastAPI**, no aquí.
 
 ---
 
-## 🗺️ Cómo funciona
+## ⬡ Cómo funciona
 
 ```mermaid
 flowchart LR
     subgraph PI["iot_program (Raspberry Pi)"]
         S["Sensores"] --> MGRs["sensors/manager"]
         MGRs --> MAIN["main.py"]
+        MAIN -- "lectura (stdin)" --> MOTOR["Motor ARM64<br/>(arm64_bridge → motor)"]
+        MOTOR -- "decisión (stdout)" --> MAIN
         MAIN --> MGRa["actuators/manager"]
         MGRa --> A["Actuadores"]
         MAIN --> GS["GlobalState"]
@@ -22,9 +24,9 @@ flowchart LR
     BROKER -- "comandos" --> MAIN
     BROKER <--> DASH["Dashboard"]
 
-    MAIN -- "lecturas, eventos, comandos, logs" --> DB[("MongoDB Atlas
+    MAIN -- "lecturas, decisiones ARM64, eventos, comandos, logs" --> DB[("MongoDB Atlas
 greenpi_iot")]
-    BE["Backend FastAPI"] -- "históricos / ARM64" --> DB
+    BE["Backend FastAPI"] -- "analizador histórico" --> DB
 ```
 
 El `iot_program` y el backend **comparten la misma base** `greenpi_iot`, pero hacen cosas distintas: este alimenta los datos, el backend los consulta y procesa.
@@ -35,14 +37,18 @@ El `iot_program` y el backend **comparten la misma base** `greenpi_iot`, pero ha
 sequenceDiagram
     participant S as Sensores
     participant M as main.py
+    participant A as Motor ARM64
     participant Q as Broker MQTT
     participant DB as MongoDB
     participant D as Dashboard
 
     Note over S,DB: Lectura (cada ciclo)
     S->>M: lectura unificada
-    M->>Q: publica invernadero/sensores/*
-    M->>DB: guarda en sensor_readings
+    M->>A: 7 campos por stdin (TEMP..MODO)
+    A-->>M: ACTION / RISK / STATUS
+    M->>M: deriva el estado del RISK y ejecuta la acción
+    M->>Q: publica invernadero/sensores/* y estado
+    M->>DB: guarda en sensor_readings y arm64_results
     Q-->>D: muestra en tiempo real
 
     Note over D,M: Comando remoto
@@ -56,15 +62,17 @@ sequenceDiagram
 ## Qué hace
 
 - Lee sensores **simulados** en modo local, sin Raspberry Pi.
+- Envía cada lectura al **motor ARM64 en vivo** y **ejecuta** la acción que decide.
+- Deriva el **estado global** (`NORMAL` / `ADVERTENCIA` / `EMERGENCIA` / `MODO_MANUAL`) del **RISK** que devuelve ARM64.
 - **Publica** lecturas por MQTT en texto plano.
 - **Recibe** comandos MQTT en texto plano.
 - Simula actuadores con `fake_actuators.py`.
-- Guarda lecturas, comandos, eventos, estado y logs en **MongoDB Atlas**.
+- Guarda lecturas, **decisiones ARM64**, comandos, eventos, estado y logs en **MongoDB Atlas**.
 - Mantiene un `GlobalState` con el último estado conocido del sistema.
 
 ---
 
-## 🧱 Estructura
+## ▦ Estructura
 
 ```text
 iot_program/
@@ -74,6 +82,7 @@ iot_program/
 ├── topics.py
 ├── models.py
 ├── rules.py
+├── arm64_bridge.py      # puente con el motor ARM64 (stdin/stdout)
 ├── mongo_repository.py
 ├── mqtt_client.py
 ├── sensors/
@@ -105,7 +114,7 @@ iot_program/
 
 ---
 
-## 👥 Trabajo por integrante
+## ❁ Trabajo por integrante
 
 Para evitar conflictos de Git, cada integrante trabaja en **su propio archivo** de sensor, actuador o componente físico.
 
@@ -139,13 +148,13 @@ No es solo meter código en el archivo asignado. Después hay que revisar que es
 
 Para sensores, `sensors/manager.py` ya llama estas clases y métodos. Entonces hay que mantener esos nombres:
 
-| Archivo | Clase/métodos que debe conservar |
-| ------- | -------------------------------- |
+| Archivo                          | Clase/métodos que debe conservar                                 |
+| -------------------------------- | ---------------------------------------------------------------- |
 | `sensors/temperatura_humedad.py` | `TemperaturaHumedadSensor.leer_temperatura()` y `leer_humedad()` |
-| `sensors/suelo_area1.py` | `SueloArea1Sensor.read()` |
-| `sensors/suelo_area2.py` | `SueloArea2Sensor.read()` |
-| `sensors/luz.py` | `LuzSensor.read()` |
-| `sensors/gas.py` | `GasSensor.read()` |
+| `sensors/suelo_area1.py`         | `SueloArea1Sensor.read()`                                        |
+| `sensors/suelo_area2.py`         | `SueloArea2Sensor.read()`                                        |
+| `sensors/luz.py`                 | `LuzSensor.read()`                                               |
+| `sensors/gas.py`                 | `GasSensor.read()`                                               |
 
 Checklist antes de subir:
 
@@ -166,13 +175,13 @@ sensors/manager.py
 
 Para actuadores, `actuators/manager.py` ya llama estas clases y métodos. Hay que mantener la misma interfaz:
 
-| Archivo | Clase/métodos que debe conservar |
-| ------- | -------------------------------- |
-| `actuators/riego_area1.py` | `RiegoArea1Actuator.activar()` y `desactivar()` |
-| `actuators/riego_area2.py` | `RiegoArea2Actuator.activar()` y `desactivar()` |
-| `actuators/ventilador.py` | `VentiladorActuator.activar()` y `desactivar()` |
-| `actuators/luces.py` | `LucesActuator.encender()` y `apagar()` |
-| `actuators/alarma.py` | `AlarmaActuator.silenciar()` |
+| Archivo                    | Clase/métodos que debe conservar                         |
+| -------------------------- | -------------------------------------------------------- |
+| `actuators/riego_area1.py` | `RiegoArea1Actuator.activar()` y `desactivar()`          |
+| `actuators/riego_area2.py` | `RiegoArea2Actuator.activar()` y `desactivar()`          |
+| `actuators/ventilador.py`  | `VentiladorActuator.activar()` y `desactivar()`          |
+| `actuators/luces.py`       | `LucesActuator.encender()` y `apagar()`                  |
+| `actuators/alarma.py`      | `AlarmaActuator.silenciar()`                             |
 | `actuators/leds_estado.py` | `LedsEstadoActuator.modo_automatico()` y `modo_manual()` |
 
 Checklist antes de subir:
@@ -226,7 +235,7 @@ Para este avance, lo más directo es:
 
 ---
 
-## 🚀 Puesta en marcha
+## ✶ Puesta en marcha
 
 ### 1. Entorno virtual
 
@@ -271,7 +280,7 @@ SENSOR_INTERVAL_SECONDS=0.2
 MQTT_PUBLISH_INTERVAL_SECONDS=1
 ```
 
-> ⚠️ No subas credenciales reales. Si `MONGODB_URI` queda vacío, el programa sigue funcionando con simulación y MQTT, pero muestra una advertencia y **no guarda en MongoDB**.
+> ❈ No subas credenciales reales. Si `MONGODB_URI` queda vacío, el programa sigue funcionando con simulación y MQTT, pero muestra una advertencia y **no guarda en MongoDB**.
 
 ### 4. Ejecutar
 
@@ -283,7 +292,7 @@ Corre en **modo simulación** por defecto. No necesita Raspberry Pi para arranca
 
 ---
 
-## 🧪 Probar con MQTTX Web
+## ❊ Probar con MQTTX Web
 
 1. Abrir MQTTX Web y crear una conexión nueva.
 2. Broker: `broker.emqx.io` · Puerto: `1883`
@@ -298,7 +307,7 @@ invernadero/#
 
 ---
 
-## 📡 Tópicos MQTT
+## ∿ Tópicos MQTT
 
 ### Publica
 
@@ -344,21 +353,22 @@ Respuesta esperada en `invernadero/actuadores/luces` con payload `ON`.
 
 ---
 
-## 🗄️ MongoDB
+## ▤ MongoDB
 
 Base de datos: `greenpi_iot`
 
-| Colección         | Contenido                              |
-| ----------------- | -------------------------------------- |
-| `sensor_readings` | Lecturas de sensores                   |
-| `events`          | Eventos del sistema                    |
-| `commands`        | Comandos recibidos                     |
-| `system_status`   | Estado del sistema (`_id = "current"`) |
-| `actuator_logs`   | Activaciones de actuadores             |
+| Colección         | Contenido                                                    |
+| ----------------- | ------------------------------------------------------------ |
+| `sensor_readings` | Lecturas de sensores                                         |
+| `arm64_results`   | Decisiones del motor ARM64 en vivo (`source: "live_engine"`) |
+| `events`          | Eventos del sistema                                          |
+| `commands`        | Comandos recibidos                                           |
+| `system_status`   | Estado del sistema (`_id = "current"`)                       |
+| `actuator_logs`   | Activaciones de actuadores                                   |
 
 ---
 
-## 🔌 Pasar de simulado a Raspberry Pi
+## ⌁ Pasar de simulado a Raspberry Pi
 
 ### Sensores reales
 
@@ -386,21 +396,22 @@ La carpeta `local_panel/` queda preparada para LCD y botones físicos. Por ahora
 
 ---
 
-## 🔗 Relación con backend y dashboard
+## ◈ Relación con backend y dashboard
 
 - El **dashboard** usa MQTT para enviar comandos en tiempo real.
 - El **dashboard** también consulta el **backend FastAPI** para históricos.
-- El **backend FastAPI** consulta MongoDB y ejecuta ARM64.
-- El **`iot_program`** alimenta MongoDB con lecturas, eventos, comandos y logs.
+- El **`iot_program`** ejecuta el **motor ARM64 en vivo** (una decisión por lectura) y alimenta MongoDB con lecturas, decisiones, eventos, comandos y logs.
+- El **backend FastAPI** consulta MongoDB y ejecuta el **analizador histórico** ARM64.
 - Ambos componentes comparten la base `greenpi_iot`.
 
 ---
 
-## 📝 Notas importantes
+## ❋ Notas importantes
 
 - MQTT usa **QoS 0** por defecto.
 - MQTT usa **texto plano**, no JSON.
 - El `client_id` incluye un número aleatorio para evitar conflictos.
 - No se usa TLS/SSL por defecto.
 - No se usan credenciales MQTT si las variables están vacías.
-- **No** se hacen cálculos estadísticos ARM64 en Python.
+- Según el PDF, Python **no clasifica** si una variable es baja, alta o elevada: envía las lecturas al **motor ARM64** y ejecuta la acción indicada. La **decisión** y las **etiquetas de riesgo** vienen de ARM64.
+- El motor ARM64 se compila solo (`make motor`) la primera vez que se necesita.
