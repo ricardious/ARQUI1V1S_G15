@@ -60,6 +60,23 @@ _start:
     mov x5, x26 // contador de iteraciones
     mov x6, #0  // SUMA_ERROR2 = 0
 
+calc_loop:
+    cbz x5, calc_done
+
+    ldr x7, [x3], #16    // Y_i, avanza puntero
+    sub x8, x7, x19         // ERROR_i = Y_i - IDEAL
+    mul x9, x8, x8           // ERROR2_i
+    add x6, x6, x9             // acumula
+
+    sub x5, x5, #1
+    b calc_loop
+
+calc_done:
+    udiv x10, x6, x26        // MSE = SUMA_ERROR2 / N
+    mov x0, x10
+    bl sqrt_entera             // RMSE
+    mov x28, x0                 // x28 = RMSE final
+
     bl open_rmse_write
     mov x20, x0                  // fd de salida
 
@@ -116,6 +133,16 @@ _start:
     bl write_text
 
     mov x0, x19
+    mov x1, x20
+    bl write_int
+
+    // RMSE=
+    mov x0, x20
+    ldr x1, =msg_rmse
+    mov x2, len_rmse
+    bl write_text
+
+    mov x0, x28
     mov x1, x20
     bl write_int
 
