@@ -11,3 +11,5 @@ Repositorio con los proyectos del curso **Vacaciones de Primer Semestre 2026**.
 | 202300476 | Alex Ricardo Castañeda Rodríguez |
 | 202100171 | Alex Oswaldo López Alquejay      |
 | 202001376 | Kevin Rodrigo Sandoval Hernández |
+
+Referencia de auditoría - 2: 2026-06-15 00:22:17
