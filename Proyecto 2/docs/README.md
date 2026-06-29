@@ -31,6 +31,7 @@ Esta documentación describe la arquitectura del sistema, los subsistemas obliga
 | [integrantes/kevin_anomalias.md](integrantes/kevin_anomalias.md)       | Detección de anomalías         | Kevin Rodrigo Sandoval Hernández |
 | [integrantes/oswaldo_prediccion.md](integrantes/oswaldo_prediccion.md) | Predicción lineal simple       | Alex Oswaldo López Alquejay      |
 | [integrantes/ricardo_tendencia.md](integrantes/ricardo_tendencia.md)   | Tendencia acumulada avanzada   | Alex Ricardo Castañeda Rodríguez |
+| [integrantes/ricardo_regresion.md](integrantes/ricardo_regresion.md)   | Regresión lineal simple        | Alex Ricardo Castañeda Rodríguez |
 
 ### Evidencias
 
