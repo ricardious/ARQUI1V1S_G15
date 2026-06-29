@@ -30,6 +30,10 @@ msg_ok:
     .ascii "\nSTATUS=OK\n"
     len_ok = . - msg_ok
 
+msg_err_status:
+    .ascii "STATUS=ERROR\nERROR=INSUFFICIENT_DATA\nDETAIL=RMSE_REQUIRES_AT_LEAST_2_VALUES\n"
+    len_err_status = . - msg_err_status
+
 .section .text
 
 .global _start
@@ -48,6 +52,10 @@ _start:
 
     mov x16, x13        // inicio
     mov x17, x14        // linea final
+
+    // validar que hayan al menos 2 datos
+    cmp x26, #2
+    blt manejar_error_datos
 
     bl obtener_valor_ideal
     mov x19, x0     // ideal
@@ -153,6 +161,13 @@ calc_done:
     bl write_text
 
     bl close_output_file
+    b exit
+
+manejar_error_datos:
+    mov x0, #1
+    ldr x1, =msg_err_status
+    mov x2, len_err_status
+    bl write_text
     b exit
 
 exit:
