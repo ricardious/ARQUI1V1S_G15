@@ -13,26 +13,29 @@
 
 ## 1. Algoritmo
 
-La rutina analiza la tendencia general de los 30 registros considerando estabilidad y cambios consecutivos entre lecturas. Para cada registro posterior al primero compara las columnas sensoras (TEMP, HUM_AIRE, HUM_SUELO_1, HUM_SUELO_2, LUZ, GAS) contra el registro anterior:
+La rutina analiza la tendencia de **una columna** del CSV dentro de un rango de líneas `[inicio, fin]`, interpretada como serie temporal. Recorre los valores en orden temporal comparando cada lectura con la anterior:
 
 ```text
 DIF_i = X_i − X_(i-1)
 ```
 
-Por cada diferencia acumula:
+Por cada diferencia acumula y clasifica:
 
-- si `DIF_i > 0` → suma de subidas y un cambio positivo;
-- si `DIF_i < 0` → suma de bajadas (valor absoluto) y un cambio negativo;
-- si `DIF_i = 0` → un cambio estable.
+- si `DIF_i > 0` → **incremento**: suma 1 a `INCREMENTS`, extiende la racha de subidas y reinicia la de bajadas;
+- si `DIF_i < 0` → **decremento**: suma 1 a `DECREMENTS`, extiende la racha de bajadas y reinicia la de subidas;
+- si `DIF_i = 0` → reinicia **ambas** rachas (sin contar incremento ni decremento).
 
-Diferencia acumulada y clasificación:
+Cada diferencia se suma a `ACCUM_DIFF`, que telescopa al cambio neto entre la primera y la última lectura. Las rachas máximas (`MAX_UP_STREAK`, `MAX_DOWN_STREAK`) guardan la mayor secuencia consecutiva de subidas o bajadas observada.
+
+Clasificación final según el signo de la diferencia acumulada:
 
 ```text
-TENDENCIA_NETA = SUMA_SUBIDAS − SUMA_BAJADAS
-TENDENCIA_NETA > 0  =>  SUBE   (UP)
-TENDENCIA_NETA < 0  =>  BAJA   (DOWN)
-TENDENCIA_NETA = 0  =>  ESTABLE (STABLE)
+ACCUM_DIFF > 0  =>  UP
+ACCUM_DIFF < 0  =>  DOWN
+ACCUM_DIFF = 0  =>  STABLE
 ```
+
+Si el rango tiene menos de 2 valores (`N < 2`) no hay comparaciones: todos los contadores quedan en 0 y la tendencia es `STABLE`.
 
 ---
 
@@ -40,18 +43,24 @@ TENDENCIA_NETA = 0  =>  ESTABLE (STABLE)
 
 ```mermaid
 flowchart TD
-    A["open_csv_read"] --> B["read_fd → csv_buffer"]
-    B --> C["skip_header"]
-    C --> D{"record_loop < 30"}
-    D -->|"parse 9 columnas → curr_values"| E{"¿primer registro?"}
-    E -->|"no"| F["compare_sensor_columns (cols 1..6)"]
-    E -->|"sí"| G["copy_current_to_previous"]
-    F --> G
-    G --> D
-    D -->|"fin del CSV"| H["close_fd"]
-    H --> I["open_tendencia_write"]
-    I --> J["write_report"]
-    J --> K["close_fd + exit_program(0)"]
+    A["get_column_arg (archivo, inicio, fin, columna)"] --> B["read_column_to_stack → datos en stack"]
+    B --> C["init: INCREMENTS=DECREMENTS=MAX_UP=MAX_DOWN=ACCUM_DIFF=0, rachas=0"]
+    C --> D{"N ≥ 2"}
+    D -->|"no"| W["write_results (todo 0, STABLE)"]
+    D -->|"sí"| E["anterior = primer valor temporal (x25-16)"]
+    E --> F{"count_changes: puntero ≥ inicio"}
+    F -->|"no"| W
+    F -->|"sí"| G["actual = [puntero]; DIF = actual − anterior; ACCUM_DIFF += DIF"]
+    G --> H{"comparar actual vs anterior"}
+    H -->|">"| I["case_increment: INCREMENTS++, racha_up++, reset racha_down, MAX_UP=max"]
+    H -->|"<"| J["case_decrement: DECREMENTS++, racha_down++, reset racha_up, MAX_DOWN=max"]
+    H -->|"="| K["reset ambas rachas"]
+    I --> L["next_value: anterior=actual, avanzar puntero"]
+    J --> L
+    K --> L
+    L --> F
+    W --> M["open_tendencia_write → write_report"]
+    M --> N["close_output_file + restaurar sp + exit_ok(0)"]
 ```
 
 ---
@@ -60,69 +69,87 @@ flowchart TD
 
 Registros persistentes en `_start` (callee-saved, preservados según AAPCS64):
 
-| Registro | Uso                                 |
-| -------- | ----------------------------------- |
-| `x19`    | descriptor del CSV                  |
-| `x20`    | puntero actual dentro del CSV       |
-| `x21`    | puntero al fin del buffer           |
-| `x22`    | registros procesados                |
-| `x23`    | suma de subidas                     |
-| `x24`    | suma de bajadas                     |
-| `x25`    | contador de cambios positivos       |
-| `x26`    | contador de cambios negativos       |
-| `x27`    | contador de cambios estables        |
-| `x28`    | descriptor del archivo de resultado |
+| Registro | Uso                                                       |
+| -------- | --------------------------------------------------------- |
+| `x24`    | inicio de los datos en el stack                           |
+| `x25`    | límite final de los datos en el stack                     |
+| `x26`    | `N` = cantidad de datos leídos (`TOTAL_VALUES`)           |
+| `x27`    | posición para restaurar el stack                          |
+| `x15`    | `INCREMENTS` (conteo de subidas)                          |
+| `x16`    | `DECREMENTS` (conteo de bajadas)                          |
+| `x17`    | `MAX_UP_STREAK` (racha máxima de subidas)                 |
+| `x18`    | `MAX_DOWN_STREAK` (racha máxima de bajadas)               |
+| `x19`    | `ACCUM_DIFF` (diferencia acumulada, con signo)            |
+| `x22`    | racha actual de subidas                                   |
+| `x28`    | racha actual de bajadas                                   |
+| `x20`    | descriptor del archivo de resultado                       |
 
-Temporales: en el lazo de columnas `x9` (índice) y `x10` (puntero a `curr_values`); en `compare_sensor_columns` `x9` (columna 1..6), `x10`/`x11` (curr/prev), `x12`/`x13` (valores) y `x14` (diferencia).
+Temporales del lazo: `x12` (puntero al valor actual en el stack), `x13` (valor anterior), `x14` (valor actual) y `x23` (diferencia `actual − anterior`).
 
 ---
 
 ## 4. Memoria
 
-Sección `.bss`:
+Este módulo **no usa `.bss` propia**: los datos se cargan en el **stack** mediante `read_column_to_stack` (cada valor ocupa 16 bytes para mantener la alineación). El primer dato temporal se ubica en `x25 − 16` y el recorrido avanza restando `#16` hasta llegar al inicio (`x24`); al terminar se restaura `sp` con `x27`.
 
-| Símbolo       | Tamaño                 | Uso                                      |
-| ------------- | ---------------------- | ---------------------------------------- |
-| `csv_buffer`  | `CSV_MAX_BYTES = 8192` | buffer de lectura del CSV                |
-| `prev_values` | 8 × 9 = 72 bytes       | registro anterior (9 enteros de 64 bits) |
-| `curr_values` | 8 × 9 = 72 bytes       | registro actual                          |
+Sección `.data` (cadenas literales del reporte):
 
-Constantes: `CSV_MAX_BYTES = 8192`, `MAX_RECORDS = 30`, `COLS_PER_RECORD = 9`.
+| Símbolo                                                          | Contenido                                                       |
+| --------------------------------------------------------------- | -------------------------------------------------------------- |
+| `msg_module`                                                    | `MODULE=ADVANCED_TREND\n`                                       |
+| `msg_total`, `msg_increments`, `msg_decrements`                 | etiquetas `TOTAL_VALUES=`, `INCREMENTS=`, `DECREMENTS=`         |
+| `msg_max_up`, `msg_max_down`, `msg_accum_diff`, `msg_trend`     | etiquetas `MAX_UP_STREAK=`, `MAX_DOWN_STREAK=`, `ACCUM_DIFF=`, `TREND=` |
+| `trend_up` / `trend_down` / `trend_stable`                      | valores `UP` / `DOWN` / `STABLE`                               |
+
+El buffer de lectura del CSV vive en `utils/utils_data.s`, compartido por todos los módulos.
 
 ---
 
 ## 5. Ciclos, saltos y subrutinas
 
-- **Ciclos:** `record_loop` (recorre hasta 30 registros), `column_loop` (parsea las 9 columnas de cada registro), `compare_loop` (recorre las columnas sensoras 1..6), `copy_loop` (copia `curr_values`→`prev_values`).
-- **Saltos condicionales:** fin de registros (`cmp x22, #MAX_RECORDS`), primer registro (`cbz x22, save_first_record`), clasificación de la diferencia (`b.gt`/`b.lt`/igual) y clasificación final (`write_label_up`/`write_label_down`/estable).
-- **Subrutinas propias:** `compare_sensor_columns`, `copy_current_to_previous`, `write_report`. Además invoca las de `utils.s`.
+- **Ciclo:** `count_changes` recorre los `N` valores en **orden temporal** comparando cada lectura con la anterior y actualizando contadores, rachas y la diferencia acumulada.
+- **Saltos condicionales:**
+  - datos insuficientes: `cmp x26, #2` / `blt write_results`;
+  - fin del recorrido: `cmp x12, x24` / `blt write_results`;
+  - clasificación de cada diferencia: `cmp x14, x13` con `bgt case_increment` / `blt case_decrement` (igualdad reinicia rachas);
+  - actualización de racha máxima: `cmp x22, x17` / `ble next_value` (y análogo con `x28`/`x18`);
+  - clasificación final: `cmp x19, #0` con `bgt write_trend_up` / `blt write_trend_down` / caída a `write_trend_stable`.
+- **Etiquetas propias:** `count_changes`, `case_increment`, `case_decrement`, `next_value`, `write_results`, `write_trend_up`, `write_trend_down`, `write_trend_stable`, `close_result_file`, `exit_ok`.
+- **Subrutinas:** la lógica de tendencia es propia del módulo; toda la E/S y el parseo se delegan a `utils.s`.
 
 ---
 
 ## 6. Entrada y salida
 
-**Entrada:** `../data/lecturas.csv` (30 registros, 9 columnas, enteros), conversión ASCII→entero mediante `parse_next_uint` de `utils.s`.
+**Entrada:** argumentos de consola `archivo inicio fin columna` —
+`./build/modulo_5_tendencia ../data/lecturas.csv 1 30 TEMP`.
+`get_column_arg` valida y extrae los argumentos; `read_column_to_stack` localiza la columna por nombre en el encabezado y carga al stack únicamente los valores del rango `[inicio, fin]`, con conversión ASCII→entero (`atoi_csv`).
 
-**Salida:** `../resultados_arm64/resultado_tendencia.txt`, escrita con conversión entero→ASCII (`write_uint`/`write_int` de `utils.s`):
+**Salida:** `../resultados_arm64/resultado_tendencia.txt`, escrita con `write_text` (texto), `write_uint` (contadores sin signo) y `write_int` (con signo, para `ACCUM_DIFF`):
 
 ```text
-Modulo 5 - Tendencia acumulada avanzada
-Responsable: Alex Ricardo Castaneda Rodriguez
-Registros procesados: <n>
-Suma subidas: <n>
-Suma bajadas: <n>
-Tendencia neta: <n>
-Cambios positivos: <n>
-Cambios negativos: <n>
-Cambios estables: <n>
-Clasificacion: SUBE | BAJA | ESTABLE
+MODULE=ADVANCED_TREND
+TOTAL_VALUES=30
+INCREMENTS=17
+DECREMENTS=12
+MAX_UP_STREAK=3
+MAX_DOWN_STREAK=2
+ACCUM_DIFF=2
+TREND=UP
 ```
 
 ---
 
 ## 7. Relación con `utils.s`
 
-`modulo_5_tendencia.s` se apoya en la biblioteca común para toda la E/S y el parseo: `open_csv_read`, `read_fd`, `skip_header`, `parse_next_uint`, `close_fd`, `open_tendencia_write`, `write_cstr`, `write_newline`, `write_uint`, `write_int`, `exit_program`. Esto permite que los cinco módulos compartan la misma lógica de lectura del CSV, conversión ASCII↔entero y escritura de resultados.
+El módulo se apoya en la biblioteca común para toda la E/S, el parseo y el manejo del stack:
+
+- **Argumentos:** `get_column_arg`.
+- **Lectura de la columna al stack:** `read_column_to_stack`, que internamente usa `open_csv_read`, `read_file`, `close_file`, `find_column_by_name`, `skip_to_next_line`, `atoi_csv` y `save_number_to_stack`.
+- **Salida:** `open_tendencia_write`, `write_text`, `write_uint`, `write_int`, `write_newline`, `close_output_file`.
+- **Errores:** `range_error` (rango inválido o sin datos) y `arg_error` (argumentos incompletos), invocados desde las utilidades.
+
+La única lógica propia del módulo es el conteo de cambios, las rachas y la diferencia acumulada sobre los valores en el stack.
 
 ---
 
@@ -130,15 +157,20 @@ Clasificacion: SUBE | BAJA | ESTABLE
 
 ```bash
 cd arm64
-make run-tendencia      # compila y ejecuta; genera ../resultados_arm64/resultado_tendencia.txt
+make run-tendencia LEC=../data/lecturas.csv INI=1 FIN=30 COL=TEMP
+# compila y ejecuta; genera ../resultados_arm64/resultado_tendencia.txt
 ```
 
-Depuración con GDB:
+Depuración con **gdb-multiarch + QEMU** (dos terminales en paralelo):
 
 ```bash
+# Terminal 1 — emulador esperando conexión
 cd arm64
-make
-gdb-multiarch build/modulo_5_tendencia
+make tendencia
+qemu-aarch64 -g 1234 ./build/modulo_5_tendencia ../data/lecturas.csv 1 30 TEMP
+
+# Terminal 2 — depurador
+gdb-multiarch ./build/modulo_5_tendencia
 ```
 
-Comandos de evidencia: `break _start`, `break compare_sensor_columns`, `run`, `stepi`, `info registers`, `x/16x $sp`, `x/s $x1`, `continue`.
+Dentro de GDB: `target remote localhost:1234`, `break _start`, `break count_changes`, `run`/`continue`, `stepi`, `info registers x15 x16 x17 x18 x19`, `x/16x $sp`. Evidencia en `docs/evidencias/gdb/modulo_5_tendencia.png`.
