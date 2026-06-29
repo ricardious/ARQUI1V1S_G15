@@ -6,34 +6,67 @@ BUILD_DIR := build
 LEC ?= ../data/lecturas.csv
 INI ?= 1
 FIN ?= 30
-COL ?= TEMP
+COL ?= GAS
 
 UTILS_OBJ := $(BUILD_DIR)/utils.o
+
 MEDIA_OBJ := $(BUILD_DIR)/modulo_1_media.o
 MEDIA_BIN := $(BUILD_DIR)/modulo_1_media
+
 VARIANZA_OBJ := $(BUILD_DIR)/modulo_2_varianza.o
 VARIANZA_BIN := $(BUILD_DIR)/modulo_2_varianza
+
 ANOMALIAS_OBJ := $(BUILD_DIR)/modulo_3_anomalias.o
 ANOMALIAS_BIN := $(BUILD_DIR)/modulo_3_anomalias
+
+PREDICCION_FUTURA_OBJ := $(BUILD_DIR)/modulo_3_prediccion.o
+PREDICCION_FUTURA_BIN := $(BUILD_DIR)/modulo_3_prediccion
+
 PREDICCION_OBJ := $(BUILD_DIR)/modulo_4_prediccion.o
 PREDICCION_BIN := $(BUILD_DIR)/modulo_4_prediccion
 
 TENDENCIA_OBJ := $(BUILD_DIR)/modulo_5_tendencia.o
 TENDENCIA_BIN := $(BUILD_DIR)/modulo_5_tendencia
+REGRESION_OBJ := $(BUILD_DIR)/modulo_2_regresion.o
+REGRESION_BIN := $(BUILD_DIR)/modulo_2_regresion
 
-.PHONY: all media varianza anomalias prediccion tendencia run-media run-varianza run-anomalias run-prediccion run-tendencia run-all clean
+INTEGRAL_OBJ := $(BUILD_DIR)/modulo_4_integral_error.o
+INTEGRAL_BIN := $(BUILD_DIR)/modulo_4_integral_error
 
-all: media varianza anomalias prediccion tendencia
+RMSE_OBJ := $(BUILD_DIR)/modulo_1_rmse.o
+RMSE_BIN := $(BUILD_DIR)/modulo_1_rmse
 
-media: $(MEDIA_BIN)	
+DERIVADA_OBJ := $(BUILD_DIR)/modulo_5_derivada_local.o
+DERIVADA_BIN := $(BUILD_DIR)/modulo_5_derivada_local
+
+MOTOR_OBJ := $(BUILD_DIR)/motor.o
+MOTOR_BIN := $(BUILD_DIR)/motor
+
+.PHONY: all media varianza anomalias prediccion tendencia motor regresion integral rmse run-media run-varianza run-anomalias run-prediccion run-tendencia run-motor run-regresion run-derivada run-integral run-rmse run-all clean
+
+all: media varianza anomalias prediccion tendencia motor regresion derivada integral rmse
+
+media: $(MEDIA_BIN)
 
 varianza: $(VARIANZA_BIN)
 
 anomalias: $(ANOMALIAS_BIN)
 
+prediccion_futura: $(PREDICCION_FUTURA_BIN)
+
 prediccion: $(PREDICCION_BIN)
 
 tendencia: $(TENDENCIA_BIN)
+
+derivada: $(DERIVADA_BIN)
+
+motor: $(MOTOR_BIN)
+
+regresion: $(REGRESION_BIN)
+
+integral: $(INTEGRAL_BIN)
+
+rmse: $(RMSE_BIN)
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
@@ -59,6 +92,24 @@ $(PREDICCION_BIN): $(PREDICCION_OBJ) $(UTILS_OBJ)
 $(TENDENCIA_BIN): $(TENDENCIA_OBJ) $(UTILS_OBJ)
 	$(LD) -o $@ $^
 
+$(DERIVADA_BIN): $(DERIVADA_OBJ) $(UTILS_OBJ)
+	$(LD) -o $@ $^
+
+$(MOTOR_BIN): $(MOTOR_OBJ) $(UTILS_OBJ)
+	$(LD) -o $@ $^
+
+$(PREDICCION_FUTURA_BIN): $(PREDICCION_FUTURA_OBJ) $(UTILS_OBJ)
+	$(LD) -o $@ $^
+
+$(REGRESION_BIN): $(REGRESION_OBJ) $(UTILS_OBJ)
+	$(LD) -o $@ $^
+
+$(INTEGRAL_BIN): $(INTEGRAL_OBJ) $(UTILS_OBJ)
+	$(LD) -o $@ $^
+
+$(RMSE_BIN): $(RMSE_OBJ) $(UTILS_OBJ)
+	$(LD) -o $@ $^
+
 run-media: $(MEDIA_BIN)
 	$(MEDIA_BIN) $(LEC) $(INI) $(FIN) $(COL)
 
@@ -68,13 +119,31 @@ run-varianza: $(VARIANZA_BIN)
 run-anomalias: $(ANOMALIAS_BIN)
 	$(ANOMALIAS_BIN) $(LEC) $(INI) $(FIN) $(COL)
 
+run-prediccion-futura: $(PREDICCION_FUTURA_BIN)
+	$(PREDICCION_FUTURA_BIN) $(LEC) $(INI) $(FIN) $(COL)
+
 run-prediccion: $(PREDICCION_BIN)
 	$(PREDICCION_BIN) $(LEC) $(INI) $(FIN) $(COL)
 
 run-tendencia: $(TENDENCIA_BIN)
 	$(TENDENCIA_BIN) $(LEC) $(INI) $(FIN) $(COL)
 
-run-all: run-media run-varianza run-anomalias run-prediccion run-tendencia
+run-regresion: regresion
+	$(REGRESION_BIN) $(LEC) $(INI) $(FIN) $(COL)
+  
+run-derivada: $(DERIVADA_BIN)
+	$(DERIVADA_BIN) $(LEC) $(INI) $(FIN) $(COL)
+
+run-integral: $(INTEGRAL_BIN)
+	$(INTEGRAL_BIN) $(LEC) $(INI) $(FIN) $(COL)
+
+run-rmse: $(RMSE_BIN)
+	$(RMSE_BIN) $(LEC) $(INI) $(FIN) $(COL)
+
+run-motor: $(MOTOR_BIN)
+	$(MOTOR_BIN)
+
+run-all: run-media run-varianza run-anomalias run-prediccion run-tendencia run-regresion run-derivada run-prediccion-futura run-integral run-rmse
 
 clean:
 	rm -rf $(BUILD_DIR)

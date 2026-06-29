@@ -1,4 +1,4 @@
-# 🌱 Backend FastAPI — GreenPi IoT
+# ❀ Backend FastAPI — GreenPi IoT
 
 API REST que alimenta al dashboard. Se comunica con **MongoDB Atlas** mediante la API asíncrona de PyMongo, registra comandos y coordina el flujo **ARM64**.
 
@@ -15,7 +15,7 @@ flowchart LR
 
 ---
 
-## 📑 Contenido
+## ☰ Contenido
 
 - [Requisitos](#-requisitos)
 - [Puesta en marcha](#-puesta-en-marcha)
@@ -26,7 +26,7 @@ flowchart LR
 
 ---
 
-## ✅ Requisitos
+## ✦ Requisitos
 
 - Python 3.10+
 - Una URI de MongoDB Atlas
@@ -34,7 +34,7 @@ flowchart LR
 
 ---
 
-## 🚀 Puesta en marcha
+## ✶ Puesta en marcha
 
 ### 1. Crear el entorno virtual
 
@@ -84,7 +84,7 @@ La API queda disponible en **http://127.0.0.1:8000**
 
 ---
 
-## 🔧 Variables de entorno
+## ✷ Variables de entorno
 
 | Variable       | Descripción                            | Ejemplo                 |
 | -------------- | -------------------------------------- | ----------------------- |
@@ -93,11 +93,11 @@ La API queda disponible en **http://127.0.0.1:8000**
 | `FRONTEND_URL` | Origen permitido para CORS             | `http://localhost:3000` |
 | `ARM64_DIR`    | Ruta a la carpeta de los módulos ARM64 | `../arm64`              |
 
-> ⚠️ **Nunca subas el archivo `.env` al repositorio.** Contiene credenciales y debe quedar solo en tu máquina.
+> ❈ **Nunca subas el archivo `.env` al repositorio.** Contiene credenciales y debe quedar solo en tu máquina.
 
 ---
 
-## 🧪 Probar la API
+## ❊ Probar la API
 
 ### Documentación interactiva
 
@@ -117,7 +117,7 @@ curl http://127.0.0.1:8000/api/readings/latest
 
 ---
 
-## 🗄️ Colecciones de MongoDB
+## ▤ Colecciones de MongoDB
 
 | Colección         | Contenido                       |
 | ----------------- | ------------------------------- |
@@ -128,21 +128,29 @@ curl http://127.0.0.1:8000/api/readings/latest
 | `actuator_logs`   | Activaciones de actuadores      |
 | `arm64_results`   | Resultados de los módulos ARM64 |
 
-Cuando aplica, los documentos siguen esta estructura base:
+Los documentos de `arm64_results` siguen el **esquema plano del PDF**:
 
 ```json
 {
-  "timestamp": "fecha y hora actual",
-  "tipo_dato": "tipo del registro",
-  "valor": {},
-  "origen": "backend_fastapi | dashboard | iot_program | arm64",
-  "estado_relacionado": "NORMAL | ADVERTENCIA | EMERGENCIA | RIEGO_ACTIVO | MODO_MANUAL | PENDIENTE"
+  "timestamp": "fecha y hora UTC",
+  "source": "historical_analyzer | live_engine",
+  "module": "media | varianza | regresion | ... | motor",
+  "input": "lecturas.csv 1 30 TEMP",
+  "range": { "line_start": 1, "line_end": 30 },
+  "column": "temp",
+  "result": { "raw": "texto del .txt", "fields": {} },
+  "decision": null,
+  "risk": null,
+  "status": "OK | ERROR",
+  "error_detail": null
 }
 ```
 
+El **analizador histórico** (backend) usa `source: "historical_analyzer"`; el **motor en vivo** (`iot_program`) usa `source: "live_engine"` con `module: "motor"`.
+
 ---
 
-## ⚙️ Flujo ARM64
+## ❂ Flujo ARM64
 
 El backend coordina la generación de datos, la ejecución de los módulos y el guardado de resultados.
 
@@ -169,34 +177,27 @@ sequenceDiagram
 Consulta los **últimos 30 documentos** de `sensor_readings` y genera `data/lecturas.csv` (en la raíz del repositorio) con este formato:
 
 ```csv
-ID,TEMP,HUM_AIRE,HUM_SUELO_1,HUM_SUELO_2,LUZ,GAS,RIEGO_1,RIEGO_2
-1,28,70,45,48,320,120,0,0
+TEMP,HUM_AIRE,SOIL1,SOIL2,LUZ,GAS,MODO
+28,70,45,48,320,120,0
 ```
 
 ### 2. Ejecutar los módulos — `POST /api/arm64/run`
 
-1. Verifica que exista `lecturas.csv`.
-2. Ejecuta `make` dentro de `arm64/` y luego un target `run`, `ejecutar` o `all-run` si existe.
-3. Si el Makefile no tiene target de ejecución, intenta correr los binarios directamente:
+1. Genera `lecturas.csv` con los últimos `N` registros.
+2. Ejecuta `make run-all` (o `make run-<modulo>` para uno solo) dentro de `arm64/`, pasando `LEC` (archivo), `INI`/`FIN` (rango de líneas) y `COL` (columna).
+3. Lee cada salida `.txt` en `resultados_arm64/` y la guarda en `arm64_results` con `source: "historical_analyzer"`.
 
-   ```text
-   modulo_1_media
-   modulo_2_varianza
-   modulo_3_anomalias
-   modulo_4_prediccion
-   modulo_5_tendencia
-   ```
+Módulos del **analizador histórico** (según el PDF):
 
-4. Lee los resultados esperados en `resultados_arm64/` (en la raíz):
-
-   ```text
-   resultado_media.txt
-   resultado_varianza.txt
-   resultado_anomalias.txt
-   resultado_prediccion.txt
-   resultado_tendencia.txt
-   ```
-
-5. Guarda cada resultado en la colección `arm64_results` con `origen: "arm64"`.
-
-> Si faltan el Makefile, los binarios o los archivos `.txt`, la API devuelve **errores claros** indicando qué falta implementar.
+| Clave            | Archivo                     | Salida                            |
+| ---------------- | --------------------------- | --------------------------------- |
+| `media`          | `modulo_1_media.s`          | `resultado_media.txt`             |
+| `rmse`           | `modulo_1_rmse.s`           | `resultado_rmse.txt`              |
+| `varianza`       | `modulo_2_varianza.s`       | `resultado_varianza.txt`          |
+| `regresion`      | `modulo_2_regresion.s`      | `resultado_regresion.txt`         |
+| `anomalias`      | `modulo_3_anomalias.s`      | `resultado_anomalias.txt`         |
+| `prediccion_reg` | `modulo_3_prediccion.s`     | `resultado_prediccion_futura.txt` |
+| `prediccion`     | `modulo_4_prediccion.s`     | `resultado_prediccion.txt`        |
+| `integral`       | `modulo_4_integral_error.s` | `resultado_integral_error.txt`    |
+| `derivada`       | `modulo_5_derivada_local.s` | `resultado_derivada_local.txt`    |
+| `tendencia`      | `modulo_5_tendencia.s`      | `resultado_tendencia.txt`         |

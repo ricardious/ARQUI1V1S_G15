@@ -1,10 +1,10 @@
-# 🖥️ Dashboard IoT — Invernadero ARM64 Grupo 15
+# ❖ Dashboard IoT — Invernadero ARM64 Grupo 15
 
 Frontend web del proyecto **Invernadero ARM64**. Dashboard interactivo de monitoreo y control IoT para el invernadero inteligente. Se comunica con el **backend FastAPI** para consultar históricos y con el **broker MQTT** para datos en tiempo real y envío de comandos.
 
 ---
 
-## 🗺️ Cómo funciona
+## ⬡ Cómo funciona
 
 ```mermaid
 flowchart LR
@@ -25,7 +25,7 @@ El dashboard escucha sensores y estado global vía MQTT en tiempo real, consulta
 
 ---
 
-## 📑 Contenido
+## ☰ Contenido
 
 - [Qué hace](#-qué-hace)
 - [Estructura](#-estructura)
@@ -38,7 +38,7 @@ El dashboard escucha sensores y estado global vía MQTT en tiempo real, consulta
 
 ---
 
-## ✅ Qué hace
+## ✦ Qué hace
 
 - Recibe **sensores y estado global** en tiempo real vía MQTT WebSocket.
 - Envía **comandos de control** (riego, ventilación, luces, alarma) vía MQTT.
@@ -47,12 +47,12 @@ El dashboard escucha sensores y estado global vía MQTT en tiempo real, consulta
 - Grafica **históricos** (temperatura, humedad, suelo, luz, gas) con SVG.
 - Controla actuadores manualmente con toggles ON/OFF.
 - Muestra **eventos, comandos y logs** de actuadores en tablas por pestañas.
-- Coordina la ejecución del **análisis ARM64** (generar CSV, ejecutar módulos).
+- Coordina el **análisis histórico ARM64**: genera el CSV, ejecuta los **10 módulos** y muestra sus resultados (cards + 3D).
 - Detecta el **estado de conexión** de MQTT, Raspberry Pi y el backend.
 
 ---
 
-## 👥 Trabajo por integrante
+## ❁ Trabajo por integrante
 
 Cada integrante trabaja en su **propio componente** para evitar conflictos de Git.
 
@@ -82,7 +82,7 @@ src/services/http-client.ts
 
 ---
 
-## 🧱 Estructura
+## ▦ Estructura
 
 ```text
 client/
@@ -158,7 +158,7 @@ client/
 
 ---
 
-## ✅ Requisitos
+## ✦ Requisitos
 
 - Node.js 18+
 - pnpm (gestor de paquetes)
@@ -166,7 +166,7 @@ client/
 
 ---
 
-## 🚀 Puesta en marcha
+## ✶ Puesta en marcha
 
 ### 0. Instalar pnpm (si no lo tenés)
 
@@ -213,7 +213,7 @@ pnpm start
 
 ---
 
-## 🔧 Variables de entorno
+## ✷ Variables de entorno
 
 | Variable                        | Descripción                      | Ejemplo                               |
 | ------------------------------- | -------------------------------- | ------------------------------------- |
@@ -221,11 +221,11 @@ pnpm start
 | `NEXT_PUBLIC_MQTT_WSS_URL`      | Broker MQTT vía WebSocket seguro | `wss://broker.emqx.io:8084/mqtt`      |
 | `NEXT_PUBLIC_MQTT_TOPIC_PREFIX` | Prefijo de tópicos MQTT          | _(vacío para usar `invernadero/...`)_ |
 
-> ⚠️ Las variables con `NEXT_PUBLIC_` quedan expuestas en el navegador. No pongas credenciales privadas.
+> ❈ Las variables con `NEXT_PUBLIC_` quedan expuestas en el navegador. No pongas credenciales privadas.
 
 ---
 
-## 📡 Tópicos MQTT
+## ∿ Tópicos MQTT
 
 ### Escucha
 
@@ -254,7 +254,7 @@ CAMBIAR_MODO_AUTOMATICO  CAMBIAR_MODO_MANUAL
 
 ---
 
-## 🧩 Secciones del dashboard
+## ❉ Secciones del dashboard
 
 El dashboard es una **single-page app** con scroll anclado a estas secciones:
 
@@ -266,6 +266,9 @@ El dashboard es una **single-page app** con scroll anclado a estas secciones:
 | **Actuadores** | `#actuadores` | Toggles de control + visualización 3D de cada actuador      |
 | **Historial**  | `#historial`  | Tabla con pestañas: eventos, comandos y logs de actuadores  |
 | **ARM64**      | `#arm64`      | Generar CSV, ejecutar módulos y ver resultados en 3D        |
+
+La sección **ARM64** (`Arm64Section.tsx` + `Arm64Viz3D.tsx`) muestra una tarjeta por módulo del analizador histórico
+: media, RMSE, varianza, regresión lineal, anomalías, predicción por regresión, predicción, integral del error, derivada local y tendencia (Fase 1 + las 5 rutinas de Fase 2). Cada tarjeta ejecuta su módulo y muestra el resultado; `Arm64Viz3D` los representa como cristales 3D.
 
 ### Conexión en tiempo real
 
@@ -286,7 +289,7 @@ Si MQTT no está disponible (modo desarrollo sin broker), el dashboard hace **fa
 
 ---
 
-## 🔗 Relación con iot_program y server
+## ◈ Relación con iot_program y server
 
 - El **dashboard** escucha sensores, actuadores y estado vía MQTT publicados por el `iot_program`.
 - El **dashboard** envía comandos de control vía MQTT que el `iot_program` recibe y ejecuta.
@@ -308,7 +311,7 @@ flowchart TD
 
 ---
 
-## 📝 Notas importantes
+## ❋ Notas importantes
 
 - La comunicación MQTT usa **WebSocket seguro** (`wss://`) desde el navegador.
 - Los payloads MQTT son **texto plano**, no JSON.

@@ -1,6 +1,6 @@
 # Modelo de datos (MongoDB Atlas)
 
-La persistencia del sistema vive en **MongoDB Atlas**, base de datos `greenpi_iot`. La Raspberry Pi registra lecturas, eventos, comandos, logs y estado; el backend agrega los resultados ARM64 y realiza las consultas históricas. El dashboard accede a los datos siempre a través del backend, nunca de forma directa.
+La persistencia del sistema vive en **MongoDB Atlas**, base de datos `greenpi_iot`. La Raspberry Pi registra lecturas, eventos, comandos, logs y estado, y además las **decisiones del motor ARM64 en vivo**; el backend agrega los **resultados del análisis histórico** y realiza las consultas. El dashboard accede a los datos a través del backend; Grafana lee directamente las colecciones para visualización.
 
 ---
 
@@ -13,7 +13,7 @@ La persistencia del sistema vive en **MongoDB Atlas**, base de datos `greenpi_io
 | `commands`        | Comandos enviados desde el dashboard o los botones.      | iot_program / backend | backend  |
 | `system_status`   | Estado global actual (`_id = "current"`).                | iot_program / backend | backend  |
 | `actuator_logs`   | Activaciones de bomba, ventilador, luces, buzzer y LEDs. | iot_program           | backend  |
-| `arm64_results`   | Resultados de los cinco módulos ARM64.                   | backend               | backend  |
+| `arm64_results`   | Decisiones del motor en vivo y resultados del analizador histórico. | iot_program / backend | backend / Grafana |
 
 ```mermaid
 flowchart LR
@@ -22,30 +22,34 @@ flowchart LR
     IOT --> CM[("commands")]
     IOT --> AL[("actuator_logs")]
     IOT --> SS[("system_status")]
-    BE["Backend FastAPI"] --> AR[("arm64_results")]
+    IOT -->|motor en vivo| AR[("arm64_results")]
+    BE["Backend FastAPI"] -->|análisis histórico| AR
     BE --> SR
     BE --> EV
     BE --> CM
     BE --> AL
     BE --> SS
     DASH["Dashboard"] --> BE
+    GRAF["Grafana"] --> AR
 ```
 
 ---
 
 ## 2. Estructura de los documentos
 
-Cada documento incluye, como mínimo: fecha y hora, tipo de dato, valor, origen y estado relacionado.
+Las cinco colecciones de Fase 1 (`sensor_readings`, `events`, `commands`, `actuator_logs`, `system_status`) comparten la estructura base `BaseRecord`: fecha y hora, tipo de dato, valor, origen y estado relacionado.
 
 ```json
 {
   "timestamp": "fecha y hora (UTC)",
   "tipo_dato": "tipo del registro",
   "valor": {},
-  "origen": "iot_program | backend_fastapi | dashboard | arm64",
-  "estado_relacionado": "NORMAL | ADVERTENCIA | EMERGENCIA | RIEGO_ACTIVO | MODO_MANUAL | PENDIENTE"
+  "origen": "iot_program | dashboard_mqtt | backend",
+  "estado_relacionado": "NORMAL | ADVERTENCIA | EMERGENCIA | RIEGO_ACTIVO | MODO_MANUAL"
 }
 ```
+
+> La colección **`arm64_results` no usa esta estructura base**: tiene su propio esquema plano (ver §3), porque guarda decisiones y análisis de ARM64 con campos propios (`source`, `module`, `result`, `risk`, etc.).
 
 ---
 
@@ -141,23 +145,59 @@ Cada documento incluye, como mínimo: fecha y hora, tipo de dato, valor, origen 
 
 ### `arm64_results`
 
+Esquema plano propio. Cada documento es **una** decisión del motor o **un** análisis histórico; el campo `source` los distingue: `live_engine` (motor en vivo, escrito por iot_program) o `historical_analyzer` (módulos `modulo_*.s`, escritos por el backend).
+
+**Decisión del motor en vivo** (`source: "live_engine"`):
+
 ```json
 {
-  "timestamp": "2026-06-14T12:05:00Z",
-  "tipo_dato": "resultado_arm64",
-  "valor": {
-    "media": "MODULE=WEIGHTED_MEAN\nTOTAL_VALUES=30\n...",
-    "varianza": "MODULE=VARIANCE\n...",
-    "anomalias": "MODULE=ANOMALY_DETECTION\n...",
-    "prediccion": "MODULE=PREDICTION\n...",
-    "tendencia": "MODULE=ADVANCED_TREND\n..."
+  "timestamp": "2026-06-14T12:00:00Z",
+  "source": "live_engine",
+  "module": "motor",
+  "input": "28,70,45,45,320,120,0",
+  "range": null,
+  "column": null,
+  "result": {
+    "ACTION": "FAN_ON",
+    "TARGET": "VENTILADOR",
+    "RISK": "MEDIUM",
+    "REASON": "TEMP_ALTA",
+    "VALUE": "35",
+    "INDICATOR": "TEMP",
+    "STATUS": "OK"
   },
-  "origen": "arm64",
-  "estado_relacionado": "NORMAL"
+  "decision": "FAN_ON",
+  "risk": "MEDIUM",
+  "status": "OK",
+  "error_detail": null
 }
 ```
 
-El documento de `arm64_results` guarda el contenido de cada archivo `resultado_*.txt`, indexado por módulo.
+**Análisis histórico** (`source: "historical_analyzer"`):
+
+```json
+{
+  "timestamp": "2026-06-14T12:05:00Z",
+  "source": "historical_analyzer",
+  "module": "regresion",
+  "input": "../data/lecturas.csv",
+  "range": { "inicio": 1, "fin": 20 },
+  "column": "TEMP",
+  "result": {
+    "CALC": "LINEAR_REGRESSION",
+    "COLUMN": "TEMP",
+    "SLOPE_X100": "-3",
+    "TREND": "DESCENDING",
+    "STATUS": "OK"
+  },
+  "decision": null,
+  "risk": null,
+  "status": "OK",
+  "error_detail": null
+}
+```
+
+`result` guarda los campos `clave=valor` ya parseados de la salida de ARM64. En el motor en vivo `range` y `column` son `null`; en el análisis histórico se llenan con el rango de líneas y la columna procesada. Si `status` es `ERROR`, `error_detail` describe el fallo.
 
 ---
 

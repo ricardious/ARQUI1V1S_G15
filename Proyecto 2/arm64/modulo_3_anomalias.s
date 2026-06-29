@@ -36,6 +36,35 @@ risk_high:
     .ascii "HIGH\n"                 //Etiqueta para identificar el nivel de riesgo alto
     len_risk_high = . - risk_high
 
+//Fase 2 etiquetas
+msg_calc_anom:
+    .ascii "CALC=ANOMALY_DETECTION\n"       //Etiqueta para identificar el cálculo de anomalías
+    len_msg_calc_anom = . - msg_calc_anom
+
+msg_colum:
+    .ascii "COLUMN="               //Etiqueta para identificar la columna
+    len_msg_colum = . - msg_colum
+
+msg_window_start:
+    .ascii "WINDOW_START="         //Etiqueta para identificar el inicio de la ventana
+    len_msg_window_start = . - msg_window_start
+
+msg_window_end:
+    .ascii "WINDOW_END="           //Etiqueta para identificar el final de la ventana
+    len_msg_window_end = . - msg_window_end
+
+msg_count:
+    .ascii "TOTAL_VALUES="                //Etiqueta para identificar la cantidad de valores
+    len_msg_count = . - msg_count
+
+msg_risk_label:
+    .ascii "SYSTEM_RISK="           //Etiqueta para identificar la etiqueta de riesgo
+    len_msg_risk_label = . - msg_risk_label
+
+msg_status_ok:
+    .ascii "STATUS=OK\n"           //Etiqueta para identificar el estado de la operación
+    len_msg_status_ok = . - msg_status_ok
+
 .text               // Incluir el archivo utils.s para utilizar sus funciones
 .include "utils.s"  // arm64/utils.s
 .global _start        
@@ -43,7 +72,10 @@ risk_high:
 _start:
     // obtener columna desde argumento
     bl get_column_arg
-    add x11, x11, #1 // ajustar columna a base 1 (columna 1 = columna 0 en el CSV)
+   // mov x13, x13 // WINDOW_START
+   // mov x14, x14 // WINDOW_END
+    mov x17, x25 // COLUMN_NAME
+    //add x11, x11, #1 // ajustar columna a base 1 (columna 1 = columna 0 en el CSV)
 
     // leer columna del CSV y guardarla en stack
     bl read_column_to_stack
@@ -57,20 +89,68 @@ _start:
     bl open_anomalias_write // abrir archivo de salida para escribir resultados
     mov x20, x0 // fd de salida(resultado)
 
+    //CALC=ANOMALY_DETECTION
     mov x0, x20 // fd de salida
-    ldr x1, =msg_module // mensaje de módulo
-    mov x2, len_msg_module // longitud del mensaje de módulo
-    bl write_text // escribir mensaje de módulo en archivo de salida
+    ldr x1, =msg_calc_anom // mensaje de cálculo de anomalías
+    mov x2, len_msg_calc_anom // longitud del mensaje de cálculo de anomalías
+    bl write_text // escribir mensaje de cálculo de anomalías en archivo de salida
+
+    //COLUMN=nombre_columna
+    mov x0, x20 // fd de salida
+    ldr x1, =msg_colum // mensaje de columna
+    mov x2, len_msg_colum // longitud del mensaje de columna
+    bl write_text // escribir mensaje de columna en archivo de salida
+
+    //strlen de la columna
+    mov x21, x17 // puntero al nombre de la columna
+    mov x22, #0 // contador de caracteres
+
+anom_strlen_col:
+    ldrb w23, [x21], #1 // cargar un byte del nombre de la columna y avanzar el puntero
+    cbz w23, anom_strlen_col_done
+    add x22, x22, #1 // incrementar el contador de caracteres
+    b anom_strlen_col // repetir hasta encontrar el byte nulo
+
+anom_strlen_col_done:
+    mov x0, x20 // fd de salida
+    mov x1, x17 // puntero al nombre de la columna
+    mov x2, x22 // longitud del nombre de la columna
+    mov x8, #64 // syscall write
+    svc #0 // llamar al sistema para escribir el nombre de la columna en archivo de salida
 
     mov x0, x20 // fd de salida
-    ldr x1, =msg_total // mensaje de total de valores
-    mov x2, len_msg_total // longitud del mensaje de total de valores
-    bl write_text // escribir mensaje de total de valores en archivo de salida
+    bl write_newline // escribir nueva línea en archivo de salida
 
-    mov x0, x26 // cantidad de datos (total_values)
+    //WINDOW_START=valor_inicio
+    mov x0, x20 // fd de salida
+    ldr x1, =msg_window_start // mensaje de inicio de ventana
+    mov x2, len_msg_window_start // longitud del mensaje de inicio de ventana
+    bl write_text // escribir mensaje de inicio de ventana en archivo de salida
+    mov x0, x13 // valor de inicio de ventana
     mov x1, x20 // fd de salida
-    bl write_uint // escribir total_values en archivo de salida
+    bl write_uint // escribir valor de inicio de ventana en archivo de salida
+    mov x0, x20 // fd de salida
+    bl write_newline // escribir nueva línea en archivo de salida
 
+    //WINDOW_END=valor_final
+    mov x0, x20 // fd de salida
+    ldr x1, =msg_window_end // mensaje de final de ventana
+    mov x2, len_msg_window_end // longitud del mensaje de final de ventana
+    bl write_text // escribir mensaje de final de ventana en archivo de salida
+    mov x0, x14 // valor de final de ventana
+    mov x1, x20 // fd de salida
+    bl write_uint // escribir valor de final de ventana en archivo de salida
+    mov x0, x20 // fd de salida
+    bl write_newline // escribir nueva línea en archivo de salida
+
+    //COUNT=numero_valores
+    mov x0, x20 // fd de salida
+    ldr x1, =msg_count // mensaje de cantidad de valores
+    mov x2, len_msg_count // longitud del mensaje de cantidad de valores
+    bl write_text // escribir mensaje de cantidad de valores en archivo de salida
+    mov x0, x26 // cantidad de valores leidos
+    mov x1, x20 // fd de salida
+    bl write_uint // escribir cantidad de valores en archivo de salida
     mov x0, x20 // fd de salida
     bl write_newline // escribir nueva línea en archivo de salida
 
@@ -124,7 +204,7 @@ calc_var_done:
     udiv x21, x28, x26 //variable = suma de diferencias al cuadrado / número de valores
     
     mov x0, x21 // variable (varianza)
-    bl integer_sqrt 
+    bl sqrt_entera // calcular la raíz cuadrada de la varianza para obtener la desviación estándar desde el utils_math.s
     mov x22, x0 // desviación estándar
 
     mov x0, x20 // fd de salida
@@ -183,8 +263,8 @@ anomaly_done:
 
     //Clasificar riesgo del sistema
     mov x0, x20 // fd de salida
-    ldr x1, =msg_risk // mensaje de nivel de riesgo
-    mov x2, len_msg_risk // longitud del mensaje de nivel de riesgo
+    ldr x1, =msg_risk_label // mensaje de nivel de riesgo
+    mov x2, len_msg_risk_label // longitud del mensaje de nivel de riesgo
     bl write_text // escribir mensaje de nivel de riesgo en archivo de salida
 
     cmp x23, #0 // si no hay anomalías, riesgo normal
@@ -213,6 +293,11 @@ write_risk_label:
     bl write_text // escribir mensaje de nivel de riesgo en archivo de salida
 
     mov x0, x20 // fd de salida
+    ldr x1, =msg_status_ok // mensaje de estado de operación
+    mov x2, len_msg_status_ok // longitud del mensaje de estado de operación
+    bl write_text // escribir mensaje de estado de operación en archivo de salida
+    
+    mov x0, x20 // fd de salida
     bl close_output_file // cerrar archivo de salida
 
     mov sp, x27 // restaurar el stack pointer
@@ -221,17 +306,4 @@ exit_ok:
     mov x0, #0 // código de salida 0 (éxito)
     mov x8, #93 // syscall exit
     svc #0
-
-integer_sqrt:
-    mov x1, #1 // inicializar el resultado con 1
-sqrt_loop:
-    mul x2, x1, x1 // calcular el cuadrado del resultado actual
-    cmp x2, x0 // comparar el cuadrado con el número original
-    bgt sqrt_done // si el cuadrado es mayor que el número original, salir del bucle
-    add x1, x1, #1 // incrementar el resultado
-    b sqrt_loop // repetir el bucle
-
-sqrt_done:
-    sub x0, x1, #1 // restar 1 al resultado final
-    ret
 

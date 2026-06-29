@@ -27,7 +27,7 @@ export const arm64Api = {
     if (ini != null) params.set("ini", String(ini));
     if (fin != null) params.set("fin", String(fin));
     const qs = params.toString();
-    return apiFetch<{ message: string; results: Arm64Result["valor"] }>(
+    return apiFetch<{ message: string; results: Arm64Result[] }>(
       `/api/arm64/run${qs ? `?${qs}` : ""}`,
       { method: "POST" },
     );

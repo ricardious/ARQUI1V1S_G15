@@ -28,11 +28,7 @@ def base_record(
 
 
 class MongoRepository:
-    """Repositorio MongoDB del iot_program.
-
-    Si MongoDB falla, el programa no se detiene. MQTT y simulacion siguen
-    funcionando para poder probar integracion sin base de datos.
-    """
+    """Repositorio de MongoDB para el IoT."""
 
     def __init__(self, mongodb_uri: str, database_name: str) -> None:
         self.enabled = False
@@ -112,6 +108,38 @@ class MongoRepository:
             ),
         )
 
+    def insert_arm64_result(
+        self,
+        *,
+        source: str,
+        module: str,
+        input_data: str,
+        result: dict[str, Any],
+        decision: str | None = None,
+        risk: str | None = None,
+        status: str = "OK",
+        error_detail: str | None = None,
+        data_range: dict[str, int] | None = None,
+        column: str | None = None,
+    ) -> None:
+        """Guarda un resultado ARM64."""
+        self._insert_doc(
+            "arm64_results",
+            {
+                "timestamp": now_utc(),
+                "source": source,
+                "module": module,
+                "input": input_data,
+                "range": data_range,
+                "column": column,
+                "result": result,
+                "decision": decision,
+                "risk": risk,
+                "status": status,
+                "error_detail": error_detail,
+            },
+        )
+
     def update_system_status(self, state: dict[str, Any]) -> None:
         if not self.enabled:
             return
@@ -127,6 +155,9 @@ class MongoRepository:
             print(f"[MongoDB] Error actualizando system_status: {exc}")
 
     def _insert(self, collection: str, document: BaseRecord) -> None:
+        self._insert_doc(collection, document)
+
+    def _insert_doc(self, collection: str, document: dict[str, Any]) -> None:
         if not self.enabled:
             return
         try:

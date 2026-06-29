@@ -30,6 +30,22 @@ integral_error_path:
 derivada_local_path:
     .asciz "../resultados_arm64/resultado_derivada_local.txt"
 
+.data
+
+TEMP_IDEAL: .quad 24
+HUM_IDEAL:  .quad 70
+SOIL_IDEAL: .quad 65
+LUZ_IDEAL:  .quad 200
+GAS_IDEAL:  .quad 150
+
+// umbrales para LED_RED (riesgo alto o critico)
+GAS_RIESGO:       .quad 350     // gas entre 350-400 LED_RED
+TEMP_RIESGO:      .quad 32      // temp entre 32-35 LED_RED
+
+// umbrales para LED_YELLOW (advertencia)
+GAS_ADVERTENCIA:  .quad 300     // gas entre 300-350 LED_YELLOW
+TEMP_ADVERTENCIA: .quad 29      // temp entre 29-32 LED_YELLOW
+
 newline_text:
     .asciz "\n"
 
