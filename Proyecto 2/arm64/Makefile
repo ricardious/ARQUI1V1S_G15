@@ -33,15 +33,18 @@ REGRESION_BIN := $(BUILD_DIR)/modulo_2_regresion
 INTEGRAL_OBJ := $(BUILD_DIR)/modulo_4_integral_error.o
 INTEGRAL_BIN := $(BUILD_DIR)/modulo_4_integral_error
 
+RMSE_OBJ := $(BUILD_DIR)/modulo_1_rmse.o
+RMSE_BIN := $(BUILD_DIR)/modulo_1_rmse
+
 DERIVADA_OBJ := $(BUILD_DIR)/modulo_5_derivada_local.o
 DERIVADA_BIN := $(BUILD_DIR)/modulo_5_derivada_local
 
 MOTOR_OBJ := $(BUILD_DIR)/motor.o
 MOTOR_BIN := $(BUILD_DIR)/motor
 
-.PHONY: all media varianza anomalias prediccion tendencia motor regresion integral run-media run-varianza run-anomalias run-prediccion run-tendencia run-motor run-regresion run-derivada run-integral run-all clean
+.PHONY: all media varianza anomalias prediccion tendencia motor regresion integral rmse run-media run-varianza run-anomalias run-prediccion run-tendencia run-motor run-regresion run-derivada run-integral run-rmse run-all clean
 
-all: media varianza anomalias prediccion tendencia motor regresion derivada integral
+all: media varianza anomalias prediccion tendencia motor regresion derivada integral rmse
 
 media: $(MEDIA_BIN)
 
@@ -62,6 +65,8 @@ motor: $(MOTOR_BIN)
 regresion: $(REGRESION_BIN)
 
 integral: $(INTEGRAL_BIN)
+
+rmse: $(RMSE_BIN)
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
@@ -101,6 +106,9 @@ $(REGRESION_BIN): $(REGRESION_OBJ) $(UTILS_OBJ)
 $(INTEGRAL_BIN): $(INTEGRAL_OBJ) $(UTILS_OBJ)
 	$(LD) -o $@ $^
 
+$(RMSE_BIN): $(RMSE_OBJ) $(UTILS_OBJ)
+	$(LD) -o $@ $^
+
 run-media: $(MEDIA_BIN)
 	$(MEDIA_BIN) $(LEC) $(INI) $(FIN) $(COL)
 
@@ -127,11 +135,14 @@ run-derivada: $(DERIVADA_BIN)
 
 run-integral: $(INTEGRAL_BIN)
 	$(INTEGRAL_BIN) $(LEC) $(INI) $(FIN) $(COL)
- 
+
+run-rmse: $(RMSE_BIN)
+	$(RMSE_BIN) $(LEC) $(INI) $(FIN) $(COL)
+
 run-motor: $(MOTOR_BIN)
 	$(MOTOR_BIN)
 
-run-all: run-media run-varianza run-anomalias run-prediccion run-tendencia run-regresion run-derivada run-prediccion-futura run-integral
+run-all: run-media run-varianza run-anomalias run-prediccion run-tendencia run-regresion run-derivada run-prediccion-futura run-integral run-rmse
 
 clean:
 	rm -rf $(BUILD_DIR)
