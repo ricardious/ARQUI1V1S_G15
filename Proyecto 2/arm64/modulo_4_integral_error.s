@@ -73,7 +73,7 @@ _start:
     mov x6, #0              // x6 = AREA_ERROR (acumulador total)
 
     // calcular el primer error (Y_0 - IDEAL)
-    ldr x7, [x3], #8        // cargar Y_0 y avanzar el puntero 8 bytes
+    ldr x7, [x3], #16       // cargar Y_0 y avanzar el puntero 16 bytes
     sub x8, x7, x4          // x8 = Y_0 - IDEAL
 
     cmp x8, #0              // evaluar si el error es positivo o negativo
@@ -87,7 +87,7 @@ loop_integral:
     cbz x5, fin_calculo     // si ya se procesaron las N-1 parejas, salir
 
     // calcular el siguiente error (Y_(i+1) - IDEAL)
-    ldr x9, [x3], #8        // cargar Y_(i+1) y avanzar el puntero 8 bytes
+    ldr x9, [x3], #16       // cargar Y_(i+1) y avanzar el puntero 16 bytes
     sub x10, x9, x4         // x10 = Y_(i+1) - IDEAL
 
     cmp x10, #0             // evaluar signo del siguiente error
