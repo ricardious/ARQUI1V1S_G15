@@ -68,18 +68,18 @@ _start:
     
 
     // Guardamos los limites de la ventana
-    mov x19, x13       // WINDOW_START 
-    mov x20, x14       // WINDOW_END 
-   
-    // 2. Leer datos al stack
+   mov x16, x13       // WINDOW_START a x16
+    mov x17, x14       // WINDOW_END a x17
+    mov x18, x25       // Puntero del nombre a x18 (Crucial)
+    //  Leer datos al stack
     bl read_column_to_stack 
+    mov x24, x0        
+    mov x25, x1        
+    mov x21, x2        
+    mov x27, x3     // Direccion para restaurar el stack a x27
 
-    mov x24, x0        // Top del stack (ultimo dato)
-    mov x8, x1        // Fondo del stack (primer dato)
-    mov x21, x2        // N (cantidad de datos)
-    mov x18, x3        // Direccion original del stack
 
-    // 3. Validacion: Regresion necesita MINIMO 2 puntos
+    // Validacion: Regresion necesita MINIMO 2 puntos
     cmp x21, #2
     blt error_rango_insuficiente
 
@@ -87,17 +87,14 @@ _start:
     //  CALCULO DE SUMATORIAS PARA REGRESION
    
     mov x9, x24         // x9 = Puntero actual 
-    sub x5, x21, #1     // x5 = Indice X_i 
-    
-    
-//Inicializamos sumX en 0 para limpiar la memoria residual
+   mov x5, x21         // Indice X_i alineado a 1 (arranca en N)
     mov x22, #0         // sumX
     mov x23, #0         // sumY
     mov x26, #0         // sumX2
-    mov x27, #0         // sumXY
+    mov x28, #0         // sumXY temporalmente
 
 calc_sums_loop:
-    cmp x9, x8         
+    cmp x9, x25         
     bge calc_sums_done
 
     ldr x10, [x9]       // Y_i = Valor actual del CSV
@@ -109,17 +106,17 @@ calc_sums_loop:
     add x26, x26, x11   // sumX2 += X_i * X_i
 
     mul x11, x5, x10
-    add x27, x27, x11   // sumXY += X_i * Y_i
+    add x28, x28, x11   // sumXY += X_i * Y_i
 
     sub x5, x5, #1      // X_i--
     add x9, x9, #16     // Avanzar al dato mas viejo 
     b calc_sums_loop
 
 calc_sums_done:
-
+     mov x14, x28
     //  Calcular pendiente  e intercepto 
     // NUMERADOR = (N * sumXY) - (sumX * sumY)
-    mul x10, x21, x27   // x10 = N * sumXY
+    mul x10, x21, x14   // x10 = N * sumXY
     mul x11, x22, x23   // x11 = sumX * sumY
     sub x10, x10, x11   // x10 = NUMERADOR
 
