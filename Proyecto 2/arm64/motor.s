@@ -64,6 +64,8 @@ input_buffer:
 .include "motor/soil1.s"
 .include "motor/soil2.s"
 .include "motor/prioridades.s"
+.include "motor/led_red.s"
+.include "motor/led_yellow.s"
 
 
 _start:
