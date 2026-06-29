@@ -1,4 +1,4 @@
-# Módulo 2 — Integral del error por regla del trapecio
+# Módulo 4 — Integral del error por regla del trapecio
 
 | Campo                          | Detalle                                                             |
 | ------------------------------ | ------------------------------------------------------------------- |
