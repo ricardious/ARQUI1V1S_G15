@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
 settings = get_settings()
 
 app = FastAPI(
-    title="GreenPi IoT Backend",
+    title="Invernadero - IoT Backend",
     version="1.0.0",
     description="API REST para dashboard, MongoDB Atlas y flujo ARM64.",
     lifespan=lifespan,
