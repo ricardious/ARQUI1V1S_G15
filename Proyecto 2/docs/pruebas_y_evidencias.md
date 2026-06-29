@@ -14,10 +14,11 @@ Plan de pruebas del sistema y guía de las evidencias que respaldan su funcionam
 | 4   | MongoDB           | Documentos en las colecciones tras ejecutar el sistema.   | `evidencias/mongodb/`    |
 | 5   | Backend           | `GET /health` y `/docs`.                                  | `evidencias/dashboard/`  |
 | 6   | Dashboard         | Recorrer las 6 secciones con datos en vivo.               | `evidencias/dashboard/`  |
-| 7   | Sensores reales   | Lectura de cada sensor con hardware.                      | `evidencias/sensores/`   |
-| 8   | Actuadores reales | Comando o condición → actuador físico responde.           | `evidencias/actuadores/` |
-| 9   | ARM64             | `make run-tendencia` y archivo de salida.                 | `evidencias/arm64/`      |
-| 10  | GDB               | Sesión de depuración por integrante.                      | `evidencias/gdb/`        |
+| 7   | Grafana           | Paneles leyendo de MongoDB (lecturas, riesgo, ARM64).     | `evidencias/grafana/`    |
+| 8   | Sensores reales   | Lectura de cada sensor con hardware.                      | `evidencias/sensores/`   |
+| 9   | Actuadores reales | Comando o condición → actuador físico responde.           | `evidencias/actuadores/` |
+| 10  | ARM64             | `make run-tendencia` y archivo de salida.                 | `evidencias/arm64/`      |
+| 11  | GDB               | Sesión de depuración por integrante.                      | `evidencias/gdb/`        |
 
 ---
 
@@ -49,7 +50,7 @@ Validar la cadena de extremo a extremo:
 
 ```text
 Sensores → Python → MQTT → MongoDB → Dashboard → Comando → Raspberry Pi → Actuador
-→ lecturas.csv → ARM64 → Resultados → MongoDB → Dashboard
+→ lecturas.csv → ARM64 → Resultados → MongoDB → Dashboard / Grafana
 ```
 
 ---
@@ -91,7 +92,22 @@ Cada integrante presenta la sesión GDB de su módulo: breakpoints, registros, m
 
 ---
 
-## 8. Evidencias a registrar
+## 8. Prueba de visualización en Grafana
+
+Grafana es **solo visualización**: lee los datos ya persistidos en MongoDB y no ejecuta lógica del invernadero. Sirve para mostrar de forma gráfica el histórico de lecturas y las decisiones del motor ARM64.
+
+1. Con datos en MongoDB (tras ejecutar el sistema), abrir Grafana y comprobar que la fuente de datos apunta a la base del proyecto (`greenpi_iot`).
+2. Revisar los paneles:
+   - lecturas históricas de los sensores (temperatura, humedad ambiental, suelo área 1 y 2, luz, gas);
+   - decisiones del motor en vivo y resultados del analizador histórico (colección `arm64_results`: `source`, módulo, decisión, riesgo, estado);
+   - nivel de riesgo y estado global, y errores registrados.
+3. Cambiar el rango temporal del tablero y confirmar que los paneles se actualizan con el histórico.
+
+Evidencia: capturas de los paneles en `evidencias/grafana/`.
+
+---
+
+## 9. Evidencias a registrar
 
 | Carpeta                  | Contenido                                |
 | ------------------------ | ---------------------------------------- |
@@ -102,9 +118,10 @@ Cada integrante presenta la sesión GDB de su módulo: breakpoints, registros, m
 | `evidencias/actuadores/` | Actuadores físicos respondiendo.         |
 | `evidencias/arm64/`      | Archivos `resultado_*.txt`.              |
 | `evidencias/gdb/`        | Una sesión de depuración por integrante. |
+| `evidencias/grafana/`    | Dashboard elaborado en Grafana.          |
 
 ---
 
-## 9. Video demostrativo
+## 10. Video demostrativo
 
 El video debe mostrar sensores, actuadores, riego real, dashboard, comunicación MQTT y persistencia en MongoDB, incluyendo el flujo completo hasta los resultados ARM64 en el dashboard.
