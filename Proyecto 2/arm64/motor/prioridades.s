@@ -31,6 +31,14 @@ evaluar_prioridades:
     // 5) temp: promedio alto (x19) y tendencia ascendente (x20)/ FAN_ON
     bl evaluar_temperatura
     cbnz x0, salir_prioridad
+
+    // LED_RED: variable en zona de riesgo alto
+    bl evaluar_riesgo_alto
+    cbnz x0, salir_prioridad
+
+    // LED_YELLOW: variable cerca del umbral
+    bl evaluar_advertencia
+    cbnz x0, salir_prioridad
     
     cmp x13, #0             //  modo es automático?
     bne prioridad_7         // != cero (Manual), salta a NO_ACTION
