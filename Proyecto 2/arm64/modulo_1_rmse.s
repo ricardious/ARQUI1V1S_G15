@@ -1,5 +1,3 @@
-
-.include "utils.s"
 .section .rodata
 msg_calc:
     .ascii "CALC=RMSE\n"
@@ -35,6 +33,8 @@ msg_ok:
 .section .text
 
 .global _start
+
+.include "utils.s"
 _start:
 
     // se obtiene la columna
@@ -56,6 +56,15 @@ _start:
     
     bl obtener_valor_ideal
     mov x19, x0      // ideal
+
+
+    // CALC=ERROR_INTEGRAL
+    mov x0, x20            // fd de salida
+    ldr x1, =msg_calc
+    mov x2, len_msg_calc
+    bl write_text
+
+
 //CALC=RMSE 
 //COLUMN=SOIL1 
 //WINDOW_START=1000 
@@ -69,3 +78,6 @@ _start:
 //ERROR2_i = ERROR_i * ERROR_i 
 // MSE = suma(ERROR2_i) / N 
 //RMSE = sqrt_entera(MSE) 
+    mov x0, #0
+    mov x8, #93
+    svc #0
