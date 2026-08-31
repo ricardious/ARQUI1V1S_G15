@@ -1,4 +1,5 @@
 import csv
+import os
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -170,8 +171,9 @@ class Arm64Service:
                 detail="No existe Makefile en la carpeta arm64. Agrega los modulos ARM64 antes de ejecutar.",
             )
 
+        lec_path = os.path.relpath(self.csv_path, self.arm64_dir)
         make_args = [
-            f"LEC={self.csv_path}",
+            f"LEC={lec_path}",
             f"INI={line_start}",
             f"FIN={line_end}",
             f"COL={col_name}",

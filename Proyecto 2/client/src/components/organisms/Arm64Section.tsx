@@ -189,6 +189,7 @@ export default function Arm64Section() {
               label={m.label}
               headline={headline}
               stats={stats}
+              raw={doc?.result?.raw}
               foot={foot}
               shape={m.shape}
               color={color}

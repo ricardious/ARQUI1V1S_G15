@@ -7,6 +7,7 @@ export default function Arm64Card({
   label,
   headline,
   stats,
+  raw,
   foot,
   shape,
   color,
@@ -19,6 +20,7 @@ export default function Arm64Card({
   label: string;
   headline: string;
   stats: { k: string; v: string | undefined }[];
+  raw?: string;
   foot: string;
   shape: Shape;
   color: string;
@@ -53,6 +55,11 @@ export default function Arm64Card({
             </span>
           ))}
         </div>
+      )}
+      {raw && (
+        <pre className="mt-3 max-h-40 overflow-auto whitespace-pre-wrap rounded-lg border border-edge bg-ink/20 p-2 font-mono text-[10px] leading-relaxed text-dim2">
+          {raw}
+        </pre>
       )}
       <p
         className={`text-[11px] font-mono mt-3 ${danger ? "text-danger" : "text-dim2"}`}

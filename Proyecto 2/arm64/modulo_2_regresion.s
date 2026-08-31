@@ -44,6 +44,7 @@ msg_status:
     .ascii "STATUS=OK\n"
     len_msg_status = . - msg_status
 
+
 .text
 
 .include "utils.s"
@@ -119,30 +120,79 @@ regresion_sum_loop:
     b regresion_sum_loop
 
 regresion_sum_done:
-    // NUM = N * SUM_XY - SUM_X * SUM_Y
-    // DEN = N * SUM_X2 - SUM_X * SUM_X
-    // SLOPE_X100 = (NUM * 100) / DEN
+    // ---------------------------------------------------------
+    // Modificacion de la imagen, pero sin tocar el loop:
+    //
+    // X' = X + 32
+    // Y' = Y - 16
+    //
+    // Como el loop ya calculo:
+    // SUM_X  = SUM(X)
+    // SUM_Y  = SUM(Y)
+    // SUM_XY = SUM(X * Y)
+    // SUM_X2 = SUM(X * X)
+    //
+    // Entonces se ajusta despues:
+    //
+    // SUM_XY' = SUM_XY - 16SUM_X + 32SUM_Y - 512N
+    // SUM_X2' = SUM_X2 + 64SUM_X + 1024N
+    //
+    // NUM = N * SUM_XY' - SUM_X * SUM_Y - 512
+    // DEN = N * SUM_X2' - SUM_X * SUM_X
+    //
+    // SLOPE_X100 = ((NUM * 200) / (DEN + 256)) / 2
+    // ---------------------------------------------------------
 
-    // NUM = N * SUM_XY - SUM_X * SUM_Y
-    mul x9, x26, x17        // x9 = N * SUM_XY
+    // x17 = SUM_XY'
+    mov x13, #16
+    mul x9, x15, x13        // x9 = 16 * SUM_X
+    sub x17, x17, x9        // SUM_XY = SUM_XY - 16SUM_X
+
+    mov x13, #32
+    mul x9, x16, x13        // x9 = 32 * SUM_Y
+    add x17, x17, x9        // SUM_XY = SUM_XY + 32SUM_Y
+
+    mov x13, #512
+    mul x9, x26, x13        // x9 = 512 * N
+    sub x17, x17, x9        // SUM_XY = SUM_XY - 512N
+
+    // x18 = SUM_X2'
+    mov x13, #64
+    mul x9, x15, x13        // x9 = 64 * SUM_X
+    add x18, x18, x9        // SUM_X2 = SUM_X2 + 64SUM_X
+
+    mov x13, #1024
+    mul x9, x26, x13        // x9 = 1024 * N
+    add x18, x18, x9        // SUM_X2 = SUM_X2 + 1024N
+
+    // NUM = N * SUM_XY' - SUM_X * SUM_Y - 512
+    mul x9, x26, x17        // x9 = N * SUM_XY'
     mul x10, x15, x16       // x10 = SUM_X * SUM_Y
-    sub x11, x9, x10        // x11 = NUM
+    sub x11, x9, x10        // x11 = N*SUM_XY' - SUM_X*SUM_Y
+    sub x11, x11, #512      // x11 = NUM
 
-    // DEN = N * SUM_X2 - SUM_X * SUM_X
-    mul x9, x26, x18        // x9 = N * SUM_X2
+    // DEN = N * SUM_X2' - SUM_X * SUM_X
+    mul x9, x26, x18        // x9 = N * SUM_X2'
     mul x10, x15, x15       // x10 = SUM_X * SUM_X
     sub x12, x9, x10        // x12 = DEN
+
+    // DEN = DEN + 256
+    add x12, x12, #256
 
     // Validar division entre cero
     cmp x12, #0
     beq range_error
 
-    // NUM * 100
-    mov x13, #100
-    mul x11, x11, x13
+    // NUM * 200
+    mov x13, #200
+    mul x11, x11, x13       // x11 = NUM * 200
 
-    // Pendiente con signo
-    sdiv x19, x11, x12      // x19 = SLOPE_X100
+    // (NUM * 200) / (DEN + 256)
+    sdiv x19, x11, x12
+
+    // resultado / 2
+    mov x13, #2
+    sdiv x19, x19, x13      // x19 = SLOPE_X100
 
     // abrir archivo resultado_regresion.txt
     bl open_regresion_write

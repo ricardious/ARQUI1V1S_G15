@@ -38,6 +38,8 @@ a.out
 *.core
 core.*
 qemu_*.core
+# Shim local para depuracion (apunta al gdb del sistema)
+arm64/utils/gdb-multiarch
 # Salidas generadas en ejecución (regenerables)
 # Descomentar si NO quieren versionar los resultados:
 # resultado_*.txt
