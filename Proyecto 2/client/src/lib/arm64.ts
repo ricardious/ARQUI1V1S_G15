@@ -112,9 +112,14 @@ export const ARM64_MODULES: Arm64ModuleMeta[] = [
     label: "Anomalías",
     file: "modulo_3_anomalias.s",
     shape: "tetra",
-    headline: (f) => f.TOTAL,
-    stats: () => [],
-    danger: (f) => Number(f.TOTAL) > 2,
+    headline: (f) => f.ANOMALIES ?? f.TOTAL,
+    stats: (f) => [
+      { k: "media", v: f.MEAN },
+      { k: "std", v: f.STD_DEV },
+      { k: "riesgo", v: f.SYSTEM_RISK },
+      { k: "n", v: f.TOTAL_VALUES },
+    ],
+    danger: (f) => Number(f.ANOMALIES ?? f.TOTAL) > 2 || f.SYSTEM_RISK === "HIGH",
   },
   {
     key: "prediccion_reg",
